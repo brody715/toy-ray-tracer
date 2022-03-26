@@ -54,12 +54,12 @@ fn main() -> anyhow::Result<()> {
     let opt = args.render_opts;
 
     let scene_factory = scenes::get_scene_factory(&args.scene)?;
-    let scene = scene_factory(opt);
+    let scene = scene_factory.create_scene(opt);
 
     let engine = Engine::new();
 
     let output_dir = Path::new(&args.output_dir);
-    let output_path = output_dir.join(format!("{}.png", scene.name()));
+    let output_path = output_dir.join(format!("{}.png", scene_factory.name()));
 
     {
         let _timer = ExecutionTimer::new(|start_time| {
@@ -71,7 +71,7 @@ fn main() -> anyhow::Result<()> {
 
         info!(
             "start to render scene={} size={}x{} nsamples={}",
-            scene.name(),
+            scene_factory.name(),
             opt.width,
             opt.height,
             opt.nsamples

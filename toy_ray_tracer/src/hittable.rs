@@ -1,8 +1,11 @@
+use std::sync::Arc;
+
 use derive_new::new;
 
+use crate::aabb::AABB;
+use crate::material::{Material, MaterialPtr};
 use crate::ray::Ray;
 use crate::vec::{Point3, Vec3};
-use crate::{aabb::AABB, material::Material};
 
 #[derive(new)]
 pub struct HitRecord<'a> {
@@ -30,10 +33,12 @@ impl<'a> HitRecord<'a> {
     }
 }
 
-pub trait Hittable: Sync {
+pub trait Hittable: Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
 }
+
+pub type HittablePtr = Arc<dyn Hittable + Sync + Send>;
 
 pub struct EmptyHittable {}
 

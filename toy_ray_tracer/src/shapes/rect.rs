@@ -1,6 +1,6 @@
 use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable};
-use crate::material::Material;
+use crate::material::MaterialPtr;
 use crate::ray::Ray;
 use crate::vec::Vec3;
 
@@ -10,18 +10,26 @@ pub enum Plane {
     XY,
 }
 
-pub struct AARect<M: Material> {
+pub struct AARect {
     plane: Plane,
     a0: f32,
     a1: f32,
     b0: f32,
     b1: f32,
     k: f32,
-    material: M,
+    material: MaterialPtr,
 }
 
-impl<M: Material> AARect<M> {
-    pub fn new(plane: Plane, a0: f32, a1: f32, b0: f32, b1: f32, k: f32, material: M) -> Self {
+impl AARect {
+    pub fn new(
+        plane: Plane,
+        a0: f32,
+        a1: f32,
+        b0: f32,
+        b1: f32,
+        k: f32,
+        material: MaterialPtr,
+    ) -> Self {
         AARect {
             plane,
             a0,
@@ -34,7 +42,7 @@ impl<M: Material> AARect<M> {
     }
 }
 
-impl<M: Material> Hittable for AARect<M> {
+impl Hittable for AARect {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let (k_axis, a_axis, b_axis) = match &self.plane {
             Plane::YZ => (0, 1, 2),
@@ -55,7 +63,7 @@ impl<M: Material> Hittable for AARect<M> {
                 let p = ray.point_at_parameter(t);
                 let mut normal = Vec3::zeros();
                 normal[k_axis] = 1.0;
-                let mut rec = HitRecord::new(t, u, v, p, &self.material);
+                let mut rec = HitRecord::new(t, u, v, p, self.material.as_ref());
                 rec.set_face_normal(ray, &normal);
                 return Some(rec);
             }

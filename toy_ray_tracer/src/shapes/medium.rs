@@ -1,30 +1,31 @@
 use crate::aabb::AABB;
-use crate::hittable::{HitRecord, Hittable};
+use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::materials::Isotropic;
 use crate::ray::Ray;
-use crate::texture::Texture;
+use crate::texture::TexturePtr;
 use crate::utils::random;
 use std::f32;
+use std::sync::Arc;
 
 use crate::vec::Vec3;
 
-pub struct ConstantMedium<H: Hittable, T: Texture> {
-    boundary: H,
+pub struct ConstantMedium {
+    boundary: HittablePtr,
     density: f32,
-    phase_function: Isotropic<T>,
+    phase_function: Arc<Isotropic>,
 }
 
-impl<H: Hittable, T: Texture> ConstantMedium<H, T> {
-    pub fn new(boundary: H, density: f32, texture: T) -> Self {
+impl ConstantMedium {
+    pub fn new(boundary: HittablePtr, density: f32, texture: TexturePtr) -> Self {
         ConstantMedium {
             boundary,
             density,
-            phase_function: Isotropic::new(texture),
+            phase_function: Arc::new(Isotropic::new(texture)),
         }
     }
 }
 
-impl<H: Hittable, T: Texture> Hittable for ConstantMedium<H, T> {
+impl Hittable for ConstantMedium {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         if let Some(mut hit1) = self.boundary.hit(&ray, -f32::MAX, f32::MAX) {
             if let Some(mut hit2) = self.boundary.hit(&ray, hit1.t + 0.0001, f32::MAX) {
@@ -44,7 +45,7 @@ impl<H: Hittable, T: Texture> Hittable for ConstantMedium<H, T> {
                             0.0,
                             0.0,
                             ray.point_at_parameter(t),
-                            &self.phase_function,
+                            self.phase_function.as_ref(),
                         );
                         rec.set_face_normal(ray, &Vec3::new(1.0, 0.0, 0.0));
                         return Some(rec);

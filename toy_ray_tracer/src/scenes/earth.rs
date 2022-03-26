@@ -6,6 +6,7 @@ use crate::shapes::Sphere;
 
 use crate::textures::ImageTexture;
 use crate::vec::{vec3, Vec3};
+use std::sync::Arc;
 
 fn create_world() -> Box<dyn Hittable> {
     let image = image::open("assets/earthmap.jpg")
@@ -13,8 +14,12 @@ fn create_world() -> Box<dyn Hittable> {
         .to_rgb8();
     let (nx, ny) = image.dimensions();
     let data = image.into_raw();
-    let texture = ImageTexture::new(data, nx, ny);
-    let earth = Sphere::new(Vec3::new(0.0, 0.0, 0.0), 2.0, Lambertian::new(texture));
+    let texture = Arc::new(ImageTexture::new(data, nx, ny));
+    let earth = Sphere::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        2.0,
+        Arc::new(Lambertian::new(texture)),
+    );
     Box::new(earth)
 }
 

@@ -2,23 +2,22 @@ use crate::{
     hittable::HitRecord,
     material::Material,
     ray::Ray,
-    texture::Texture,
+    texture::{Texture, TexturePtr},
     utils::random,
     vec::{vec3, Vec3},
 };
 
-#[derive(Clone)]
-pub struct Lambertian<T: Texture> {
-    albedo: T,
+pub struct Lambertian {
+    albedo: TexturePtr,
 }
 
-impl<T: Texture> Lambertian<T> {
-    pub fn new(albedo: T) -> Self {
+impl Lambertian {
+    pub fn new(albedo: TexturePtr) -> Self {
         Lambertian { albedo }
     }
 }
 
-impl<T: Texture> Material for Lambertian<T> {
+impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
         let target = hit.p + hit.normal + vec3::random_in_unit_sphere();
         let scattered = Ray::new(hit.p, target - hit.p, ray.time());
@@ -30,7 +29,6 @@ impl<T: Texture> Material for Lambertian<T> {
     }
 }
 
-#[derive(Clone)]
 pub struct Metal {
     albedo: Vec3,
     fuzz: f32,
@@ -64,7 +62,6 @@ impl Material for Metal {
     }
 }
 
-#[derive(Clone)]
 pub struct Dielectric {
     // index of refraction
     ir: f32,
@@ -106,18 +103,17 @@ impl Material for Dielectric {
     }
 }
 
-#[derive(Clone)]
-pub struct DiffuseLight<T: Texture> {
-    emit: T,
+pub struct DiffuseLight {
+    emit: TexturePtr,
 }
 
-impl<T: Texture> DiffuseLight<T> {
-    pub fn new(emit: T) -> Self {
+impl DiffuseLight {
+    pub fn new(emit: TexturePtr) -> Self {
         DiffuseLight { emit }
     }
 }
 
-impl<T: Texture> Material for DiffuseLight<T> {
+impl Material for DiffuseLight {
     fn scatter(&self, _ray: &Ray, _hit: &HitRecord) -> Option<(Ray, Vec3)> {
         None
     }
@@ -128,17 +124,17 @@ impl<T: Texture> Material for DiffuseLight<T> {
 }
 
 #[derive(Clone)]
-pub struct Isotropic<T: Texture> {
-    albedo: T,
+pub struct Isotropic {
+    albedo: TexturePtr,
 }
 
-impl<T: Texture> Isotropic<T> {
-    pub fn new(albedo: T) -> Self {
+impl Isotropic {
+    pub fn new(albedo: TexturePtr) -> Self {
         Isotropic { albedo }
     }
 }
 
-impl<T: Texture> Material for Isotropic<T> {
+impl Material for Isotropic {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
         let scattered = Ray::new(hit.p, vec3::random_in_unit_sphere(), ray.time());
         Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))

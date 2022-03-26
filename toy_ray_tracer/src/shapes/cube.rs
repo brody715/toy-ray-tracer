@@ -2,7 +2,7 @@ use super::rect::{AARect, Plane};
 use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable};
 use crate::hittable_list::HittableList;
-use crate::material::Material;
+use crate::material::MaterialPtr;
 use crate::ray::Ray;
 use crate::vec::Vec3;
 
@@ -13,7 +13,7 @@ pub struct Cube {
 }
 
 impl Cube {
-    pub fn new<M: Material + Clone + 'static>(p_min: Vec3, p_max: Vec3, material: M) -> Self {
+    pub fn new(p_min: Vec3, p_max: Vec3, material: MaterialPtr) -> Self {
         let mut sides = HittableList::new();
         sides.add(AARect::new(
             Plane::XY,

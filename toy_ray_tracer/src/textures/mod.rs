@@ -1,4 +1,8 @@
-use crate::{perlin::Perlin, texture::Texture, vec::Vec3};
+use crate::{
+    perlin::Perlin,
+    texture::{Texture, TexturePtr},
+    vec::Vec3,
+};
 
 #[derive(Clone)]
 pub struct ConstantTexture {
@@ -19,20 +23,19 @@ impl Texture for ConstantTexture {
     }
 }
 
-#[derive(Clone)]
-pub struct CheckerTexture<T: Texture, U: Texture> {
-    odd: T,
-    even: U,
+pub struct CheckerTexture {
+    odd: TexturePtr,
+    even: TexturePtr,
 }
 
-impl<T: Texture, U: Texture> CheckerTexture<T, U> {
+impl CheckerTexture {
     #[allow(dead_code)]
-    pub fn new(odd: T, even: U) -> Self {
+    pub fn new(odd: TexturePtr, even: TexturePtr) -> Self {
         CheckerTexture { odd, even }
     }
 }
 
-impl<T: Texture, U: Texture> Texture for CheckerTexture<T, U> {
+impl Texture for CheckerTexture {
     fn value(&self, u: f32, v: f32, p: &Vec3) -> Vec3 {
         let sines = f32::sin(10.0 * p.x) * f32::sin(10.0 * p.y) * f32::sin(10.0 * p.z);
         if sines < 0.0 {

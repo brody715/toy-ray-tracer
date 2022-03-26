@@ -131,4 +131,14 @@ pub mod vec3 {
     pub fn dot(v1: &Vec3, v2: &Vec3) -> f32 {
         return v1.dot(v2);
     }
+
+    #[inline]
+    pub fn min(v1: &Vec3, v2: &Vec3) -> Vec3 {
+        return Vec3::new(v1.x.min(v2.x), v1.y.min(v2.y), v1.z.min(v2.z));
+    }
+
+    #[inline]
+    pub fn max(v1: &Vec3, v2: &Vec3) -> Vec3 {
+        return Vec3::new(v1.x.max(v2.x), v1.y.max(v2.y), v1.z.max(v2.z));
+    }
 }

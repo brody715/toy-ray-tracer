@@ -1,21 +1,21 @@
 use crate::aabb::AABB;
 use crate::aabb::{self, create_sphere_box};
 use crate::hittable::{HitRecord, Hittable};
-use crate::material::Material;
+use crate::material::{Material, MaterialPtr};
 use crate::ray::Ray;
 use crate::vec::Vec3;
 use nalgebra::Vector3;
 use std::f32;
 
 #[derive(Clone)]
-pub struct Sphere<M: Material> {
+pub struct Sphere {
     center: Vec3,
     radius: f32,
-    material: M,
+    material: MaterialPtr,
 }
 
-impl<M: Material> Sphere<M> {
-    pub fn new(center: Vec3, radius: f32, material: M) -> Self {
+impl Sphere {
+    pub fn new(center: Vec3, radius: f32, material: MaterialPtr) -> Self {
         Sphere {
             center,
             radius,
@@ -37,7 +37,7 @@ fn sphere_hit<'a>(
     ray: &Ray,
     center: Vec3,
     radius: f32,
-    material: &'a (dyn Material + 'a),
+    material: &'a dyn Material,
     t_min: f32,
     t_max: f32,
 ) -> Option<HitRecord<'a>> {
@@ -77,9 +77,16 @@ fn sphere_hit<'a>(
     return None;
 }
 
-impl<M: Material> Hittable for Sphere<M> {
+impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
-        return sphere_hit(ray, self.center, self.radius, &self.material, t_min, t_max);
+        return sphere_hit(
+            ray,
+            self.center,
+            self.radius,
+            self.material.as_ref(),
+            t_min,
+            t_max,
+        );
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
@@ -90,23 +97,23 @@ impl<M: Material> Hittable for Sphere<M> {
     }
 }
 
-pub struct MovingSphere<M: Material> {
+pub struct MovingSphere {
     center0: Vec3,
     center1: Vec3,
     time0: f32,
     time1: f32,
     radius: f32,
-    material: M,
+    material: MaterialPtr,
 }
 
-impl<M: Material> MovingSphere<M> {
+impl MovingSphere {
     pub fn new(
         center0: Vec3,
         center1: Vec3,
         time0: f32,
         time1: f32,
         radius: f32,
-        material: M,
+        material: MaterialPtr,
     ) -> Self {
         MovingSphere {
             center0,
@@ -124,13 +131,13 @@ impl<M: Material> MovingSphere<M> {
     }
 }
 
-impl<M: Material> Hittable for MovingSphere<M> {
+impl Hittable for MovingSphere {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         sphere_hit(
             ray,
             self.center(ray.time()),
             self.radius,
-            &self.material,
+            self.material.as_ref(),
             t_min,
             t_max,
         )
