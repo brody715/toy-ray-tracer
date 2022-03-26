@@ -1,4 +1,5 @@
 use crate::{
+    nimage,
     perlin::Perlin,
     texture::{Texture, TexturePtr},
     vec::Vec3,
@@ -10,10 +11,8 @@ pub struct ConstantTexture {
 }
 
 impl ConstantTexture {
-    pub fn new(r: f32, g: f32, b: f32) -> Self {
-        ConstantTexture {
-            color: Vec3::new(r, g, b),
-        }
+    pub fn new(color: Vec3) -> Self {
+        ConstantTexture { color }
     }
 }
 
@@ -53,6 +52,7 @@ pub struct NoiseTexture {
 }
 
 impl NoiseTexture {
+    #[allow(dead_code)]
     pub fn new(scale: f32) -> Self {
         NoiseTexture {
             noise: Perlin::new(),
@@ -71,33 +71,28 @@ impl Texture for NoiseTexture {
 
 #[derive(Clone)]
 pub struct ImageTexture {
-    data: Vec<u8>,
-    nx: u32,
-    ny: u32,
+    image: nimage::Image,
 }
 
 impl ImageTexture {
-    pub fn new(data: Vec<u8>, nx: u32, ny: u32) -> Self {
-        ImageTexture { data, nx, ny }
+    pub fn new(image: nimage::Image) -> Self {
+        ImageTexture { image }
     }
 }
 
 impl Texture for ImageTexture {
     fn value(&self, u: f32, v: f32, _p: &Vec3) -> Vec3 {
-        let nx = self.nx as usize;
-        let ny = self.ny as usize;
-        let mut i = (u * nx as f32) as usize;
-        let mut j = ((1.0 - v) * ny as f32) as usize;
-        if i > nx - 1 {
-            i = nx - 1
+        let width = self.image.width() as usize;
+        let height = self.image.height() as usize;
+        let mut i = (u * width as f32) as usize;
+        let mut j = ((1.0 - v) * height as f32) as usize;
+        if i > width - 1 {
+            i = width - 1
         }
-        if j > ny - 1 {
-            j = ny - 1
+        if j > height - 1 {
+            j = height - 1
         }
-        let idx = 3 * i + 3 * nx * j;
-        let r = self.data[idx] as f32 / 255.0;
-        let g = self.data[idx + 1] as f32 / 255.0;
-        let b = self.data[idx + 2] as f32 / 255.0;
-        Vec3::new(r, g, b)
+        let pixel_idx = i + width * j;
+        return self.image.get_pixel(pixel_idx);
     }
 }

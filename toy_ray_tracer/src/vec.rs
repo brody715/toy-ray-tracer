@@ -132,11 +132,13 @@ pub mod vec3 {
         return v1.dot(v2);
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn min(v1: &Vec3, v2: &Vec3) -> Vec3 {
         return Vec3::new(v1.x.min(v2.x), v1.y.min(v2.y), v1.z.min(v2.z));
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn max(v1: &Vec3, v2: &Vec3) -> Vec3 {
         return Vec3::new(v1.x.max(v2.x), v1.y.max(v2.y), v1.z.max(v2.z));

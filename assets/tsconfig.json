@@ -1,0 +1,15 @@
+{
+    "include": [
+        "./projects/**/*.js"
+    ],
+    "compilerOptions": {
+        // fake outdir
+        "outDir": "./out",
+        "module": "es6",
+        "checkJs": true,
+        "strictNullChecks": true,
+        "typeRoots": [
+            "./schemas"
+        ]
+    },
+}

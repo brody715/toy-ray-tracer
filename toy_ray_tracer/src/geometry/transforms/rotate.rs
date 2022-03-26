@@ -1,10 +1,14 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use crate::aabb::AABB;
-use crate::hittable::{HitRecord, Hittable};
+use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
 use crate::vec::Vec3;
 use std::f32;
 
 #[allow(dead_code)]
+#[derive(JsonSchema, Debug, Serialize, Deserialize)]
 pub enum Axis {
     X,
     Y,
@@ -19,16 +23,16 @@ fn get_axis(axis: &Axis) -> (usize, usize, usize) {
     }
 }
 
-pub struct Rotate<H: Hittable> {
+pub struct Rotate {
     axis: Axis,
     sin_theta: f32,
     cos_theta: f32,
-    hittable: H,
+    hittable: HittablePtr,
     bbox: Option<AABB>,
 }
 
-impl<H: Hittable> Rotate<H> {
-    pub fn new(axis: Axis, hittable: H, angle: f32) -> Self {
+impl Rotate {
+    pub fn new(axis: Axis, hittable: HittablePtr, angle: f32) -> Self {
         let (r_axis, a_axis, b_axis) = get_axis(&axis);
         let radians = (f32::consts::PI / 180.0) * angle;
         let sin_theta = f32::sin(radians);
@@ -81,7 +85,7 @@ impl<H: Hittable> Rotate<H> {
     }
 }
 
-impl<H: Hittable> Hittable for Rotate<H> {
+impl Hittable for Rotate {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let (_, a_axis, b_axis) = get_axis(&self.axis);
         let mut origin = ray.origin();

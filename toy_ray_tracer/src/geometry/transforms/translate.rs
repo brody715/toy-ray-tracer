@@ -1,20 +1,20 @@
 use crate::aabb::AABB;
-use crate::hittable::{HitRecord, Hittable};
+use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
 use crate::vec::Vec3;
 
-pub struct Translate<H: Hittable> {
-    hittable: H,
+pub struct Translate {
+    hittable: HittablePtr,
     offset: Vec3,
 }
 
-impl<H: Hittable> Translate<H> {
-    pub fn new(hittable: H, offset: Vec3) -> Self {
+impl Translate {
+    pub fn new(hittable: HittablePtr, offset: Vec3) -> Self {
         Translate { hittable, offset }
     }
 }
 
-impl<H: Hittable> Hittable for Translate<H> {
+impl Hittable for Translate {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let moved_ray = Ray::new(ray.origin() - self.offset, ray.direction(), ray.time());
         self.hittable.hit(&moved_ray, t_min, t_max).map(|mut hit| {

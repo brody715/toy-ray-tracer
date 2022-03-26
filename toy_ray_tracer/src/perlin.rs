@@ -2,6 +2,7 @@ use crate::utils::random;
 
 use crate::vec::Vec3;
 
+#[allow(dead_code)]
 fn perlin_generate() -> Vec<Vec3> {
     let mut p = Vec::with_capacity(256);
     for _ in 0..256 {
@@ -17,6 +18,7 @@ fn perlin_generate() -> Vec<Vec3> {
     p
 }
 
+#[allow(dead_code)]
 fn permute(p: &mut [usize], n: usize) {
     for i in (0..n as usize).rev() {
         let target = random::usize(0..(i + 1));
@@ -24,6 +26,7 @@ fn permute(p: &mut [usize], n: usize) {
     }
 }
 
+#[allow(dead_code)]
 fn perlin_generate_perm() -> Vec<usize> {
     let mut p = Vec::with_capacity(256);
     for i in 0..256 {

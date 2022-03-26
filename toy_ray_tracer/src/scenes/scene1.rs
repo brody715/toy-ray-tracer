@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use crate::camera::{Camera, CameraOpt};
+use crate::geometry::containers::BVH;
+use crate::geometry::shapes::{MovingSphere, Sphere};
 use crate::hittable::Hittable;
 use crate::hittable_list::HittableList;
 use crate::materials::{Dielectric, Lambertian, Metal};
 use crate::scene::{RenderOptions, Scene};
-use crate::shapes::{MovingSphere, Sphere, BVH};
 use crate::textures::{CheckerTexture, ConstantTexture};
 use crate::utils::random;
 use crate::vec::{vec3, Vec3};

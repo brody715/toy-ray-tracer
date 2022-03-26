@@ -1,7 +1,7 @@
 use std::{cell::RefCell, sync::Arc};
 
-use crate::{scene::Scene, scenes::SceneFactory, utils::random};
-use log::{info, trace};
+use crate::{project::Project, utils::random};
+use log::trace;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use thread_local::ThreadLocal;
 
@@ -9,7 +9,6 @@ use crate::{
     hittable::Hittable,
     nimage::Image,
     ray::Ray,
-    scene::RenderOptions,
     utils::ExecutionTimer,
     vec::{vec3, Color3, Vec3List},
 };
@@ -21,18 +20,20 @@ impl Engine {
         return Engine {};
     }
 
-    pub fn render(&self, scene: &Scene, opts: RenderOptions) -> Image {
+    pub fn render(&self, project: &Project) -> Image {
+        let opts = project.settings();
         let width = opts.width;
         let height = opts.height;
         let nsamples = opts.nsamples;
         let max_depth = opts.max_depth;
 
-        let pixels_local = Arc::new(ThreadLocal::new());
+        let scene = project.scene();
 
         let world = scene.world();
         let camera = scene.camera();
         let background = scene.background();
 
+        let pixels_local = Arc::new(ThreadLocal::new());
         (0..nsamples).into_par_iter().for_each(|s: i32| {
             let _timer = ExecutionTimer::new(|start_time| {
                 trace!(

@@ -1,13 +1,13 @@
 use crate::aabb;
 use crate::aabb::AABB;
-use crate::hittable::{HitRecord, Hittable};
+use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
 use crate::utils::random;
 use std::cmp::Ordering;
 
 enum BVHNode {
     Branch { left: Box<BVH>, right: Box<BVH> },
-    Leaf(Box<dyn Hittable>),
+    Leaf(HittablePtr),
 }
 
 pub struct BVH {
@@ -19,7 +19,7 @@ fn box_compare(
     time0: f32,
     time1: f32,
     axis: usize,
-) -> impl Fn(&Box<dyn Hittable>, &Box<dyn Hittable>) -> Ordering {
+) -> impl Fn(&HittablePtr, &HittablePtr) -> Ordering {
     move |a, b| {
         let a_bbox = a.bounding_box(time0, time1);
         let b_bbox = b.bounding_box(time0, time1);
@@ -32,7 +32,7 @@ fn box_compare(
 }
 
 impl BVH {
-    pub fn new(mut objects: Vec<Box<dyn Hittable>>, time0: f32, time1: f32) -> Self {
+    pub fn new(mut objects: Vec<HittablePtr>, time0: f32, time1: f32) -> Self {
         let axis = random::usize(0..3);
 
         objects.sort_unstable_by(box_compare(time0, time1, axis));

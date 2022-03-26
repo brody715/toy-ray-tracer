@@ -3,7 +3,7 @@ use std::sync::Arc;
 use derive_new::new;
 
 use crate::aabb::AABB;
-use crate::material::{Material, MaterialPtr};
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec::{Point3, Vec3};
 

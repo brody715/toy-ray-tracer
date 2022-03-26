@@ -1,31 +1,36 @@
 mod aabb;
 mod camera;
 mod engine;
+mod environment;
+mod geometry;
 mod hittable;
 mod hittable_list;
 mod material;
 mod materials;
 mod nimage;
 mod perlin;
+mod project;
 mod ray;
 mod scene;
+mod scene_builder;
 mod scenes;
-mod shapes;
 mod texture;
 mod textures;
-mod transforms;
 mod utils;
 mod vec;
 
 use crate::scene::RenderOptions;
+use crate::scene_builder::{load_project_config, Buildable};
 use crate::{engine::Engine, utils::ExecutionTimer};
-use clap::Parser;
+use anyhow::Ok;
+use clap::{Args, Parser, Subcommand};
 use log::{debug, info};
+use scene_builder::ProjectConfig;
+use schemars::schema_for;
 use std::path::Path;
 
-#[derive(Parser, Debug)]
-#[clap(author, version, about)]
-struct Args {
+#[derive(Args, Debug)]
+struct RenderCmdArgs {
     #[clap(long, help = "scene to render", default_value_t = String::from("earth"))]
     scene: String,
 
@@ -33,33 +38,64 @@ struct Args {
     output_dir: String,
 
     #[clap(flatten)]
-    verbose: clap_verbosity_flag::Verbosity,
+    render_opts: RenderOptions,
+
+    #[clap(long, short = 'p', help = "project file")]
+    project_file: String,
+}
+
+#[derive(Args, Debug)]
+struct GenerateCmdArgs {}
+
+#[derive(Subcommand)]
+enum Commands {
+    Render(RenderCmdArgs),
+    Generate(GenerateCmdArgs),
+}
+
+#[derive(Parser)]
+#[clap(author, version, about)]
+struct Cli {
+    #[clap(subcommand)]
+    command: Commands,
 
     #[clap(flatten)]
-    render_opts: RenderOptions,
+    verbose: clap_verbosity_flag::Verbosity,
 }
 
 fn main() -> anyhow::Result<()> {
-    let args = Args::parse();
+    let cli = Cli::parse();
 
-    {
-        let mut log_builder = pretty_env_logger::formatted_builder();
-        log_builder
-            .filter_level(args.verbose.log_level_filter())
-            .init();
+    let mut log_builder = pretty_env_logger::formatted_builder();
+    log_builder
+        .filter_level(cli.verbose.log_level_filter())
+        .init();
+
+    match cli.command {
+        Commands::Render(args) => run_render(args),
+        Commands::Generate(args) => run_generate(args),
     }
+}
 
+fn run_generate(_args: GenerateCmdArgs) -> anyhow::Result<()> {
+    let schema = schema_for!(ProjectConfig);
+    println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+    Ok(())
+}
+
+fn run_render(args: RenderCmdArgs) -> anyhow::Result<()> {
     debug!("use args={:#?}", args);
 
-    let opt = args.render_opts;
+    let project_config: ProjectConfig = load_project_config(&args.project_file)?;
 
-    let scene_factory = scenes::get_scene_factory(&args.scene)?;
-    let scene = scene_factory.create_scene(opt);
+    let project = project_config.build();
+
+    let opt = project.settings();
 
     let engine = Engine::new();
 
     let output_dir = Path::new(&args.output_dir);
-    let output_path = output_dir.join(format!("{}.png", scene_factory.name()));
+    let output_path = output_dir.join(format!("{}.png", project.name()));
 
     {
         let _timer = ExecutionTimer::new(|start_time| {
@@ -71,12 +107,12 @@ fn main() -> anyhow::Result<()> {
 
         info!(
             "start to render scene={} size={}x{} nsamples={}",
-            scene_factory.name(),
+            project.name(),
             opt.width,
             opt.height,
             opt.nsamples
         );
-        let img = engine.render(&scene, opt);
+        let img = engine.render(&project);
         img.save_to_png(&output_path)?;
     }
 

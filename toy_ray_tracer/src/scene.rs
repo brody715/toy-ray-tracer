@@ -1,20 +1,22 @@
+use std::sync::Arc;
+
 use derive_new::new;
 
 use crate::{
     camera::{Camera, CameraOpt},
-    hittable::{EmptyHittable, Hittable},
+    hittable::{EmptyHittable, Hittable, HittablePtr},
     vec::{Color3, Vec3},
 };
 
 #[derive(new)]
 pub struct Scene {
-    camera: Camera,
-    world: Box<dyn Hittable>,
-    background: Color3,
+    pub(crate) camera: Camera,
+    pub(crate) world: HittablePtr,
+    pub(crate) sky: Color3,
     #[allow(dead_code)]
-    name: String,
+    pub(crate) name: String,
     #[allow(dead_code)]
-    description: String,
+    pub(crate) description: String,
 }
 
 impl Scene {
@@ -22,8 +24,8 @@ impl Scene {
     pub fn default() -> Self {
         Self {
             camera: Self::default_camera(),
-            world: Box::new(EmptyHittable::new()),
-            background: Vec3::zeros(),
+            world: Arc::new(EmptyHittable::new()),
+            sky: Vec3::zeros(),
             name: String::from("[no-name]"),
             description: String::from(""),
         }
@@ -49,7 +51,7 @@ impl Scene {
     }
 
     #[allow(dead_code)]
-    pub fn set_world(&mut self, world: Box<dyn Hittable>) {
+    pub fn set_world(&mut self, world: HittablePtr) {
         self.world = world;
     }
 
@@ -64,13 +66,13 @@ impl Scene {
     /// Get the scene's background.
     #[must_use]
     pub fn background(&self) -> Color3 {
-        self.background
+        self.sky
     }
 
     /// Set the scene's background.
     #[allow(dead_code)]
     pub fn set_background(&mut self, background: Color3) {
-        self.background = background;
+        self.sky = background;
     }
 
     /// Get a reference to the scene's name.

@@ -1,22 +1,26 @@
+use std::sync::Arc;
+
 use derive_new::new;
 
 use crate::aabb::{self, AABB};
-use crate::hittable::{HitRecord, Hittable};
+use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
 
 #[derive(new)]
 pub struct HittableList {
     #[new(default)]
-    list: Vec<Box<dyn Hittable>>,
+    list: Vec<HittablePtr>,
+}
+
+impl From<Vec<HittablePtr>> for HittableList {
+    fn from(list: Vec<HittablePtr>) -> Self {
+        HittableList { list: list.into() }
+    }
 }
 
 impl HittableList {
-    pub fn move_list(self) -> Vec<Box<dyn Hittable>> {
-        return self.list;
-    }
-
     pub fn add(&mut self, hittable: impl Hittable + 'static) {
-        self.list.push(Box::new(hittable))
+        self.list.push(Arc::new(hittable))
     }
 }
 

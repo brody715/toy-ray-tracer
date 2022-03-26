@@ -2,7 +2,7 @@ use crate::{
     hittable::HitRecord,
     material::Material,
     ray::Ray,
-    texture::{Texture, TexturePtr},
+    texture::TexturePtr,
     utils::random,
     vec::{vec3, Vec3},
 };
@@ -30,12 +30,12 @@ impl Material for Lambertian {
 }
 
 pub struct Metal {
-    albedo: Vec3,
+    albedo: TexturePtr,
     fuzz: f32,
 }
 
 impl Metal {
-    pub fn new(albedo: Vec3, fuzz: f32) -> Self {
+    pub fn new(albedo: TexturePtr, fuzz: f32) -> Self {
         Metal {
             albedo,
             fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
@@ -51,7 +51,7 @@ impl Material for Metal {
         };
         if reflected.dot(&hit.normal) > 0.0 {
             let scattered = Ray::new(hit.p, reflected, ray.time());
-            Some((scattered, self.albedo))
+            Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))
         } else {
             None
         }
