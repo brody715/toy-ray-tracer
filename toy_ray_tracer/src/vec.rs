@@ -69,6 +69,7 @@ pub mod vec3 {
 
     use super::Vec3;
 
+    #[allow(dead_code)]
     pub const YUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 
     #[allow(dead_code)]

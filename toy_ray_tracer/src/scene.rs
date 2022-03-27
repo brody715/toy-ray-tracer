@@ -101,6 +101,7 @@ pub struct RenderOptions {
 }
 
 impl RenderOptions {
+    #[allow(dead_code)]
     pub fn aspect(&self) -> f32 {
         return self.width as f32 / self.height as f32;
     }

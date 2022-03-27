@@ -13,7 +13,6 @@ mod project;
 mod ray;
 mod scene;
 mod scene_builder;
-mod scenes;
 mod texture;
 mod textures;
 mod utils;
