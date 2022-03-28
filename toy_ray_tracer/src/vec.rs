@@ -65,6 +65,8 @@ impl IndexMut<usize> for Vec3List {
 
 // utils for Vec3
 pub mod vec3 {
+    use std::f32::consts::PI;
+
     use crate::utils::random;
 
     use super::Vec3;
@@ -97,6 +99,45 @@ pub mod vec3 {
                 return p;
             }
         }
+    }
+
+    #[allow(dead_code)]
+    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+        let in_unit_sphere = self::random_in_unit_sphere();
+        if in_unit_sphere.dot(&normal) > 0.0 {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn random_unit_vector() -> Vec3 {
+        return self::random_in_unit_sphere().normalize();
+    }
+
+    pub fn random_cosine_direction() -> Vec3 {
+        let r1 = random::f32();
+        let r2 = random::f32();
+        let z = (1.0 - r2).sqrt();
+
+        let phi = 2.0 * PI * r1;
+        let x = phi.cos() * r2.sqrt();
+        let y = phi.sin() * r2.sqrt();
+
+        return Vec3::new(x, y, z);
+    }
+
+    pub fn random_to_sphere(radius: f32, distance_squared: f32) -> Vec3 {
+        let r1 = random::f32();
+        let r2 = random::f32();
+        let z = 1.0 + r2 * ((1.0 - radius * radius / distance_squared).sqrt() - 1.0);
+
+        let phi = 2.0 * PI * r1;
+        let x = phi.cos() * (1.0 - z * z).sqrt();
+        let y = phi.sin() * (1.0 - z * z).sqrt();
+
+        return Vec3::new(x, y, z);
     }
 
     #[inline]

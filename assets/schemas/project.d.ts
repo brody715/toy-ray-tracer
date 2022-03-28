@@ -6,7 +6,6 @@
  */
 
 export type Vec3F = [number, number, number];
-export type WorldConfig = GeometryConfig[] | GeometryConfig;
 export type GeometryConfig =
   | {
       center: Vec3F;
@@ -65,6 +64,16 @@ export type GeometryConfig =
       [k: string]: unknown | undefined;
     }
   | {
+      child: GeometryConfig;
+      kind: "flip_face";
+      [k: string]: unknown | undefined;
+    }
+  | {
+      child: GeometryConfig;
+      kind: "no_effect";
+      [k: string]: unknown | undefined;
+    }
+  | {
       boundary: GeometryConfig;
       density: number;
       kind: "constant_medium";
@@ -116,6 +125,12 @@ export type TextureConfig =
       [k: string]: unknown | undefined;
     };
 export type Axis = "X" | "Y" | "Z";
+export type SkyConfig = {
+  background: Vec3F;
+  kind: "solid";
+  [k: string]: unknown | undefined;
+};
+export type WorldConfig = GeometryConfig[] | GeometryConfig;
 
 export interface ProjectConfig {
   name: string;
@@ -125,6 +140,7 @@ export interface ProjectConfig {
 }
 export interface SceneConfig {
   camera: CameraConfig;
+  lights?: GeometryConfig | null;
   sky: SkyConfig;
   world: WorldConfig;
   [k: string]: unknown | undefined;
@@ -139,10 +155,6 @@ export interface CameraConfig {
   time1: number;
   vertical_fov: number;
   view_up: Vec3F;
-  [k: string]: unknown | undefined;
-}
-export interface SkyConfig {
-  background: Vec3F;
   [k: string]: unknown | undefined;
 }
 export interface Settings {

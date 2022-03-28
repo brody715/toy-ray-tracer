@@ -47,16 +47,18 @@ export function create_world() {
     material: red,
   });
 
-  world.push({
+  const lights = make_geometry({
     kind: "flip_face",
     child: {
       kind: "rect",
-      v0: [113, 554, 127],
-      v1: [443, 554, 432],
+      v0: [213, 554, 227],
+      v1: [343, 554, 332],
       // radius: 100,
       material: light,
     },
   });
+
+  world.push(lights);
 
   world.push({
     kind: "rect",
@@ -112,39 +114,22 @@ export function create_world() {
     },
   });
 
-  cube1 = make_geometry({
-    kind: "constant_medium",
-    boundary: cube1,
-    density: 0.01,
-    texture: {
-      kind: "constant_texture",
-      color: [1.0, 1.0, 1.0],
-    },
-  });
-
-  cube2 = make_geometry({
-    kind: "constant_medium",
-    boundary: cube2,
-    density: 0.01,
-    texture: {
-      kind: "constant_texture",
-      color: [0.0, 0.0, 0.0],
-    },
-  });
-
   world.push(cube1, cube2);
 
-  return world;
+  return { world, lights };
 }
 
+const { world, lights } = create_world();
+
 export default make_project({
-  name: "cornell_box_foggy",
+  name: "cornell_box",
   settings: {
     output_dir: "./output",
-    height: 800,
-    width: 800,
-    nsamples: 100,
-    max_depth: 15,
+    height: 500,
+    width: 500,
+    nsamples: 1000,
+    // nsamples: 3,
+    max_depth: 50,
   },
   scene: {
     camera: {
@@ -158,6 +143,7 @@ export default make_project({
       time0: 0.0,
       time1: 0.0,
     },
+    lights,
     sky: {
       kind: "solid",
       //   background: [0.7, 0.8, 1.0],
@@ -166,7 +152,7 @@ export default make_project({
     world: {
       // kind: "list",
       kind: "bvh",
-      objects: create_world(),
+      objects: world,
       time0: 0,
       time1: 1.0,
     },

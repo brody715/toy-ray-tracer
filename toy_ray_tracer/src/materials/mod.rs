@@ -1,11 +1,26 @@
+use std::f32::consts::PI;
+
 use crate::{
-    hittable::HitRecord,
-    material::Material,
+    hittable::{HitRecord, Hittable},
+    material::{Material, ScatterRecord},
+    math::{pdfs::CosinePDF, ONB},
     ray::Ray,
     texture::TexturePtr,
     utils::random,
-    vec::{vec3, Vec3},
+    vec::{vec3, Color3, Vec3},
 };
+
+pub struct EmptyMaterial;
+
+impl Material for EmptyMaterial {
+    fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Option<ScatterRecord> {
+        None
+    }
+
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
+        1.0
+    }
+}
 
 pub struct Lambertian {
     albedo: TexturePtr,
@@ -18,14 +33,27 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
-        let target = hit.p + hit.normal + vec3::random_in_unit_sphere();
-        let scattered = Ray::new(hit.p, target - hit.p, ray.time());
-        Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
+        let uvw = ONB::build_form_w(&rec.normal);
+        let direction = uvw.local(vec3::random_cosine_direction());
+        let scattered = Ray::new(rec.p, direction.normalize(), ray.time());
+        let attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
+        let pdf = Box::new(CosinePDF::from(rec.normal));
+
+        Some(ScatterRecord {
+            specular_ray: None,
+            attenuation,
+            pdf: Some(pdf),
+        })
     }
 
-    fn emitted(&self, _u: f32, _v: f32, _p: &Vec3) -> Vec3 {
-        Vec3::zeros()
+    fn scattering_pdf(&self, _ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f32 {
+        let cosine = rec.normal.dot(&scattered.direction().normalize());
+        if cosine < 0.0 {
+            0.0
+        } else {
+            cosine / PI
+        }
     }
 }
 
@@ -44,21 +72,35 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
-        let mut reflected = vec3::reflect(&ray.direction().normalize(), &hit.normal);
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
+        let mut reflected = vec3::reflect(&ray.direction().normalize(), &rec.normal);
         if self.fuzz > 0.0 {
             reflected += self.fuzz * vec3::random_in_unit_sphere()
         };
-        if reflected.dot(&hit.normal) > 0.0 {
-            let scattered = Ray::new(hit.p, reflected, ray.time());
-            Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))
-        } else {
-            None
-        }
+        // TODO: reflecte rec.normal
+        let specular_ray = Some(Ray::new(rec.p, reflected, ray.time()));
+        let attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
+        let pdf = None;
+
+        return Some(ScatterRecord {
+            specular_ray,
+            attenuation,
+            pdf,
+        });
+        // if reflected.dot(&rec.normal) > 0.0 {
+        //     let scattered = Ray::new(rec.p, reflected, ray.time());
+        //     Some(ScatterRecord {
+        //         specular_ray: scattered,
+        //         attenuation: self.albedo.value(rec.u, rec.v, &rec.p),
+        //         pdf: 0.0,
+        //     })
+        // } else {
+        //     None
+        // }
     }
 
-    fn emitted(&self, _u: f32, _v: f32, _p: &Vec3) -> Vec3 {
-        Vec3::zeros()
+    fn scattering_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f32 {
+        1.0
     }
 }
 
@@ -74,7 +116,7 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
         let refraction_ratio = if rec.front_face {
             1.0 / self.ir
         } else {
@@ -94,12 +136,16 @@ impl Material for Dielectric {
             };
 
         let attenuation = Vec3::new(1.0, 1.0, 1.0);
-        let scattered = Ray::new(rec.p, direction, 0.0);
-        return Some((scattered, attenuation));
+        let specular_ray = Some(Ray::new(rec.p, direction, ray.time()));
+        return Some(ScatterRecord {
+            specular_ray,
+            attenuation,
+            pdf: None,
+        });
     }
 
-    fn emitted(&self, _u: f32, _v: f32, _p: &Vec3) -> Vec3 {
-        Vec3::zeros()
+    fn scattering_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f32 {
+        1.0
     }
 }
 
@@ -114,12 +160,20 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn scatter(&self, _ray: &Ray, _hit: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Option<ScatterRecord> {
         None
     }
 
-    fn emitted(&self, u: f32, v: f32, p: &Vec3) -> Vec3 {
-        self.emit.value(u, v, &p)
+    fn scattering_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f32 {
+        1.0
+    }
+
+    fn emitted(&self, _ray: &Ray, rec: &HitRecord) -> crate::vec::Color3 {
+        if rec.front_face {
+            return self.emit.value(rec.u, rec.v, &rec.p);
+        } else {
+            return Color3::zeros();
+        }
     }
 }
 
@@ -135,12 +189,16 @@ impl Isotropic {
 }
 
 impl Material for Isotropic {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vec3)> {
-        let scattered = Ray::new(hit.p, vec3::random_in_unit_sphere(), ray.time());
-        Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
+        let specular_ray = Some(Ray::new(rec.p, vec3::random_in_unit_sphere(), ray.time()));
+        Some(ScatterRecord {
+            specular_ray,
+            attenuation: self.albedo.value(rec.u, rec.v, &rec.p),
+            pdf: None,
+        })
     }
 
-    fn emitted(&self, _u: f32, _v: f32, _p: &Vec3) -> Vec3 {
-        Vec3::zeros()
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
+        1.0
     }
 }

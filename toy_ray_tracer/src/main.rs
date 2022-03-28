@@ -17,6 +17,7 @@ mod texture;
 mod textures;
 mod utils;
 mod vec;
+mod math;
 
 use crate::scene::RenderOptions;
 use crate::scene_builder::{load_project_config, Buildable};

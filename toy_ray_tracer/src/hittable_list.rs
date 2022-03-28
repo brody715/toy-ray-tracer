@@ -5,6 +5,7 @@ use derive_new::new;
 use crate::aabb::{self, AABB};
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
+use crate::utils::random;
 
 #[derive(new)]
 pub struct HittableList {
@@ -52,5 +53,22 @@ impl Hittable for HittableList {
             }
             _ => None,
         }
+    }
+
+    fn pdf_value(&self, origin: &crate::vec::Point3, v: &crate::vec::Vec3) -> f32 {
+        let weight = 1.0 / self.list.len() as f32;
+
+        let sum = self
+            .list
+            .iter()
+            .map(|h| h.pdf_value(origin, v) * weight)
+            .fold(0.0 as f32, |acc, v| acc + v);
+
+        return sum;
+    }
+
+    fn random(&self, origin: &crate::vec::Vec3) -> crate::vec::Vec3 {
+        let idx = random::usize(0..self.list.len());
+        return self.list[idx].random(origin);
     }
 }

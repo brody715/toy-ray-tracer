@@ -7,6 +7,7 @@ use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::material::MaterialPtr;
 use crate::ray::Ray;
+use crate::utils::random;
 use crate::vec::Vec3;
 
 pub struct Rect {
@@ -59,6 +60,14 @@ impl Hittable for Rect {
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         self._impl.bounding_box(t0, t1)
+    }
+
+    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+        self._impl.pdf_value(origin, v)
+    }
+
+    fn random(&self, origin: &Vec3) -> Vec3 {
+        self._impl.random(origin)
     }
 }
 
@@ -145,5 +154,31 @@ impl Hittable for AARect {
             ),
         };
         Some(AABB { min, max })
+    }
+
+    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+        let rec = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
+
+        if let Some(rec) = rec {
+            let area = (self.a1 - self.a0) * (self.b1 - self.b0);
+            let distance_squared = rec.t * rec.t * v.norm_squared();
+            let cosine = (v.dot(&rec.normal) / v.norm()).abs();
+
+            return distance_squared / (cosine * area);
+        }
+
+        return 0.0;
+    }
+
+    fn random(&self, origin: &Vec3) -> Vec3 {
+        let rand_a = random::f32_r(self.a0, self.a1);
+        let rand_b = random::f32_r(self.b0, self.b1);
+
+        let random_point = match self.plane {
+            Plane::YZ => Vec3::new(self.k, rand_a, rand_b),
+            Plane::ZX => Vec3::new(rand_b, self.k, rand_a),
+            Plane::XY => Vec3::new(rand_a, rand_b, self.k),
+        };
+        return random_point - origin;
     }
 }

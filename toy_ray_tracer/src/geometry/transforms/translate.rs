@@ -30,4 +30,12 @@ impl Hittable for Translate {
             b
         })
     }
+
+    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+        self.hittable.pdf_value(origin, v)
+    }
+
+    fn random(&self, origin: &Vec3) -> Vec3 {
+        self.hittable.random(origin)
+    }
 }

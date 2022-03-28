@@ -302,6 +302,42 @@
         {
           "type": "object",
           "required": [
+            "child",
+            "kind"
+          ],
+          "properties": {
+            "child": {
+              "$ref": "#/definitions/GeometryConfig"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "flip_face"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "child",
+            "kind"
+          ],
+          "properties": {
+            "child": {
+              "$ref": "#/definitions/GeometryConfig"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "no_effect"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
             "boundary",
             "density",
             "kind",
@@ -439,6 +475,16 @@
         "camera": {
           "$ref": "#/definitions/CameraConfig"
         },
+        "lights": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GeometryConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "sky": {
           "$ref": "#/definitions/SkyConfig"
         },
@@ -481,15 +527,26 @@
       }
     },
     "SkyConfig": {
-      "type": "object",
-      "required": [
-        "background"
-      ],
-      "properties": {
-        "background": {
-          "$ref": "#/definitions/Vec3f"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "background",
+            "kind"
+          ],
+          "properties": {
+            "background": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "solid"
+              ]
+            }
+          }
         }
-      }
+      ]
     },
     "TextureConfig": {
       "oneOf": [

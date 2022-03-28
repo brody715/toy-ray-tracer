@@ -1,5 +1,5 @@
 export function create_world() {
-  const red = make_material({
+  const m_red = make_material({
     kind: "lambertian",
     albedo: {
       kind: "constant_texture",
@@ -7,7 +7,7 @@ export function create_world() {
     },
   });
 
-  const white = make_material({
+  const m_white = make_material({
     kind: "lambertian",
     albedo: {
       kind: "constant_texture",
@@ -15,7 +15,7 @@ export function create_world() {
     },
   });
 
-  const green = make_material({
+  const m_green = make_material({
     kind: "lambertian",
     albedo: {
       kind: "constant_texture",
@@ -23,12 +23,26 @@ export function create_world() {
     },
   });
 
-  const light = make_material({
+  const m_light = make_material({
     kind: "diffuse_light",
     emit: {
       kind: "constant_texture",
       color: [7.0, 7.0, 7.0],
     },
+  });
+
+  const m_aluminu = make_material({
+    kind: "metal",
+    albedo: {
+      kind: "constant_texture",
+      color: [0.8, 0.85, 0.88],
+    },
+    fuzz: 0.0,
+  });
+
+  const m_glass = make_material({
+    kind: "dielectric",
+    ir: 1.5,
   });
 
   const world = make_geometry_list([]);
@@ -37,24 +51,46 @@ export function create_world() {
     kind: "rect",
     v0: [555, 0, 0],
     v1: [555, 555, 555],
-    material: green,
+    material: m_green,
   });
 
   world.push({
     kind: "rect",
     v0: [0, 0, 0],
     v1: [0, 555, 555],
-    material: red,
+    material: m_red,
+  });
+
+  const lights = make_geometry({
+    kind: "list",
+    objects: [
+      {
+        kind: "flip_face",
+        child: {
+          kind: "rect",
+          v0: [213, 554, 227],
+          v1: [343, 554, 332],
+          // radius: 100,
+          material: m_light,
+        },
+      },
+      {
+        kind: "sphere",
+        center: [190, 90, 190],
+        radius: 90,
+        material: m_light,
+      },
+    ],
   });
 
   world.push({
     kind: "flip_face",
     child: {
       kind: "rect",
-      v0: [113, 554, 127],
-      v1: [443, 554, 432],
+      v0: [213, 554, 227],
+      v1: [343, 554, 332],
       // radius: 100,
-      material: light,
+      material: m_light,
     },
   });
 
@@ -62,41 +98,25 @@ export function create_world() {
     kind: "rect",
     v0: [0, 555, 0],
     v1: [555, 555, 555],
-    material: white,
+    material: m_white,
   });
 
   world.push({
     kind: "rect",
     v0: [0, 0, 0],
     v1: [555, 0, 555],
-    material: white,
+    material: m_white,
   });
 
   world.push({
     kind: "rect",
     v0: [0, 0, 555],
     v1: [555, 555, 555],
-    material: white,
+    material: m_white,
   });
 
   // cubes
   let cube1 = make_geometry({
-    kind: "translate",
-    offset: [130, 0, 65],
-    child: {
-      kind: "rotate",
-      axis: "Y",
-      angle: -18.0,
-      child: {
-        kind: "cube",
-        p_min: [0, 0, 0],
-        p_max: [165, 165, 165],
-        material: white,
-      },
-    },
-  });
-
-  let cube2 = make_geometry({
     kind: "translate",
     offset: [265, 0, 295],
     child: {
@@ -107,44 +127,50 @@ export function create_world() {
         kind: "cube",
         p_min: [0, 0, 0],
         p_max: [165, 330, 165],
-        material: white,
+        material: m_aluminu,
       },
     },
   });
 
-  cube1 = make_geometry({
-    kind: "constant_medium",
-    boundary: cube1,
-    density: 0.01,
-    texture: {
-      kind: "constant_texture",
-      color: [1.0, 1.0, 1.0],
-    },
+  let cube2 = make_geometry({
+    kind: "sphere",
+    center: [190, 90, 190],
+    radius: 90,
+    material: m_glass,
   });
 
-  cube2 = make_geometry({
-    kind: "constant_medium",
-    boundary: cube2,
-    density: 0.01,
-    texture: {
-      kind: "constant_texture",
-      color: [0.0, 0.0, 0.0],
-    },
-  });
+  // let cube2 = make_geometry({
+  //   kind: "translate",
+  //   offset: [265, 0, 295],
+  //   child: {
+  //     kind: "rotate",
+  //     axis: "Y",
+  //     angle: 15.0,
+  //     child: {
+  //       kind: "cube",
+  //       p_min: [0, 0, 0],
+  //       p_max: [165, 330, 165],
+  //       material: m_white,
+  //     },
+  //   },
+  // });
 
   world.push(cube1, cube2);
 
-  return world;
+  return { world, lights };
 }
 
+const { world, lights } = create_world();
+
 export default make_project({
-  name: "cornell_box_foggy",
+  name: "cornell_box_metal",
   settings: {
     output_dir: "./output",
-    height: 800,
-    width: 800,
-    nsamples: 100,
-    max_depth: 15,
+    height: 500,
+    width: 500,
+    nsamples: 1000,
+    // nsamples: 3,
+    max_depth: 50,
   },
   scene: {
     camera: {
@@ -158,6 +184,7 @@ export default make_project({
       time0: 0.0,
       time1: 0.0,
     },
+    lights,
     sky: {
       kind: "solid",
       //   background: [0.7, 0.8, 1.0],
@@ -166,7 +193,7 @@ export default make_project({
     world: {
       // kind: "list",
       kind: "bvh",
-      objects: create_world(),
+      objects: world,
       time0: 0,
       time1: 1.0,
     },

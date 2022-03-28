@@ -38,7 +38,11 @@ impl Image {
         let start_idx = idx * Self::CHANNEL_NUMS;
 
         for i in 0..3 {
-            self.buf[start_idx + i] = (color[i] * FMAX_COLOR) as u8
+            let mut cv = color[i];
+            if cv.is_nan() {
+                cv = 0.0
+            }
+            self.buf[start_idx + i] = (cv.clamp(0.0, 0.9999) * FMAX_COLOR) as u8
         }
     }
 

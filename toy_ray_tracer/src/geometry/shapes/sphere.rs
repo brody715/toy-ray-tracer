@@ -2,10 +2,12 @@ use crate::aabb::AABB;
 use crate::aabb::{self, create_sphere_box};
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::{Material, MaterialPtr};
+use crate::math::ONB;
 use crate::ray::Ray;
-use crate::vec::Vec3;
+use crate::vec::{vec3, Vec3};
 use nalgebra::Vector3;
 use std::f32;
+use std::f32::consts::PI;
 
 #[derive(Clone)]
 pub struct Sphere {
@@ -94,6 +96,24 @@ impl Hittable for Sphere {
         let min = self.center - radius;
         let max = self.center + radius;
         Some(AABB { min, max })
+    }
+
+    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+        if let Some(rec) = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX) {
+            let cos_theta_max =
+                (1.0 - self.radius * self.radius / (self.center - origin).norm_squared()).sqrt();
+            let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
+            return 1.0 / solid_angle;
+        }
+
+        return 0.0;
+    }
+
+    fn random(&self, origin: &Vec3) -> Vec3 {
+        let direction = self.center - origin;
+        let distance_squared = direction.norm_squared();
+        let uvw = ONB::build_form_w(&direction);
+        return uvw.local(vec3::random_to_sphere(self.radius, distance_squared));
     }
 }
 

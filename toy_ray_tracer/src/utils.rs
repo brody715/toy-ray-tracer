@@ -51,5 +51,9 @@ pub mod random {
         return fastrand::f32();
     }
 
+    pub fn f32_r(min: f32, max: f32) -> f32 {
+        return min + self::f32() * (max - min);
+    }
+
     integer!(usize);
 }

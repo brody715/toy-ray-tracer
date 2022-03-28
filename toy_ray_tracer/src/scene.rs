@@ -1,18 +1,17 @@
-use std::sync::Arc;
-
 use derive_new::new;
 
 use crate::{
-    camera::{Camera, CameraOpt},
-    hittable::{EmptyHittable, Hittable, HittablePtr},
-    vec::{Color3, Vec3},
+    camera::Camera,
+    environment::{Sky, SkyPtr},
+    hittable::{Hittable, HittablePtr},
 };
 
 #[derive(new)]
 pub struct Scene {
     pub(crate) camera: Camera,
     pub(crate) world: HittablePtr,
-    pub(crate) sky: Color3,
+    pub(crate) lights: HittablePtr,
+    pub(crate) sky: SkyPtr,
     #[allow(dead_code)]
     pub(crate) name: String,
     #[allow(dead_code)]
@@ -20,31 +19,6 @@ pub struct Scene {
 }
 
 impl Scene {
-    #[allow(dead_code)]
-    pub fn default() -> Self {
-        Self {
-            camera: Self::default_camera(),
-            world: Arc::new(EmptyHittable::new()),
-            sky: Vec3::zeros(),
-            name: String::from("[no-name]"),
-            description: String::from(""),
-        }
-    }
-
-    pub fn default_camera() -> Camera {
-        Camera::new(CameraOpt {
-            look_from: Vec3::new(13.0, 2.0, 3.0),
-            look_at: Vec3::zeros(),
-            view_up: Vec3::new(0.0, 1.0, 0.0),
-            vertical_fov: 20.0,
-            aspect: 1.0,
-            aperture: 0.0,
-            focus_dist: 10.0,
-            time0: 0.0,
-            time1: 1.0,
-        })
-    }
-
     #[allow(dead_code)]
     pub fn set_camera(&mut self, cam: Camera) {
         self.camera = cam;
@@ -65,14 +39,8 @@ impl Scene {
 
     /// Get the scene's background.
     #[must_use]
-    pub fn background(&self) -> Color3 {
-        self.sky
-    }
-
-    /// Set the scene's background.
-    #[allow(dead_code)]
-    pub fn set_background(&mut self, background: Color3) {
-        self.sky = background;
+    pub fn sky(&self) -> &dyn Sky {
+        self.sky.as_ref()
     }
 
     /// Get a reference to the scene's name.
@@ -85,6 +53,12 @@ impl Scene {
     #[allow(dead_code)]
     pub fn set_name(&mut self, name: String) {
         self.name = name;
+    }
+
+    /// Get a reference to the scene's lights.
+    #[must_use]
+    pub fn lights(&self) -> &dyn Hittable {
+        self.lights.as_ref()
     }
 }
 

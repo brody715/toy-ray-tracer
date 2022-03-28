@@ -8,12 +8,12 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::camera::{Camera, CameraOpt};
-use crate::environment::Sky;
+use crate::environment::{Sky, SkyPtr, SolidSky};
 use crate::geometry::containers::BVH;
 use crate::geometry::shapes::{Cube, MovingSphere, Rect, Sphere};
-use crate::geometry::transforms::{Axis, Rotate, Translate};
+use crate::geometry::transforms::{Axis, FlipFace, NoEffect, Rotate, Translate};
 use crate::geometry::volumes::ConstantMedium;
-use crate::hittable::HittablePtr;
+use crate::hittable::{EmptyHittable, HittablePtr};
 use crate::hittable_list::HittableList;
 use crate::material::MaterialPtr;
 use crate::materials::{Dielectric, DiffuseLight, Isotropic, Lambertian, Metal};
@@ -120,16 +120,22 @@ pub struct SceneConfig {
     pub camera: CameraConfig,
     pub sky: SkyConfig,
     pub world: WorldConfig,
+    pub lights: Option<GeometryConfig>,
 }
 
 impl Buildable for SceneConfig {
     type Out = Scene;
 
     fn build(self) -> Self::Out {
+        let lights = match self.lights {
+            Some(lights) => lights.build(),
+            None => Arc::new(EmptyHittable::new()),
+        };
         Scene {
             camera: self.camera.build(),
             world: self.world.build(),
-            sky: self.sky.build().background,
+            lights,
+            sky: self.sky.build(),
             name: String::from("no-name"),
             description: String::from(""),
         }
@@ -168,16 +174,19 @@ impl Buildable for CameraConfig {
 }
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug)]
-pub struct SkyConfig {
-    pub background: JVec3,
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum SkyConfig {
+    Solid { background: JVec3 },
 }
 
 impl Buildable for SkyConfig {
-    type Out = Sky;
+    type Out = SkyPtr;
 
     fn build(self) -> Self::Out {
-        Sky {
-            background: self.background.into(),
+        match self {
+            SkyConfig::Solid { background } => Arc::new(SolidSky {
+                background: background.into(),
+            }),
         }
     }
 }
@@ -286,6 +295,12 @@ pub enum GeometryConfig {
         offset: JVec3,
         child: Box<GeometryConfig>,
     },
+    FlipFace {
+        child: Box<GeometryConfig>,
+    },
+    NoEffect {
+        child: Box<GeometryConfig>,
+    },
     ConstantMedium {
         boundary: Box<GeometryConfig>,
         density: f32,
@@ -355,6 +370,8 @@ impl Buildable for GeometryConfig {
             GeometryConfig::Rect { v0, v1, material } => {
                 Arc::new(Rect::new(v0.into(), v1.into(), material.build()))
             }
+            GeometryConfig::FlipFace { child } => Arc::new(FlipFace::new(child.build())),
+            GeometryConfig::NoEffect { child } => Arc::new(NoEffect::new(child.build())),
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::vec::Vec3;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Ray {
     a: Vec3,
     b: Vec3,
