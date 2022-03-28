@@ -1,4 +1,5 @@
 use crate::aabb::AABB;
+use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::materials::Isotropic;
 use crate::ray::Ray;
@@ -66,5 +67,14 @@ impl Hittable for ConstantMedium {
 
     fn random(&self, origin: &Vec3) -> Vec3 {
         self.boundary.random(origin)
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_constant_medium(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_constant_medium(EnterContext::new(self));
+        self.boundary.walk(walker);
     }
 }

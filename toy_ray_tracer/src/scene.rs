@@ -1,16 +1,13 @@
-use derive_new::new;
-
 use crate::{
     camera::Camera,
     environment::{Sky, SkyPtr},
     hittable::{Hittable, HittablePtr},
 };
 
-#[derive(new)]
 pub struct Scene {
     pub(crate) camera: Camera,
     pub(crate) world: HittablePtr,
-    pub(crate) lights: HittablePtr,
+    pub(crate) light_shape: HittablePtr,
     pub(crate) sky: SkyPtr,
     #[allow(dead_code)]
     pub(crate) name: String,
@@ -19,16 +16,6 @@ pub struct Scene {
 }
 
 impl Scene {
-    #[allow(dead_code)]
-    pub fn set_camera(&mut self, cam: Camera) {
-        self.camera = cam;
-    }
-
-    #[allow(dead_code)]
-    pub fn set_world(&mut self, world: HittablePtr) {
-        self.world = world;
-    }
-
     pub fn camera(&self) -> &Camera {
         &self.camera
     }
@@ -49,16 +36,10 @@ impl Scene {
         self.name.as_ref()
     }
 
-    /// Set the scene's name.
-    #[allow(dead_code)]
-    pub fn set_name(&mut self, name: String) {
-        self.name = name;
-    }
-
-    /// Get a reference to the scene's lights.
+    /// Get a reference to the scene's light_shape.
     #[must_use]
-    pub fn lights(&self) -> &dyn Hittable {
-        self.lights.as_ref()
+    pub fn light_shape(&self) -> &dyn Hittable {
+        self.light_shape.as_ref()
     }
 }
 

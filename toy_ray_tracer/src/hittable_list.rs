@@ -3,6 +3,7 @@ use std::sync::Arc;
 use derive_new::new;
 
 use crate::aabb::{self, AABB};
+use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
 use crate::utils::random;
@@ -70,5 +71,17 @@ impl Hittable for HittableList {
     fn random(&self, origin: &crate::vec::Vec3) -> crate::vec::Vec3 {
         let idx = random::usize(0..self.list.len());
         return self.list[idx].random(origin);
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_hittable_list(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_hittable_list(EnterContext::new(self));
+
+        for child in self.list.iter() {
+            child.walk(walker);
+        }
     }
 }

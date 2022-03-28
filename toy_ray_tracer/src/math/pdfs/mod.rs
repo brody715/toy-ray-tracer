@@ -14,6 +14,7 @@ pub struct CosinePDF {
 
 impl CosinePDF {
     #[must_use]
+    #[allow(dead_code)]
     pub fn new(uvw: ONB) -> Self {
         Self { uvw }
     }
@@ -63,11 +64,24 @@ impl<'a> PDF for HittablePDF<'a> {
     }
 }
 
+pub struct NopPDF;
+
+impl PDF for NopPDF {
+    fn value(&self, _direction: &Vec3) -> f32 {
+        1.0
+    }
+
+    fn generate(&self) -> Vec3 {
+        todo!()
+    }
+}
+
 pub struct WrapperPDF<'a> {
     p: &'a dyn PDF,
 }
 
 impl<'a> WrapperPDF<'a> {
+    #[allow(dead_code)]
     pub fn new(p: &'a dyn PDF) -> Self {
         Self { p }
     }

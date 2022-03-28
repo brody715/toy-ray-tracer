@@ -1,19 +1,22 @@
 mod js;
 mod load;
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
+use log::info;
 use schemars::schema::{ArrayValidation, InstanceType, SchemaObject};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::camera::{Camera, CameraOpt};
-use crate::environment::{Sky, SkyPtr, SolidSky};
-use crate::geometry::containers::BVH;
-use crate::geometry::shapes::{Cube, MovingSphere, Rect, Sphere};
-use crate::geometry::transforms::{Axis, FlipFace, NoEffect, Rotate, Translate};
+use crate::environment::{SkyPtr, SolidSky};
+use crate::geometry::containers::{TagsHittable, BVH};
+use crate::geometry::shapes::{Cube, MovingSphere, NopLight, Rect, Sphere};
+use crate::geometry::transforms::{Axis, FlipFace, Rotate, Translate};
+use crate::geometry::try_get_light_from_world;
 use crate::geometry::volumes::ConstantMedium;
-use crate::hittable::{EmptyHittable, HittablePtr};
+use crate::hittable::HittablePtr;
 use crate::hittable_list::HittableList;
 use crate::material::MaterialPtr;
 use crate::materials::{Dielectric, DiffuseLight, Isotropic, Lambertian, Metal};
@@ -120,21 +123,32 @@ pub struct SceneConfig {
     pub camera: CameraConfig,
     pub sky: SkyConfig,
     pub world: WorldConfig,
-    pub lights: Option<GeometryConfig>,
+    pub light: Option<GeometryConfig>,
 }
 
 impl Buildable for SceneConfig {
     type Out = Scene;
 
     fn build(self) -> Self::Out {
-        let lights = match self.lights {
+        let world = self.world.build();
+        let light_shape = match self.light {
             Some(lights) => lights.build(),
-            None => Arc::new(EmptyHittable::new()),
+            None => {
+                let try_lights = try_get_light_from_world(world.as_ref());
+
+                info!("found lights");
+
+                match try_lights {
+                    Some(lights) => lights,
+                    None => Arc::new(NopLight {}),
+                }
+            }
         };
+
         Scene {
             camera: self.camera.build(),
-            world: self.world.build(),
-            lights,
+            world,
+            light_shape,
             sky: self.sky.build(),
             name: String::from("no-name"),
             description: String::from(""),
@@ -283,6 +297,10 @@ pub enum GeometryConfig {
         time0: f32,
         time1: f32,
     },
+    Tags {
+        tags: Vec<String>,
+        child: Box<GeometryConfig>,
+    },
     List {
         objects: Vec<GeometryConfig>,
     },
@@ -296,9 +314,6 @@ pub enum GeometryConfig {
         child: Box<GeometryConfig>,
     },
     FlipFace {
-        child: Box<GeometryConfig>,
-    },
-    NoEffect {
         child: Box<GeometryConfig>,
     },
     ConstantMedium {
@@ -371,7 +386,10 @@ impl Buildable for GeometryConfig {
                 Arc::new(Rect::new(v0.into(), v1.into(), material.build()))
             }
             GeometryConfig::FlipFace { child } => Arc::new(FlipFace::new(child.build())),
-            GeometryConfig::NoEffect { child } => Arc::new(NoEffect::new(child.build())),
+            GeometryConfig::Tags { tags, child } => {
+                let tags: HashSet<String> = tags.iter().map(|t| String::from(t)).collect();
+                Arc::new(TagsHittable::new(tags, child.build()))
+            }
         }
     }
 }

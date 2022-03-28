@@ -13,7 +13,7 @@ pub struct SolidSky {
 }
 
 impl Sky for SolidSky {
-    fn color(&self, r: &Ray) -> Color3 {
+    fn color(&self, _r: &Ray) -> Color3 {
         self.background
     }
 }

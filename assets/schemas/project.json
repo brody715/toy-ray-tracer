@@ -232,6 +232,31 @@
         {
           "type": "object",
           "required": [
+            "child",
+            "kind",
+            "tags"
+          ],
+          "properties": {
+            "child": {
+              "$ref": "#/definitions/GeometryConfig"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "tags"
+              ]
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
             "kind",
             "objects"
           ],
@@ -313,24 +338,6 @@
               "type": "string",
               "enum": [
                 "flip_face"
-              ]
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "child",
-            "kind"
-          ],
-          "properties": {
-            "child": {
-              "$ref": "#/definitions/GeometryConfig"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "no_effect"
               ]
             }
           }
@@ -475,7 +482,7 @@
         "camera": {
           "$ref": "#/definitions/CameraConfig"
         },
-        "lights": {
+        "light": {
           "anyOf": [
             {
               "$ref": "#/definitions/GeometryConfig"

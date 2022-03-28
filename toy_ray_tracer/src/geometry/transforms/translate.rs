@@ -1,4 +1,5 @@
 use crate::aabb::AABB;
+use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
 use crate::vec::Vec3;
@@ -37,5 +38,14 @@ impl Hittable for Translate {
 
     fn random(&self, origin: &Vec3) -> Vec3 {
         self.hittable.random(origin)
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_translate(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_translate(EnterContext::new(self));
+        self.hittable.walk(walker);
     }
 }

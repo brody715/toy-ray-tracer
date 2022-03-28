@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::aabb::AABB;
+use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::material::MaterialPtr;
 use crate::ray::Ray;
@@ -68,6 +69,15 @@ impl Hittable for Rect {
 
     fn random(&self, origin: &Vec3) -> Vec3 {
         self._impl.random(origin)
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_rect(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_rect(EnterContext::new(self));
+        self._impl.walk(walker);
     }
 }
 
@@ -180,5 +190,13 @@ impl Hittable for AARect {
             Plane::XY => Vec3::new(rand_a, rand_b, self.k),
         };
         return random_point - origin;
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_a_a_rect(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_a_a_rect(EnterContext::new(self));
     }
 }

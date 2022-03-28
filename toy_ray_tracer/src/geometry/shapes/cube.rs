@@ -1,5 +1,6 @@
 use super::rect::{AARect, Plane};
 use crate::aabb::AABB;
+use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable};
 use crate::hittable_list::HittableList;
 use crate::material::MaterialPtr;
@@ -87,5 +88,14 @@ impl Hittable for Cube {
             min: self.p_min,
             max: self.p_max,
         })
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_cube(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_cube(EnterContext::new(self));
+        self.sides.walk(walker);
     }
 }

@@ -203,6 +203,7 @@ export default make_project({
       time1: 1.0,
     },
     sky: {
+      kind: "solid",
       background: [0.7, 0.8, 1.0],
     },
     world: create_world(),

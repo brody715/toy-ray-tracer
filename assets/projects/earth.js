@@ -20,6 +20,7 @@ export default make_project({
       time1: 0.0,
     },
     sky: {
+      kind: "solid",
       background: [0.7, 0.8, 1.0],
     },
     world: [

@@ -47,18 +47,22 @@ export function create_world() {
     material: red,
   });
 
-  const lights = make_geometry({
-    kind: "flip_face",
-    child: {
-      kind: "rect",
-      v0: [213, 554, 227],
-      v1: [343, 554, 332],
-      // radius: 100,
-      material: light,
-    },
-  });
-
-  world.push(lights);
+  world.push(
+    make_geometry({
+      kind: "tags",
+      tags: ["lights"],
+      child: {
+        kind: "flip_face",
+        child: {
+          kind: "rect",
+          v0: [213, 554, 227],
+          v1: [343, 554, 332],
+          // radius: 100,
+          material: light,
+        },
+      },
+    })
+  );
 
   world.push({
     kind: "rect",
@@ -116,10 +120,8 @@ export function create_world() {
 
   world.push(cube1, cube2);
 
-  return { world, lights };
+  return world;
 }
-
-const { world, lights } = create_world();
 
 export default make_project({
   name: "cornell_box",
@@ -127,7 +129,7 @@ export default make_project({
     output_dir: "./output",
     height: 500,
     width: 500,
-    nsamples: 1000,
+    nsamples: 100,
     // nsamples: 3,
     max_depth: 50,
   },
@@ -143,7 +145,7 @@ export default make_project({
       time0: 0.0,
       time1: 0.0,
     },
-    lights,
+    // lights,
     sky: {
       kind: "solid",
       //   background: [0.7, 0.8, 1.0],
@@ -152,7 +154,7 @@ export default make_project({
     world: {
       // kind: "list",
       kind: "bvh",
-      objects: world,
+      objects: create_world(),
       time0: 0,
       time1: 1.0,
     },

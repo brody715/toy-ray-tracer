@@ -2,6 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::aabb::AABB;
+use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
 use crate::vec::Vec3;
@@ -126,5 +127,14 @@ impl Hittable for Rotate {
 
     fn random(&self, origin: &Vec3) -> Vec3 {
         self.hittable.random(origin)
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_rotate(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_rotate(EnterContext::new(self));
+        self.hittable.walk(walker);
     }
 }

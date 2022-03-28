@@ -5,7 +5,7 @@ use crate::{
     environment::Sky,
     material::ScatterRecord,
     math::{
-        pdfs::{HittablePDF, MixturePDF, WrapperPDF},
+        pdfs::{HittablePDF, MixturePDF},
         PDF,
     },
     project::Project,
@@ -42,7 +42,7 @@ impl Engine {
         let world = scene.world();
         let camera = scene.camera();
         let sky = scene.sky();
-        let lights = scene.lights();
+        let lights = scene.light_shape();
 
         let tasks_finished = Arc::new(AtomicI32::new(0));
         let pixels_local = Arc::new(ThreadLocal::new());
@@ -63,6 +63,8 @@ impl Engine {
             let plc = pixels_local.get_or(|| RefCell::new(Vec3List::new_with_size(width * height)));
 
             let mut pixels = plc.borrow_mut();
+
+            // let light_pdf = HittablePDF::new(o, hittable)
 
             let rng = random::new_rng();
             for j in 0..height {
@@ -104,7 +106,7 @@ impl Engine {
         r: &Ray,
         world: &'a dyn Hittable,
         sky: &dyn Sky,
-        lights: &'a dyn Hittable,
+        light_shape: &'a dyn Hittable,
         depth: i32,
     ) -> Color3 {
         // no more light is gathered when reach the limit
@@ -123,26 +125,27 @@ impl Engine {
                 if let Some(specular_ray) = specular_ray {
                     return vec3::elementwise_mult(
                         &attenuation,
-                        &self.get_ray_color(&specular_ray, world, sky, lights, depth - 1),
+                        &self.get_ray_color(&specular_ray, world, sky, light_shape, depth - 1),
                     );
                 }
 
-                let pdf_light = HittablePDF::new(rec.p, lights);
+                let mixture_pdf: MixturePDF;
+                let light_pdf = HittablePDF::new(rec.p, light_shape);
 
-                let mixture_pdf: Box<dyn PDF> = match &pdf_scatter {
+                let mixture_pdf: &dyn PDF = match &pdf_scatter {
                     Some(pdf_scatter) => {
-                        Box::new(MixturePDF::new(&pdf_light, pdf_scatter.as_ref()))
+                        mixture_pdf = MixturePDF::new(&light_pdf, pdf_scatter.as_ref());
+                        &mixture_pdf
                     }
-                    None => Box::new(WrapperPDF::new(&pdf_light)),
+                    None => &light_pdf,
                 };
 
                 let scattered = Ray::new(rec.p, mixture_pdf.generate(), r.time());
                 let pdf_val = mixture_pdf.value(&scattered.direction());
 
-                let nc = self.get_ray_color(&scattered, world, sky, lights, depth - 1);
-
+                let new_color = self.get_ray_color(&scattered, world, sky, light_shape, depth - 1);
                 return emitted
-                    + vec3::elementwise_mult(&attenuation, &nc)
+                    + vec3::elementwise_mult(&attenuation, &new_color)
                         * rec.material.scattering_pdf(r, &rec, &scattered)
                         / pdf_val;
             }

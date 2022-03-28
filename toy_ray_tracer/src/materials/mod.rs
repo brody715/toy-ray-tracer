@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use crate::{
-    hittable::{HitRecord, Hittable},
+    hittable::HitRecord,
     material::{Material, ScatterRecord},
     math::{pdfs::CosinePDF, ONB},
     ray::Ray,
@@ -10,9 +10,9 @@ use crate::{
     vec::{vec3, Color3, Vec3},
 };
 
-pub struct EmptyMaterial;
+pub struct NopMaterial;
 
-impl Material for EmptyMaterial {
+impl Material for NopMaterial {
     fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Option<ScatterRecord> {
         None
     }
@@ -36,7 +36,7 @@ impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
         let uvw = ONB::build_form_w(&rec.normal);
         let direction = uvw.local(vec3::random_cosine_direction());
-        let scattered = Ray::new(rec.p, direction.normalize(), ray.time());
+        let _scattered = Ray::new(rec.p, direction.normalize(), ray.time());
         let attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
         let pdf = Box::new(CosinePDF::from(rec.normal));
 
@@ -77,29 +77,23 @@ impl Material for Metal {
         if self.fuzz > 0.0 {
             reflected += self.fuzz * vec3::random_in_unit_sphere()
         };
-        // TODO: reflecte rec.normal
-        let specular_ray = Some(Ray::new(rec.p, reflected, ray.time()));
         let attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
         let pdf = None;
 
-        return Some(ScatterRecord {
-            specular_ray,
-            attenuation,
-            pdf,
-        });
-        // if reflected.dot(&rec.normal) > 0.0 {
-        //     let scattered = Ray::new(rec.p, reflected, ray.time());
-        //     Some(ScatterRecord {
-        //         specular_ray: scattered,
-        //         attenuation: self.albedo.value(rec.u, rec.v, &rec.p),
-        //         pdf: 0.0,
-        //     })
-        // } else {
-        //     None
-        // }
+        if reflected.dot(&rec.normal) > 0.0 {
+            let specular_ray = Some(Ray::new(rec.p, reflected, ray.time()));
+
+            return Some(ScatterRecord {
+                specular_ray,
+                attenuation,
+                pdf,
+            });
+        } else {
+            None
+        }
     }
 
-    fn scattering_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
         1.0
     }
 }
@@ -144,7 +138,7 @@ impl Material for Dielectric {
         });
     }
 
-    fn scattering_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
         1.0
     }
 }
@@ -164,7 +158,7 @@ impl Material for DiffuseLight {
         None
     }
 
-    fn scattering_pdf(&self, ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
         1.0
     }
 

@@ -3,6 +3,7 @@ use std::sync::Arc;
 use derive_new::new;
 
 use crate::aabb::AABB;
+use crate::geometry::{EnterContext, GeometryWalker, GeometryVisitor};
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec::{Point3, Vec3};
@@ -50,25 +51,38 @@ pub trait Hittable: Sync + Send {
     fn random(&self, _origin: &Vec3) -> Vec3 {
         Vec3::new(1.0, 0.0, 0.0)
     }
+
+    fn accept(&self, visitor: &mut dyn GeometryVisitor);
+
+    fn walk(&self, walker: &mut dyn GeometryWalker);
 }
 
 pub type HittablePtr = Arc<dyn Hittable + Sync + Send>;
 pub type HittableRef<'a> = &'a (dyn Hittable);
 
-pub struct EmptyHittable {}
+pub struct NopHittable {}
 
-impl EmptyHittable {
+impl NopHittable {
+    #[allow(dead_code)]
     pub fn new() -> Self {
-        return EmptyHittable {};
+        return NopHittable {};
     }
 }
 
-impl Hittable for EmptyHittable {
+impl Hittable for NopHittable {
     fn hit(&self, _ray: &Ray, _t_minn: f32, _t_max: f32) -> Option<HitRecord> {
         None
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(AABB::new(Point3::zeros(), Point3::zeros()))
+    }
+
+    fn accept(&self, visitor: &mut dyn GeometryVisitor) {
+        visitor.visit_nop_hittable(self)
+    }
+
+    fn walk(&self, walker: &mut dyn GeometryWalker) {
+        walker.enter_nop_hittable(EnterContext::new(self))
     }
 }

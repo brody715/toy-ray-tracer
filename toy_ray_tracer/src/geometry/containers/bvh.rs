@@ -1,5 +1,6 @@
 use crate::aabb;
 use crate::aabb::AABB;
+use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
 use crate::ray::Ray;
 use crate::utils::random;
@@ -95,5 +96,22 @@ impl Hittable for BVH {
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(self.bbox)
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_b_v_h(self);
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_b_v_h(EnterContext::new(self));
+        match &self.tree {
+            BVHNode::Branch { left, right } => {
+                left.walk(walker);
+                right.walk(walker);
+            }
+            BVHNode::Leaf(n) => {
+                n.walk(walker);
+            }
+        }
     }
 }

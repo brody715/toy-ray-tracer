@@ -1,5 +1,6 @@
 use crate::aabb::AABB;
 use crate::aabb::{self, create_sphere_box};
+use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::{Material, MaterialPtr};
 use crate::math::ONB;
@@ -99,7 +100,7 @@ impl Hittable for Sphere {
     }
 
     fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
-        if let Some(rec) = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX) {
+        if let Some(_rec) = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX) {
             let cos_theta_max =
                 (1.0 - self.radius * self.radius / (self.center - origin).norm_squared()).sqrt();
             let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
@@ -114,6 +115,14 @@ impl Hittable for Sphere {
         let distance_squared = direction.norm_squared();
         let uvw = ONB::build_form_w(&direction);
         return uvw.local(vec3::random_to_sphere(self.radius, distance_squared));
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_sphere(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_sphere(EnterContext::new(self));
     }
 }
 
@@ -167,5 +176,13 @@ impl Hittable for MovingSphere {
         let box0 = create_sphere_box(&self.center0, self.radius);
         let box1 = create_sphere_box(&self.center1, self.radius);
         Some(aabb::create_surrounding_box(&box0, &box1))
+    }
+
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_moving_sphere(self)
+    }
+
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_moving_sphere(EnterContext::new(self));
     }
 }

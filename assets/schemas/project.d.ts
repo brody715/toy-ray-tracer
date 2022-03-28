@@ -46,6 +46,12 @@ export type GeometryConfig =
       [k: string]: unknown | undefined;
     }
   | {
+      child: GeometryConfig;
+      kind: "tags";
+      tags: string[];
+      [k: string]: unknown | undefined;
+    }
+  | {
       kind: "list";
       objects: GeometryConfig[];
       [k: string]: unknown | undefined;
@@ -66,11 +72,6 @@ export type GeometryConfig =
   | {
       child: GeometryConfig;
       kind: "flip_face";
-      [k: string]: unknown | undefined;
-    }
-  | {
-      child: GeometryConfig;
-      kind: "no_effect";
       [k: string]: unknown | undefined;
     }
   | {
@@ -140,7 +141,7 @@ export interface ProjectConfig {
 }
 export interface SceneConfig {
   camera: CameraConfig;
-  lights?: GeometryConfig | null;
+  light?: GeometryConfig | null;
   sky: SkyConfig;
   world: WorldConfig;
   [k: string]: unknown | undefined;
