@@ -74,9 +74,13 @@ pub mod vec3 {
     #[allow(dead_code)]
     pub const YUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 
+    pub const ZUP: Vec3 = Vec3::new(0.0, 0.0, 1.0);
+
+    pub const XUP: Vec3 = Vec3::new(1.0, 0.0, 0.0);
+
     #[allow(dead_code)]
     pub fn random() -> Vec3 {
-        todo!()
+        return Vec3::new(random::f32(), random::f32(), random::f32());
     }
 
     #[allow(dead_code)]

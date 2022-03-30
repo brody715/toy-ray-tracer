@@ -14,6 +14,9 @@ pub struct HittableList {
     list: Vec<HittablePtr>,
 }
 
+#[allow(dead_code)]
+pub type HittableListPtr = Arc<HittableList>;
+
 impl From<Vec<HittablePtr>> for HittableList {
     fn from(list: Vec<HittablePtr>) -> Self {
         HittableList { list: list.into() }

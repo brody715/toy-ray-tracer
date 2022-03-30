@@ -1,17 +1,27 @@
 mod cube;
+mod cylinder;
+mod disk;
+mod mesh;
+mod plane;
 mod rect;
 mod sphere;
+mod triangle;
 
 pub use cube::Cube;
-pub use rect::{AARect, Plane, Rect};
+pub use cylinder::Cylinder;
+pub use disk::Disk;
+pub use mesh::Mesh;
+pub use plane::Plane;
+pub use rect::{AARect, Rect};
 pub use sphere::{MovingSphere, Sphere};
+pub use triangle::Triangle;
 
-use crate::hittable::Hittable;
+use crate::{hittable::Hittable, vec::vec3};
 
 // Use as light object, if no light provided by scene
-pub struct NopLight {}
+pub struct SkyLight {}
 
-impl Hittable for NopLight {
+impl Hittable for SkyLight {
     fn hit(
         &self,
         _ray: &crate::ray::Ray,
@@ -26,18 +36,19 @@ impl Hittable for NopLight {
     }
 
     fn pdf_value(&self, _origin: &crate::vec::Point3, _v: &crate::vec::Vec3) -> f32 {
-        0.0
+        1.0
     }
 
     fn random(&self, _origin: &crate::vec::Vec3) -> crate::vec::Vec3 {
-        crate::vec::Vec3::new(1.0, 0.0, 0.0)
+        // WARNING: not distributed in sphere, try random_in_unit_sphere
+        vec3::random().normalize()
     }
 
     fn accept(&self, visitor: &mut dyn super::GeometryVisitor) {
-        visitor.visit_nop_light(self)
+        visitor.visit_sky_light(self)
     }
 
     fn walk(&self, walker: &mut dyn super::GeometryWalker) {
-        walker.enter_nop_light(super::EnterContext::new(self));
+        walker.enter_sky_light(super::EnterContext::new(self));
     }
 }

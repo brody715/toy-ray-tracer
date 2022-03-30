@@ -1,4 +1,5 @@
-use super::rect::{AARect, Plane};
+use super::rect::AARect;
+use super::Plane;
 use crate::aabb::AABB;
 use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable};

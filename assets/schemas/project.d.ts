@@ -39,6 +39,30 @@ export type GeometryConfig =
       [k: string]: unknown | undefined;
     }
   | {
+      kind: "triangle";
+      material: MaterialConfig;
+      v0: Vec3F;
+      v1: Vec3F;
+      v2: Vec3F;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      center: Vec3F;
+      kind: "disk";
+      material: MaterialConfig;
+      normal: Vec3F;
+      radius: number;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      center0: Vec3F;
+      center1: Vec3F;
+      kind: "cylinder";
+      material: MaterialConfig;
+      radius: number;
+      [k: string]: unknown | undefined;
+    }
+  | {
       kind: "bvh";
       objects: GeometryConfig[];
       time0: number;
@@ -61,6 +85,12 @@ export type GeometryConfig =
       axis: Axis;
       child: GeometryConfig;
       kind: "rotate";
+      [k: string]: unknown | undefined;
+    }
+  | {
+      child: GeometryConfig;
+      kind: "transforms";
+      params: TransformParam[];
       [k: string]: unknown | undefined;
     }
   | {
@@ -126,6 +156,18 @@ export type TextureConfig =
       [k: string]: unknown | undefined;
     };
 export type Axis = "X" | "Y" | "Z";
+export type TransformParam =
+  | {
+      angle: number;
+      axis: Axis;
+      kind: "rotate";
+      [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "translate";
+      offset: [number, number, number];
+      [k: string]: unknown | undefined;
+    };
 export type SkyConfig = {
   background: Vec3F;
   kind: "solid";

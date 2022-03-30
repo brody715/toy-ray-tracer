@@ -1,8 +1,5 @@
 use std::sync::Arc;
 
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
 use crate::aabb::AABB;
 use crate::geometry::EnterContext;
 use crate::hittable::{HitRecord, Hittable, HittablePtr};
@@ -10,6 +7,8 @@ use crate::material::MaterialPtr;
 use crate::ray::Ray;
 use crate::utils::random;
 use crate::vec::Vec3;
+
+use super::Plane;
 
 pub struct Rect {
     // left-bottom vertex
@@ -79,13 +78,6 @@ impl Hittable for Rect {
         walker.enter_rect(EnterContext::new(self));
         self._impl.walk(walker);
     }
-}
-
-#[derive(JsonSchema, Serialize, Deserialize, Debug)]
-pub enum Plane {
-    YZ,
-    ZX,
-    XY,
 }
 
 pub struct AARect {

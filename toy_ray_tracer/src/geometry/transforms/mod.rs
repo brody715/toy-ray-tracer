@@ -1,56 +1,76 @@
+mod flip_face;
 mod rotate;
 mod translate;
 
+use std::sync::Arc;
+
 pub use rotate::{Axis, Rotate};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 pub use translate::Translate;
 
-use crate::hittable::{Hittable, HittablePtr};
+use crate::{
+    aabb::AABB,
+    hittable::{HitRecord, Hittable, HittablePtr},
+    ray::Ray,
+    vec::Vec3,
+};
 
 use super::EnterContext;
 
-pub struct FlipFace {
-    hittable: HittablePtr,
+pub use flip_face::FlipFace;
+
+#[derive(JsonSchema, Serialize, Deserialize, Debug)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum TransformParam {
+    Rotate { axis: Axis, angle: f32 },
+    Translate { offset: [f32; 3] },
 }
 
-impl FlipFace {
-    #[must_use]
-    pub fn new(hittable: HittablePtr) -> Self {
-        Self { hittable }
-    }
+pub struct Transforms {
+    transformed: HittablePtr,
 }
 
-impl Hittable for FlipFace {
-    fn hit(
-        &self,
-        ray: &crate::ray::Ray,
-        t_min: f32,
-        t_max: f32,
-    ) -> Option<crate::hittable::HitRecord> {
-        let rec = self.hittable.hit(&ray, t_min, t_max);
-        match rec {
-            Some(mut rec) => Some(rec.flip_normal().clone()),
-            None => None,
-        }
+impl Transforms {
+    pub fn new(transform_params: &[TransformParam], hittable: HittablePtr) -> Self {
+        let transformed: HittablePtr =
+            transform_params
+                .iter()
+                .fold(hittable, |hittable, param| match param {
+                    TransformParam::Rotate { axis, angle } => {
+                        Arc::new(Rotate::new(*axis, hittable, *angle))
+                    }
+                    TransformParam::Translate { offset } => {
+                        Arc::new(Translate::new(hittable, Vec3::from_column_slice(offset)))
+                    }
+                });
+
+        Self { transformed }
+    }
+}
+impl Hittable for Transforms {
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+        self.transformed.hit(ray, t_min, t_max)
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<crate::aabb::AABB> {
-        self.hittable.bounding_box(t0, t1)
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        self.transformed.bounding_box(t0, t1)
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &crate::vec::Vec3) -> f32 {
-        self.hittable.pdf_value(origin, v)
+    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
+        visitor.visit_transforms(self)
     }
 
-    fn random(&self, origin: &crate::vec::Vec3) -> crate::vec::Vec3 {
-        self.hittable.random(origin)
+    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
+        walker.enter_transforms(EnterContext::new(self));
+        self.transformed.walk(walker);
     }
 
-    fn accept(&self, visitor: &mut dyn super::GeometryVisitor) {
-        visitor.visit_flip_face(self)
+    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+        self.transformed.pdf_value(origin, v)
     }
 
-    fn walk(&self, walker: &mut dyn super::GeometryWalker) {
-        walker.enter_flip_face(EnterContext::new(self));
-        self.hittable.walk(walker);
+    fn random(&self, origin: &Vec3) -> Vec3 {
+        self.transformed.random(origin)
     }
 }

@@ -25,7 +25,16 @@ fn box_compare(
         let a_bbox = a.bounding_box(time0, time1);
         let b_bbox = b.bounding_box(time0, time1);
         if let (Some(a), Some(b)) = (a_bbox, b_bbox) {
-            return a.min[axis].partial_cmp(&b.min[axis]).unwrap();
+            let cmp = a.min[axis].partial_cmp(&b.min[axis]);
+            match cmp {
+                Some(cmp) => cmp,
+                None => {
+                    panic!(
+                        "error while building bvh, can't compare AABB boxes, axis={}, a={:?}, b={:?}",
+                        axis, a, b
+                    );
+                }
+            }
         } else {
             panic!["no bounding box in bvh node"]
         }

@@ -91,45 +91,50 @@ export function create_world() {
   });
 
   // cubes
-  let cube1 = make_geometry({
-    kind: "translate",
-    offset: [130, 0, 65],
-    child: {
-      kind: "rotate",
-      axis: "Y",
-      angle: -18.0,
+
+  // cube1
+  world.push(
+    make_geometry({
+      kind: "translate",
+      offset: [130, 0, 65],
       child: {
-        kind: "cube",
-        p_min: [0, 0, 0],
-        p_max: [165, 165, 165],
+        kind: "rotate",
+        axis: "Y",
+        angle: -18.0,
+        child: {
+          kind: "cube",
+          p_min: [0, 0, 0],
+          p_max: [165, 165, 165],
+          material: white,
+        },
+      },
+    })
+  );
+
+  // cylinder2
+  world.push(
+    make_geometry({
+      kind: "transforms",
+      params: [
+        { kind: "translate", offset: [365, -40, 295] },
+        { kind: "rotate", angle: -20, axis: "X" },
+        { kind: "rotate", angle: 10, axis: "Z" },
+      ],
+      child: {
+        kind: "cylinder",
+        center0: [0, 0, 0],
+        center1: [0, 330, 0],
+        radius: 50,
         material: white,
       },
-    },
-  });
-
-  let cube2 = make_geometry({
-    kind: "translate",
-    offset: [265, 0, 295],
-    child: {
-      kind: "rotate",
-      axis: "Y",
-      angle: 15.0,
-      child: {
-        kind: "cube",
-        p_min: [0, 0, 0],
-        p_max: [165, 330, 165],
-        material: white,
-      },
-    },
-  });
-
-  world.push(cube1, cube2);
+    })
+  );
 
   return world;
 }
 
 export default make_project({
-  name: "cornell_box",
+  name: "cornell_box2",
   settings: {
     output_dir: "./output",
     height: 500,
@@ -154,7 +159,7 @@ export default make_project({
     // lights,
     sky: {
       kind: "solid",
-        // background: [0.7, 0.8, 1.0],
+      // background: [0.7, 0.8, 1.0],
       background: [0.0, 0.0, 0.0],
     },
     world: {

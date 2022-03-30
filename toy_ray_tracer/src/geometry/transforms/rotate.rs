@@ -9,7 +9,7 @@ use crate::vec::Vec3;
 use std::f32;
 
 #[allow(dead_code)]
-#[derive(JsonSchema, Debug, Serialize, Deserialize)]
+#[derive(JsonSchema, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum Axis {
     X,
     Y,

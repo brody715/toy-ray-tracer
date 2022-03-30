@@ -12,8 +12,10 @@ use serde::{Deserialize, Serialize};
 use crate::camera::{Camera, CameraOpt};
 use crate::environment::{SkyPtr, SolidSky};
 use crate::geometry::containers::{TagsHittable, BVH};
-use crate::geometry::shapes::{Cube, MovingSphere, NopLight, Rect, Sphere};
-use crate::geometry::transforms::{Axis, FlipFace, Rotate, Translate};
+use crate::geometry::shapes::{
+    Cube, Cylinder, Disk, MovingSphere, Rect, SkyLight, Sphere, Triangle,
+};
+use crate::geometry::transforms::{Axis, FlipFace, Rotate, TransformParam, Transforms, Translate};
 use crate::geometry::try_get_light_from_world;
 use crate::geometry::volumes::ConstantMedium;
 use crate::hittable::HittablePtr;
@@ -76,6 +78,11 @@ impl JsonSchema for JVec3 {
     }
 }
 
+#[derive(JsonSchema, Serialize, Deserialize, Debug)]
+pub struct FromFileFragment {
+    path: String,
+}
+
 pub trait Buildable {
     type Out;
     fn build(self) -> Self::Out;
@@ -130,17 +137,20 @@ impl Buildable for SceneConfig {
     type Out = Scene;
 
     fn build(self) -> Self::Out {
+        let sky = self.sky.build();
+
         let world = self.world.build();
         let light_shape = match self.light {
             Some(lights) => lights.build(),
             None => {
                 let try_lights = try_get_light_from_world(world.as_ref());
 
-                info!("found lights");
-
                 match try_lights {
-                    Some(lights) => lights,
-                    None => Arc::new(NopLight {}),
+                    Some(lights) => {
+                        info!("found lights");
+                        lights
+                    }
+                    None => Arc::new(SkyLight {}),
                 }
             }
         };
@@ -149,7 +159,7 @@ impl Buildable for SceneConfig {
             camera: self.camera.build(),
             world,
             light_shape,
-            sky: self.sky.build(),
+            sky,
             name: String::from("no-name"),
             description: String::from(""),
         }
@@ -266,6 +276,13 @@ impl Buildable for TextureConfig {
 }
 
 #[derive(JsonSchema, Deserialize, Serialize, Debug)]
+#[serde(untagged)]
+pub enum GeometryMeshConfig {
+    FromObjFile { from_obj_file: FromFileFragment },
+    Raw {},
+}
+
+#[derive(JsonSchema, Deserialize, Serialize, Debug)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum GeometryConfig {
     Sphere {
@@ -291,6 +308,24 @@ pub enum GeometryConfig {
         v1: JVec3,
         material: MaterialConfig,
     },
+    Triangle {
+        v0: JVec3,
+        v1: JVec3,
+        v2: JVec3,
+        material: MaterialConfig,
+    },
+    Disk {
+        center: JVec3,
+        radius: f32,
+        normal: JVec3,
+        material: MaterialConfig,
+    },
+    Cylinder {
+        center0: JVec3,
+        center1: JVec3,
+        radius: f32,
+        material: MaterialConfig,
+    },
     #[serde(rename = "bvh")]
     BVH {
         objects: Vec<GeometryConfig>,
@@ -307,6 +342,10 @@ pub enum GeometryConfig {
     Rotate {
         axis: Axis,
         angle: f32,
+        child: Box<GeometryConfig>,
+    },
+    Transforms {
+        params: Vec<TransformParam>,
         child: Box<GeometryConfig>,
     },
     Translate {
@@ -346,6 +385,26 @@ impl Buildable for GeometryConfig {
                 p_max,
                 material,
             } => Arc::new(Cube::new(p_min.into(), p_max.into(), material.build())),
+            GeometryConfig::Triangle {
+                v0,
+                v1,
+                v2,
+                material,
+            } => Arc::new(Triangle::new(
+                [v0.into(), v1.into(), v2.into()],
+                material.build(),
+            )),
+            GeometryConfig::Disk {
+                center,
+                radius,
+                normal,
+                material,
+            } => Arc::new(Disk::new(
+                center.into(),
+                radius,
+                normal.into(),
+                material.build(),
+            )),
             GeometryConfig::BVH {
                 objects,
                 time0,
@@ -390,6 +449,21 @@ impl Buildable for GeometryConfig {
                 let tags: HashSet<String> = tags.iter().map(|t| String::from(t)).collect();
                 Arc::new(TagsHittable::new(tags, child.build()))
             }
+            GeometryConfig::Cylinder {
+                center0,
+                center1,
+                radius,
+                material,
+            } => Arc::new(Cylinder::new(
+                center0.into(),
+                center1.into(),
+                radius,
+                material.build(),
+            )),
+            GeometryConfig::Transforms {
+                params: rotates,
+                child,
+            } => Arc::new(Transforms::new(&rotates, child.build())),
         }
     }
 }

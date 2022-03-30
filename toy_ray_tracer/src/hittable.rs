@@ -1,14 +1,11 @@
 use std::sync::Arc;
 
-use derive_new::new;
-
 use crate::aabb::AABB;
-use crate::geometry::{EnterContext, GeometryWalker, GeometryVisitor};
+use crate::geometry::{EnterContext, GeometryVisitor, GeometryWalker};
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec::{Point3, Vec3};
 
-#[derive(new, Clone)]
 pub struct HitRecord<'a> {
     pub t: f32,
     pub u: f32,
@@ -16,13 +13,23 @@ pub struct HitRecord<'a> {
     pub p: Vec3,
     pub material: &'a dyn Material,
 
-    #[new(default)]
     pub normal: Vec3,
-    #[new(default)]
     pub front_face: bool,
 }
 
 impl<'a> HitRecord<'a> {
+    pub fn new(t: f32, u: f32, v: f32, p: Vec3, material: &'a dyn Material) -> Self {
+        Self {
+            t,
+            u,
+            v,
+            p,
+            material,
+            normal: Vec3::zeros(),
+            front_face: false,
+        }
+    }
+
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) -> &mut Self {
         self.front_face = ray.direction().dot(outward_normal) < 0.0;
         self.normal = if self.front_face {
@@ -45,7 +52,7 @@ pub trait Hittable: Sync + Send {
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
 
     fn pdf_value(&self, _origin: &Point3, _v: &Vec3) -> f32 {
-        0.0
+        1.0
     }
 
     fn random(&self, _origin: &Vec3) -> Vec3 {

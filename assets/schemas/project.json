@@ -202,6 +202,98 @@
           "type": "object",
           "required": [
             "kind",
+            "material",
+            "v0",
+            "v1",
+            "v2"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "triangle"
+              ]
+            },
+            "material": {
+              "$ref": "#/definitions/MaterialConfig"
+            },
+            "v0": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "v1": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "v2": {
+              "$ref": "#/definitions/Vec3f"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "center",
+            "kind",
+            "material",
+            "normal",
+            "radius"
+          ],
+          "properties": {
+            "center": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "disk"
+              ]
+            },
+            "material": {
+              "$ref": "#/definitions/MaterialConfig"
+            },
+            "normal": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "radius": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "center0",
+            "center1",
+            "kind",
+            "material",
+            "radius"
+          ],
+          "properties": {
+            "center0": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "center1": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "cylinder"
+              ]
+            },
+            "material": {
+              "$ref": "#/definitions/MaterialConfig"
+            },
+            "radius": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
             "objects",
             "time0",
             "time1"
@@ -299,6 +391,31 @@
               "enum": [
                 "rotate"
               ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "child",
+            "kind",
+            "params"
+          ],
+          "properties": {
+            "child": {
+              "$ref": "#/definitions/GeometryConfig"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "transforms"
+              ]
+            },
+            "params": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TransformParam"
+              }
             }
           }
         },
@@ -612,6 +729,57 @@
             },
             "odd": {
               "$ref": "#/definitions/TextureConfig"
+            }
+          }
+        }
+      ]
+    },
+    "TransformParam": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "angle",
+            "axis",
+            "kind"
+          ],
+          "properties": {
+            "angle": {
+              "type": "number",
+              "format": "float"
+            },
+            "axis": {
+              "$ref": "#/definitions/Axis"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "rotate"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "offset"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "translate"
+              ]
+            },
+            "offset": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "float"
+              },
+              "maxItems": 3,
+              "minItems": 3
             }
           }
         }

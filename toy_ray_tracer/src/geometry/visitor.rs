@@ -3,12 +3,12 @@ use paste::paste;
 
 use super::{
     containers::{TagsHittable, BVH},
-    shapes::{AARect, Cube, MovingSphere, NopLight, Rect, Sphere},
-    transforms::{FlipFace, Rotate, Translate},
+    shapes::{AARect, Cube, Cylinder, Disk, Mesh, MovingSphere, Rect, SkyLight, Sphere, Triangle},
+    transforms::{FlipFace, Rotate, Transforms, Translate},
     volumes::ConstantMedium,
 };
 
-macro_rules! make_visitor_listener {
+macro_rules! make_visitor_walker {
     ($name: ident { $($node:ident),* }) => {
         paste! {
             pub trait [<$name Visitor>] {
@@ -30,21 +30,26 @@ pub struct EnterContext<'a, T> {
     pub node: &'a T,
 }
 
-make_visitor_listener!(Geometry {
+make_visitor_walker!(Geometry {
     HittableList,
     NopHittable,
     ConstantMedium,
     Rotate,
+    Transforms,
     FlipFace,
     Cube,
     Rect,
     AARect,
     Sphere,
     MovingSphere,
-    NopLight,
+    SkyLight,
     Translate,
     BVH,
-    TagsHittable
+    TagsHittable,
+    Disk,
+    Cylinder,
+    Triangle,
+    Mesh
 });
 
 impl<'a, T> EnterContext<'a, T> {

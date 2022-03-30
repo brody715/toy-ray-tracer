@@ -1,6 +1,6 @@
 use crate::{ray::Ray, vec::Vec3};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct AABB {
     pub min: Vec3,
     pub max: Vec3,
