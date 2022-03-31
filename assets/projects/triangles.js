@@ -14,17 +14,14 @@ function create_world() {
       { kind: "rotate", angle: -30, axis: "Z" },
     ],
     child: {
-      kind: "disk",
-      center: [0, 0, 0],
-      normal: [0, 0, 1],
-      radius: 1,
+      kind: "triangle",
       v0: [0, 1, 0],
       v1: [-1, 0, 0],
       v2: [1, 0, 0],
       material: m_blue,
     },
   });
-  world.pop();
+  // world.pop();
 
   world.push({
     kind: "transforms",
@@ -41,7 +38,7 @@ function create_world() {
       material: m_blue,
     },
   });
-  // world.pop();
+  world.pop();
   return world;
 }
 
@@ -72,7 +69,9 @@ export default make_project({
     },
     world: {
       kind: "list",
-      objects: create_world(),
+      children: create_world(),
+      time0: 0,
+      time1: 1,
     },
   },
 });

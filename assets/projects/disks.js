@@ -2,7 +2,7 @@ const world = make_geometry({
   kind: "bvh",
   time0: 0,
   time1: 1,
-  objects: [
+  children: [
     {
       kind: "disk",
       center: [0, 0, 0],

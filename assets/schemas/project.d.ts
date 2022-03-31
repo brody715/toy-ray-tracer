@@ -63,8 +63,24 @@ export type GeometryConfig =
       [k: string]: unknown | undefined;
     }
   | {
+      kind: "pyramid";
+      material: MaterialConfig;
+      v0: Vec3F;
+      v1: Vec3F;
+      v2: Vec3F;
+      v3: Vec3F;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      from_obj: MeshObjectConfig;
+      kind: "mesh";
+      load_options?: MeshLoadOptions | null;
+      material: MaterialConfig;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      children: GeometryConfig[];
       kind: "bvh";
-      objects: GeometryConfig[];
       time0: number;
       time1: number;
       [k: string]: unknown | undefined;
@@ -76,8 +92,8 @@ export type GeometryConfig =
       [k: string]: unknown | undefined;
     }
   | {
+      children: GeometryConfig[];
       kind: "list";
-      objects: GeometryConfig[];
       [k: string]: unknown | undefined;
     }
   | {
@@ -155,6 +171,13 @@ export type TextureConfig =
       odd: TextureConfig;
       [k: string]: unknown | undefined;
     };
+export type MeshObjectConfig =
+  | {
+      file_path: string;
+    }
+  | {
+      raw_string: string;
+    };
 export type Axis = "X" | "Y" | "Z";
 export type TransformParam =
   | {
@@ -198,6 +221,10 @@ export interface CameraConfig {
   time1: number;
   vertical_fov: number;
   view_up: Vec3F;
+  [k: string]: unknown | undefined;
+}
+export interface MeshLoadOptions {
+  scale: number;
   [k: string]: unknown | undefined;
 }
 export interface Settings {

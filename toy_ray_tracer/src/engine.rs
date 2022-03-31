@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{cell::RefCell, sync::Arc};
 
 use crate::{
@@ -44,20 +44,22 @@ impl Engine {
         let sky = scene.sky();
         let lights = scene.light_shape();
 
-        let tasks_finished = Arc::new(AtomicI32::new(0));
+        let tasks_finished = Arc::new(AtomicUsize::new(0));
         let pixels_local = Arc::new(ThreadLocal::new());
 
-        (0..nsamples).into_par_iter().for_each(|s: i32| {
+        (0..height).into_par_iter().for_each(|j: usize| {
             let _timer = ExecutionTimer::new(|start_time| {
                 let val = tasks_finished.fetch_add(1, Ordering::Relaxed) + 1;
-                trace!(
-                    "render elapsed {} ms, sample_idx={}, progress={}/{} ({:.2}%)",
-                    start_time.elapsed().as_millis(),
-                    s,
-                    val,
-                    nsamples,
-                    (val as f32 / nsamples as f32) * 100.0
-                )
+                if val % 40 == 0 || val == height {
+                    trace!(
+                        "render elapsed {} ms, height_idx={}, progress={}/{} ({:.2}%)",
+                        start_time.elapsed().as_millis(),
+                        j,
+                        val,
+                        height,
+                        (val as f32 / height as f32) * 100.0
+                    )
+                }
             });
 
             let plc = pixels_local.get_or(|| RefCell::new(Vec3List::new_with_size(width * height)));
@@ -67,8 +69,8 @@ impl Engine {
             // let light_pdf = HittablePDF::new(o, hittable)
 
             let rng = random::new_rng();
-            for j in 0..height {
-                for i in 0..width {
+            for i in 0..width {
+                for _s in 0..nsamples {
                     let u = (i as f32 + rng.f32()) / width as f32;
                     let v = (j as f32 + rng.f32()) / height as f32;
                     let r = camera.get_ray(u, v);

@@ -13,7 +13,8 @@ use crate::camera::{Camera, CameraOpt};
 use crate::environment::{SkyPtr, SolidSky};
 use crate::geometry::containers::{TagsHittable, BVH};
 use crate::geometry::shapes::{
-    Cube, Cylinder, Disk, MovingSphere, Rect, SkyLight, Sphere, Triangle,
+    Cube, Cylinder, Disk, Mesh, MeshLoadOptions, MovingSphere, Pyramid, Rect, SkyLight, Sphere,
+    Triangle,
 };
 use crate::geometry::transforms::{Axis, FlipFace, Rotate, TransformParam, Transforms, Translate};
 use crate::geometry::try_get_light_from_world;
@@ -276,10 +277,10 @@ impl Buildable for TextureConfig {
 }
 
 #[derive(JsonSchema, Deserialize, Serialize, Debug)]
-#[serde(untagged)]
-pub enum GeometryMeshConfig {
-    FromObjFile { from_obj_file: FromFileFragment },
-    Raw {},
+#[serde(rename_all = "snake_case")]
+pub enum MeshObjectConfig {
+    FilePath(String),
+    RawString(String),
 }
 
 #[derive(JsonSchema, Deserialize, Serialize, Debug)]
@@ -326,9 +327,22 @@ pub enum GeometryConfig {
         radius: f32,
         material: MaterialConfig,
     },
+    Pyramid {
+        v0: JVec3,
+        v1: JVec3,
+        v2: JVec3,
+        v3: JVec3,
+        material: MaterialConfig,
+    },
+    #[serde(rename = "mesh")]
+    Mesh {
+        from_obj: MeshObjectConfig,
+        load_options: Option<MeshLoadOptions>,
+        material: MaterialConfig,
+    },
     #[serde(rename = "bvh")]
     BVH {
-        objects: Vec<GeometryConfig>,
+        children: Vec<GeometryConfig>,
         time0: f32,
         time1: f32,
     },
@@ -337,7 +351,7 @@ pub enum GeometryConfig {
         child: Box<GeometryConfig>,
     },
     List {
-        objects: Vec<GeometryConfig>,
+        children: Vec<GeometryConfig>,
     },
     Rotate {
         axis: Axis,
@@ -392,6 +406,7 @@ impl Buildable for GeometryConfig {
                 material,
             } => Arc::new(Triangle::new(
                 [v0.into(), v1.into(), v2.into()],
+                None,
                 material.build(),
             )),
             GeometryConfig::Disk {
@@ -406,11 +421,11 @@ impl Buildable for GeometryConfig {
                 material.build(),
             )),
             GeometryConfig::BVH {
-                objects,
+                children,
                 time0,
                 time1,
-            } => Arc::new(BVH::new(objects.build(), time0, time1)),
-            GeometryConfig::List { objects } => Arc::new(HittableList::from(objects.build())),
+            } => Arc::new(BVH::new(children.build(), time0, time1)),
+            GeometryConfig::List { children } => Arc::new(HittableList::from(children.build())),
             GeometryConfig::MovingSphere {
                 center0,
                 center1,
@@ -464,6 +479,38 @@ impl Buildable for GeometryConfig {
                 params: rotates,
                 child,
             } => Arc::new(Transforms::new(&rotates, child.build())),
+            GeometryConfig::Mesh {
+                from_obj,
+                material,
+                load_options: load_option,
+            } => {
+                let material = material.build();
+                let load_options = match load_option {
+                    Some(o) => o,
+                    None => MeshLoadOptions::default(),
+                };
+                let mesh = match from_obj {
+                    MeshObjectConfig::FilePath(path) => {
+                        Mesh::try_from_obj_file(path, material, load_options)
+                    }
+                    MeshObjectConfig::RawString(content) => {
+                        Mesh::try_from_obj_str(&content, material, load_options)
+                    }
+                };
+
+                let mesh = mesh.expect("failed to create mesh from file");
+                Arc::new(mesh)
+            }
+            GeometryConfig::Pyramid {
+                v0,
+                v1,
+                v2,
+                v3,
+                material,
+            } => Arc::new(Pyramid::new(
+                [v0.into(), v1.into(), v2.into(), v3.into()],
+                material.build(),
+            )),
         }
     }
 }

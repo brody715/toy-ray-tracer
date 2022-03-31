@@ -3,7 +3,9 @@ use paste::paste;
 
 use super::{
     containers::{TagsHittable, BVH},
-    shapes::{AARect, Cube, Cylinder, Disk, Mesh, MovingSphere, Rect, SkyLight, Sphere, Triangle},
+    shapes::{
+        AARect, Cube, Cylinder, Disk, Mesh, MovingSphere, Pyramid, Rect, SkyLight, Sphere, Triangle,
+    },
     transforms::{FlipFace, Rotate, Transforms, Translate},
     volumes::ConstantMedium,
 };
@@ -49,7 +51,8 @@ make_visitor_walker!(Geometry {
     Disk,
     Cylinder,
     Triangle,
-    Mesh
+    Mesh,
+    Pyramid
 });
 
 impl<'a, T> EnterContext<'a, T> {

@@ -1,9 +1,12 @@
 use std::ops::{Index, IndexMut};
 
-use nalgebra::Vector3;
+use nalgebra::{Vector2, Vector3};
 
 #[allow(dead_code)]
 pub type Vec3 = Vector3<f32>;
+
+#[allow(dead_code)]
+pub type Vec2 = Vector2<f32>;
 
 #[allow(dead_code)]
 pub type Color3 = Vec3;
@@ -77,6 +80,8 @@ pub mod vec3 {
     pub const ZUP: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
     pub const XUP: Vec3 = Vec3::new(1.0, 0.0, 0.0);
+
+    pub const INF: Vec3 = Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
 
     #[allow(dead_code)]
     pub fn random() -> Vec3 {

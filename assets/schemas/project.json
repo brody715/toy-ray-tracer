@@ -294,22 +294,88 @@
           "type": "object",
           "required": [
             "kind",
-            "objects",
-            "time0",
-            "time1"
+            "material",
+            "v0",
+            "v1",
+            "v2",
+            "v3"
           ],
           "properties": {
             "kind": {
               "type": "string",
               "enum": [
-                "bvh"
+                "pyramid"
               ]
             },
-            "objects": {
+            "material": {
+              "$ref": "#/definitions/MaterialConfig"
+            },
+            "v0": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "v1": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "v2": {
+              "$ref": "#/definitions/Vec3f"
+            },
+            "v3": {
+              "$ref": "#/definitions/Vec3f"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "from_obj",
+            "kind",
+            "material"
+          ],
+          "properties": {
+            "from_obj": {
+              "$ref": "#/definitions/MeshObjectConfig"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "mesh"
+              ]
+            },
+            "load_options": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/MeshLoadOptions"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "material": {
+              "$ref": "#/definitions/MaterialConfig"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "children",
+            "kind",
+            "time0",
+            "time1"
+          ],
+          "properties": {
+            "children": {
               "type": "array",
               "items": {
                 "$ref": "#/definitions/GeometryConfig"
               }
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "bvh"
+              ]
             },
             "time0": {
               "type": "number",
@@ -349,21 +415,21 @@
         {
           "type": "object",
           "required": [
-            "kind",
-            "objects"
+            "children",
+            "kind"
           ],
           "properties": {
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/GeometryConfig"
+              }
+            },
             "kind": {
               "type": "string",
               "enum": [
                 "list"
               ]
-            },
-            "objects": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/GeometryConfig"
-              }
             }
           }
         },
@@ -585,6 +651,46 @@
               ]
             }
           }
+        }
+      ]
+    },
+    "MeshLoadOptions": {
+      "type": "object",
+      "required": [
+        "scale"
+      ],
+      "properties": {
+        "scale": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
+    "MeshObjectConfig": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "file_path"
+          ],
+          "properties": {
+            "file_path": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "raw_string"
+          ],
+          "properties": {
+            "raw_string": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },

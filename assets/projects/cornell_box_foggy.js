@@ -166,7 +166,7 @@ export default make_project({
     world: {
       // kind: "list",
       kind: "bvh",
-      objects: create_world(),
+      children: create_world(),
       time0: 0,
       time1: 1.0,
     },

@@ -23,6 +23,67 @@ export function make_project(v) { return JSON.stringify(v); }
         script.push_str(&format!("export function make_{}(v) {{ return v; }}", name));
     }
 
+    let helper = String::from(r#"
+export class Color {
+    static rgb2vec3(r, g, b) {
+        return [r / 255, g / 255, b / 255];
+    }
+
+    static hex2vec3(hex) {
+        const b = hex & 0xff;
+        hex >>= 8;
+        const g = hex & 0xff;
+        hex >>= 8;
+        const r = hex & 0xff;
+        return Color.rgb2vec3(r, g, b);
+    }
+};
+
+export class Vec3 {
+    static random_f32(min = 0, max = 1) {
+        return min + Math.random() * (max - min);
+    }
+
+    static random_vec3(min = 0, max = 1) {
+        return [
+            random_f32(min, max),
+            random_f32(min, max),
+            random_f32(min, max),
+        ];
+    }
+
+    static sub(v1, v2) {
+        return [v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]];
+    }
+
+    static add(v1, v2) {
+        return [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]];
+    }
+
+    static dot(v1, v2) {
+        return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+    }
+
+    static normalize(v) {
+        return Math.sqrt(Vec3.dot(v, v));
+    }
+};
+
+export class Utils {
+    static make_screen_size(size) {
+        return {
+            width: size.width,
+            height: size.height,
+            aspect: function () {
+              return this.width / this.height;
+            },
+        }
+    }
+}
+    "#);
+
+    script.push_str(&helper);
+
     return script;
 }
 

@@ -63,7 +63,7 @@ export function create_world() {
 
   const lights = make_geometry({
     kind: "list",
-    objects: [
+    children: [
       {
         kind: "flip_face",
         child: {
@@ -193,7 +193,7 @@ export default make_project({
     world: {
       // kind: "list",
       kind: "bvh",
-      objects: world,
+      children: world,
       time0: 0,
       time1: 1.0,
     },
