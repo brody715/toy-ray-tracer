@@ -4,6 +4,7 @@ mod load;
 use std::collections::HashSet;
 use std::sync::Arc;
 
+use anyhow::Context;
 use log::info;
 use schemars::schema::{ArrayValidation, InstanceType, SchemaObject};
 use schemars::JsonSchema;
@@ -91,9 +92,9 @@ pub trait Buildable {
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug)]
 pub struct ProjectConfig {
-    name: String,
-    settings: Settings,
-    scene: SceneConfig,
+    pub name: String,
+    pub settings: Settings,
+    pub scene: SceneConfig,
 }
 
 impl Buildable for ProjectConfig {
@@ -264,7 +265,8 @@ impl Buildable for TextureConfig {
                 Arc::new(ConstantTexture::new(color.into()))
             }
             TextureConfig::ImageTexture { file_path } => {
-                let img = nimage::Image::load_png(file_path).expect("failed to load in build");
+                let img = nimage::Image::load_png(file_path.clone())
+                    .expect(format!("failed to load image texture: {}", &file_path).as_str());
                 Arc::new(ImageTexture::new(img))
             }
             TextureConfig::CheckerTexture { odd, even } => {
@@ -491,14 +493,15 @@ impl Buildable for GeometryConfig {
                 };
                 let mesh = match from_obj {
                     MeshObjectConfig::FilePath(path) => {
-                        Mesh::try_from_obj_file(path, material, load_options)
+                        Mesh::try_from_obj_file(&path, material, load_options)
+                            .context(format!("load mesh file failed: {}", &path))
                     }
                     MeshObjectConfig::RawString(content) => {
                         Mesh::try_from_obj_str(&content, material, load_options)
                     }
                 };
 
-                let mesh = mesh.expect("failed to create mesh from file");
+                let mesh = mesh.expect("failed to create mesh");
                 Arc::new(mesh)
             }
             GeometryConfig::Pyramid {

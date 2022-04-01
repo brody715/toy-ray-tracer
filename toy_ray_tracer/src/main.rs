@@ -7,6 +7,7 @@ mod hittable;
 mod hittable_list;
 mod material;
 mod materials;
+mod math;
 mod nimage;
 mod perlin;
 mod project;
@@ -17,9 +18,7 @@ mod texture;
 mod textures;
 mod utils;
 mod vec;
-mod math;
 
-use crate::scene::RenderOptions;
 use crate::scene_builder::{load_project_config, Buildable};
 use crate::{engine::Engine, utils::ExecutionTimer};
 use anyhow::Ok;
@@ -31,15 +30,13 @@ use std::path::Path;
 
 #[derive(Args, Debug)]
 struct RenderCmdArgs {
-    #[clap(long, help = "scene to render", default_value_t = String::from("earth"))]
-    scene: String,
-
-    #[clap(long, short = 'o', help = "output dir", default_value_t = String::from("./output"))]
+    // #[clap(long, help = "scene to render", default_value_t = String::from("earth"))]
+    // scene: String,
+    #[clap(long, short = 'o', help = "output dir", default_value_t = String::from(""))]
     output_dir: String,
 
-    #[clap(flatten)]
-    render_opts: RenderOptions,
-
+    // #[clap(flatten)]
+    // render_opts: RenderOptions,
     #[clap(long, short = 'p', help = "project file")]
     project_file: String,
 }
@@ -86,15 +83,21 @@ fn run_generate(_args: GenerateCmdArgs) -> anyhow::Result<()> {
 fn run_render(args: RenderCmdArgs) -> anyhow::Result<()> {
     debug!("use args={:#?}", args);
 
-    let project_config: ProjectConfig = load_project_config(&args.project_file)?;
+    let mut project_config: ProjectConfig = load_project_config(&args.project_file)?;
+
+    {
+        let settings = &mut project_config.settings;
+        if args.output_dir.len() != 0 {
+            settings.output_dir = args.output_dir;
+        }
+    }
 
     let project = project_config.build();
 
-    let opt = project.settings();
-
     let engine = Engine::new();
 
-    let output_dir = Path::new(&args.output_dir);
+    let opt = project.settings();
+    let output_dir = Path::new(&opt.output_dir);
     let output_path = output_dir.join(format!("{}.png", project.name()));
 
     {

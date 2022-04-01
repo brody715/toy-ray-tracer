@@ -61,24 +61,14 @@ export function create_world() {
       kind: "tags",
       tags: ["lights"],
       child: {
-        // kind: "list",
-        // children: [
-        //   {
         kind: "flip_face",
         child: {
           kind: "disk",
           center: [box_width / 2, box_height - 1, box_depth / 2],
           radius: 0.2 * box_width,
           normal: [0, 1, 0],
-          // kind: "rect",
-          // v0: [213, 554, 227],
-          // v1: [343, 554, 332],
-          // radius: 100,
-          // material: light,
           material: strong_light,
         },
-        // },
-        // ],
       },
     })
   );
@@ -106,8 +96,6 @@ export function create_world() {
     v1: [box_width, box_height, 0],
     material: white,
   });
-
-  // cubes
 
   // cube1
   world.push(
@@ -156,12 +144,9 @@ export function create_world() {
               v3: [50, 0, 0],
               material: {
                 kind: "lambertian",
-                // kind: "metal",
                 albedo: {
                   kind: "constant_texture",
                   color: Color.hex2vec3(0xed556a),
-                  // color: [0.2, 0.2, 0.2],
-                  // color: [1, 1, 1],
                 },
                 fuzz: 0,
               },
@@ -216,28 +201,10 @@ export function create_world() {
             radius: 50,
             material: m_cylinder,
           },
-
-          // {
-          //   kind: "tags",
-          //   tags: ["lights"],
-          //   child: {
-          //     kind: "sphere",
-          //     center: [10, -2 * light_radius, -10],
-          //     radius: light_radius,
-          //     material: {
-          //       kind: "diffuse_light",
-          //       emit: {
-          //         kind: "constant_texture",
-          //         color: [0.9, 0.2, 0.1],
-          //       },
-          //     },
-          //   },
-          // },
         ],
       },
     });
   }
-  // world.pop();
 
   const cow_size = 60;
   world.push({
@@ -263,7 +230,6 @@ export function create_world() {
       },
     },
   });
-  // world.pop();
 
   return world;
 }
@@ -272,11 +238,9 @@ export default make_project({
   name: "homework1",
   settings: {
     output_dir: "./output",
-    height: 500,
-    width: 500,
+    height: 800,
+    width: 800,
     nsamples: 1000,
-    // nsamples: 10,
-    // nsamples: 3,
     max_depth: 15,
   },
   scene: {
@@ -294,11 +258,9 @@ export default make_project({
     // lights,
     sky: {
       kind: "solid",
-      // background: [0.7, 0.8, 1.0],
       background: [0.0, 0.0, 0.0],
     },
     world: {
-      // kind: "list",
       kind: "bvh",
       children: create_world(),
       time0: 0,

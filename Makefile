@@ -1,7 +1,32 @@
+ifndef VERSION_TAG
+COMMIT_ID = $(shell git log -1 --format=%h)
+VERSION_TAG = ${COMMIT_ID}
+endif
+
+DOCKER_REGISTRY = registry.cn-shanghai.aliyuncs.com/thincats-public/
+
+EXEC_IMAGE_NOTAG = ${DOCKER_REGISTRY}toy-ray-tracer
+EXEC_IMAGE = ${EXEC_IMAGE_NOTAG}:${VERSION_TAG}
+
 GARGS =
 ARGS=
 
 export RAYON_NUM_THREADS=6
+
+build-exec-image:
+	docker buildx build . \
+      -t ${EXEC_IMAGE_NOTAG}:v1 \
+      -t ${EXEC_IMAGE} \
+
+SCENE=homework1
+run-exec-image:
+	time docker run -v $(shell pwd)/output:/app/output ${EXEC_IMAGE} ${GARGS} render --project-file=/app/assets/projects/${SCENE}.js ${ARGS}
+
+push-exec-image:
+	docker push ${EXEC_IMAGE}
+
+print-exec-image:
+	@echo ${EXEC_IMAGE}
 
 RELEASE_EXE = ./target/release/toy_ray_tracer
 

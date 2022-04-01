@@ -119,46 +119,52 @@ impl Hittable for Cylinder {
             Plane::XY => vec3::ZUP,
         };
 
-        let sqrt_discr = discriminant.sqrt();
-        let root1 = (-b - sqrt_discr) / (2.0 * a);
-        let p1 = ro[axis_c] + root1 * rd[axis_c];
-
-        let rooto: Option<f32> = if p1 > c_min && p1 < c_max {
-            Some(root1)
-        } else {
-            let root2 = (-b + sqrt_discr) / (2.0 * a);
-            let p2 = ro[axis_c] + root2 * rd[axis_c];
-            if p2 > c_min && p2 < c_max {
-                Some(root2)
+        // base first
+        let t_normal: Option<(f32, Vec3)> = (move || {
+            // check hit the base
+            let (center, normal) = if ray.direction()[axis_c] < 0.0 {
+                (self.center1, up_normal)
             } else {
-                None
-            }
-        };
-
-        let t_normal: Option<(f32, Vec3)> = if let Some(t) = rooto {
-            let p = ray.origin() + t * ray.direction();
-            // hit sides
-            let mut normal = p - self.center0;
-            normal[axis_c] = p[axis_c];
-            let normal = normal.normalize();
-
-            Some((t, normal))
-        } else {
-            // may hit the base
-            let base_normal = if ray.direction()[axis_c] < 0.0 {
-                up_normal
-            } else {
-                -up_normal
+                (self.center0, -up_normal)
             };
-            let t = -base_normal.dot(&oc) / ray.direction().dot(&base_normal);
+
+            let oc = ray.origin() - center;
+            let t = -normal.dot(&oc) / ray.direction().dot(&normal);
             let q = oc + ray.direction() * t;
 
             if q.dot(&q) < self.radius * self.radius {
-                Some((t, base_normal))
-            } else {
-                None
+                return Some((t, normal));
             }
-        };
+
+            // check hit the sides
+            let sqrt_discr = discriminant.sqrt();
+            let root1 = (-b - sqrt_discr) / (2.0 * a);
+            let p1 = ro[axis_c] + root1 * rd[axis_c];
+
+            let rooto: Option<f32> = if p1 > c_min && p1 < c_max {
+                Some(root1)
+            } else {
+                let root2 = (-b + sqrt_discr) / (2.0 * a);
+                let p2 = ro[axis_c] + root2 * rd[axis_c];
+                if p2 > c_min && p2 < c_max {
+                    Some(root2)
+                } else {
+                    None
+                }
+            };
+
+            if let Some(t) = rooto {
+                let p = ray.origin() + t * ray.direction();
+                // hit sides
+                let mut normal = p - self.center0;
+                normal[axis_c] = p[axis_c];
+                let normal = normal.normalize();
+
+                return Some((t, normal));
+            }
+
+            return None;
+        })();
 
         if let Some((t, normal)) = t_normal {
             if t < t_min || t > t_max {
@@ -180,8 +186,6 @@ impl Hittable for Cylinder {
 
         let aa = -vec3::elementwise_mult(&a, &a) / a.dot(&a);
         let e = self.radius * vec3::sqrt(aa.add_scalar(1.0));
-
-        println!("a={:?}, aa={:?}, e={:?}", a, aa, e);
 
         return Some(AABB::new(
             vec3::min(&(self.center0 - e), &(self.center1 - e)),
