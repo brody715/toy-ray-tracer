@@ -47,10 +47,12 @@ impl Engine {
         let tasks_finished = Arc::new(AtomicUsize::new(0));
         let pixels_local = Arc::new(ThreadLocal::new());
 
+        let unit_height = height / 100;
+
         (0..height).into_par_iter().for_each(|j: usize| {
             let _timer = ExecutionTimer::new(|start_time| {
                 let val = tasks_finished.fetch_add(1, Ordering::Relaxed) + 1;
-                if (val * 100 / height) % 2 == 0 || val == height {
+                if val % unit_height == 0 || val == height {
                     trace!(
                         "render elapsed {} ms, height_idx={}, progress={}/{} ({:.2}%)",
                         start_time.elapsed().as_millis(),
