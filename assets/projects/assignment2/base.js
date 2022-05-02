@@ -1,4 +1,7 @@
-export function create_world() {
+/** @type {[number, number]} */
+export const default_block_size = [10, 10];
+
+function create_world(sampler) {
   const red = make_material({
     kind: "lambertian",
     albedo: {
@@ -56,18 +59,11 @@ export function create_world() {
         child: {
           kind: "disk",
           properties: {
-            sampler: {
-              kind: "random",
-            },
+            sampler: sampler,
           },
           center: [268, 554, 280],
           radius: 100,
           normal: [0, 1, 0],
-          // kind: "rect",
-          // v0: [213, 554, 227],
-          // v1: [343, 554, 332],
-          // radius: 100,
-          // material: light,
           material: light,
         },
       },
@@ -133,41 +129,47 @@ export function create_world() {
   return world;
 }
 
-export default make_project({
-  name: "cornell_box",
-  settings: {
-    output_dir: "./output",
-    height: 500,
-    width: 500,
-    nsamples: 100,
-    // nsamples: 10,
-    // nsamples: 3,
-    max_depth: 50,
-  },
-  scene: {
-    camera: {
-      look_from: [278, 278, -800],
-      look_at: [278, 278, 0],
-      view_up: [0, 1, 0],
-      vertical_fov: 40.0,
-      aspect: 1.0,
-      aperture: 0.0,
-      focus_dist: 10.0,
-      time0: 0.0,
-      time1: 0.0,
+/** @typedef {import('../../schemas/project').SamplerType} SamplerType */
+
+/**
+ *
+ * @param {{name: string, nsamples?: number, sampler: SamplerType}} param0
+ * @returns
+ */
+export function make_assignment2({name, nsamples = 100, sampler}) {
+  const world = create_world(sampler);
+  return make_project({
+    name,
+    settings: {
+      output_dir: "./output",
+      height: 500,
+      width: 500,
+      nsamples: nsamples,
+      max_depth: 50,
     },
-    // lights,
-    sky: {
-      kind: "solid",
-      // background: [0.7, 0.8, 1.0],
-      background: [0.0, 0.0, 0.0],
+    scene: {
+      camera: {
+        look_from: [278, 278, -800],
+        look_at: [278, 278, 0],
+        view_up: [0, 1, 0],
+        vertical_fov: 40.0,
+        aspect: 1.0,
+        aperture: 0.0,
+        focus_dist: 10.0,
+        time0: 0.0,
+        time1: 0.0,
+      },
+      // lights,
+      sky: {
+        kind: "solid",
+        background: [0.0, 0.0, 0.0],
+      },
+      world: {
+        kind: "bvh",
+        children: world,
+        time0: 0,
+        time1: 1.0,
+      },
     },
-    world: {
-      // kind: "list",
-      kind: "bvh",
-      children: create_world(),
-      time0: 0,
-      time1: 1.0,
-    },
-  },
-});
+  });
+}

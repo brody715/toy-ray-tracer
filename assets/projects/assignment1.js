@@ -102,8 +102,8 @@ export function create_world() {
     make_geometry({
       kind: "transforms",
       params: [
-        { kind: "rotate", axis: "Y", angle: -18 },
-        { kind: "translate", offset: [0.6 * box_width, 0, 0.5 * box_depth] },
+        {kind: "rotate", axis: "Y", angle: -18},
+        {kind: "translate", offset: [0.6 * box_width, 0, 0.5 * box_depth]},
       ],
       child: {
         kind: "list",
@@ -116,21 +116,26 @@ export function create_world() {
           },
           {
             kind: "transforms",
-            params: [{ kind: "translate", offset: [60, 250, 60] }],
+            params: [{kind: "translate", offset: [60, 250, 60]}],
             child: {
               kind: "sphere",
               center: [0, 0, 0],
               radius: 50,
               material: {
-                kind: "dielectric",
-                ir: 1.5,
+                // kind: "dielectric",
+                // ir: 1.5,
+                kind: "lambertian",
+                albedo: {
+                  kind: "constant_texture",
+                  color: Color.rgb2vec3(255, 0, 0),
+                },
               },
             },
           },
           {
             kind: "transforms",
             params: [
-              { kind: "rotate", axis: "Y", angle: 0 },
+              {kind: "rotate", axis: "Y", angle: 0},
               {
                 kind: "translate",
                 offset: [60, 320, 60],
@@ -171,7 +176,7 @@ export function create_world() {
     world.push({
       kind: "transforms",
       params: [
-        { kind: "rotate", axis: "Y", angle: 45 },
+        {kind: "rotate", axis: "Y", angle: 45},
         {
           kind: "translate",
           offset: [0.35 * box_width, 0.25 * box_height, 0.5 * box_depth],
@@ -210,8 +215,8 @@ export function create_world() {
   world.push({
     kind: "transforms",
     params: [
-      { kind: "rotate", axis: "Y", angle: -180 },
-      { kind: "translate", offset: [1 * cow_size, 1 * cow_size, 2 * cow_size] },
+      {kind: "rotate", axis: "Y", angle: -180},
+      {kind: "translate", offset: [1 * cow_size, 1 * cow_size, 2 * cow_size]},
     ],
     child: {
       kind: "mesh",
@@ -235,12 +240,12 @@ export function create_world() {
 }
 
 export default make_project({
-  name: "homework1",
+  name: "homework1-1",
   settings: {
     output_dir: "./output",
     height: 800,
     width: 800,
-    nsamples: 1000,
+    nsamples: 100,
     max_depth: 15,
   },
   scene: {

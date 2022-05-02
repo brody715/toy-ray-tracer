@@ -29,7 +29,7 @@ impl From<Vec3> for CosinePDF {
 }
 
 impl PDF for CosinePDF {
-    fn value(&self, direction: &crate::vec::Vec3) -> f32 {
+    fn pdf_value(&self, direction: &crate::vec::Vec3) -> f32 {
         let cosine = direction.normalize().dot(&self.uvw.w());
         if cosine <= 0.0 {
             0.0
@@ -38,7 +38,7 @@ impl PDF for CosinePDF {
         }
     }
 
-    fn generate(&self) -> crate::vec::Vec3 {
+    fn generate_direction(&self) -> crate::vec::Vec3 {
         self.uvw.local(vec3::random_cosine_direction())
     }
 }
@@ -55,11 +55,11 @@ impl<'a> HittablePDF<'a> {
 }
 
 impl<'a> PDF for HittablePDF<'a> {
-    fn value(&self, direction: &crate::vec::Vec3) -> f32 {
+    fn pdf_value(&self, direction: &crate::vec::Vec3) -> f32 {
         return self.hittable.pdf_value(&self.o, &direction);
     }
 
-    fn generate(&self) -> crate::vec::Vec3 {
+    fn generate_direction(&self) -> crate::vec::Vec3 {
         return self.hittable.random(&self.o);
     }
 }
@@ -67,11 +67,11 @@ impl<'a> PDF for HittablePDF<'a> {
 pub struct NopPDF;
 
 impl PDF for NopPDF {
-    fn value(&self, _direction: &Vec3) -> f32 {
+    fn pdf_value(&self, _direction: &Vec3) -> f32 {
         1.0
     }
 
-    fn generate(&self) -> Vec3 {
+    fn generate_direction(&self) -> Vec3 {
         todo!()
     }
 }
@@ -88,12 +88,12 @@ impl<'a> WrapperPDF<'a> {
 }
 
 impl<'a> PDF for WrapperPDF<'a> {
-    fn value(&self, direction: &Vec3) -> f32 {
-        return self.p.value(direction);
+    fn pdf_value(&self, direction: &Vec3) -> f32 {
+        return self.p.pdf_value(direction);
     }
 
-    fn generate(&self) -> Vec3 {
-        return self.p.generate();
+    fn generate_direction(&self) -> Vec3 {
+        return self.p.generate_direction();
     }
 }
 
@@ -108,16 +108,17 @@ impl<'a> MixturePDF<'a> {
     }
 }
 
+const WEIGHT: f32 = 0.5;
 impl<'a> PDF for MixturePDF<'a> {
-    fn value(&self, direction: &Vec3) -> f32 {
-        return 0.5 * self.p[0].value(direction) + 0.5 * self.p[1].value(direction);
+    fn pdf_value(&self, direction: &Vec3) -> f32 {
+        return WEIGHT * self.p[0].pdf_value(direction) + (1.0 - WEIGHT) * self.p[1].pdf_value(direction);
     }
 
-    fn generate(&self) -> Vec3 {
-        if random::f32() < 0.5 {
-            self.p[0].generate()
+    fn generate_direction(&self) -> Vec3 {
+        if random::f32() < WEIGHT {
+            self.p[0].generate_direction()
         } else {
-            self.p[1].generate()
+            self.p[1].generate_direction()
         }
     }
 }

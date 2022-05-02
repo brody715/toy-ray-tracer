@@ -33,12 +33,9 @@ RELEASE_EXE = ./target/release/toy_ray_tracer
 rt-build-optimized:
 	cargo build -p toy_ray_tracer --release
 
-rt-run-optimized: rt-build-optimized
-	time ${RELEASE_EXE} ${GARGS} ${ARGS}
-
 SCENE=earth
 rt-run-render: rt-build-optimized
-	time ${RELEASE_EXE} ${GARGS} render --project-file=./assets/projects/${SCENE}.js ${ARGS}
+	RUST_BACKTRACE=1 time ${RELEASE_EXE} ${GARGS} render --project-file=./assets/projects/${SCENE}.js ${ARGS}
 
 rt-show-scene:
 	code ./output/${SCENE}.png

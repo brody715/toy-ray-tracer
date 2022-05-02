@@ -23,7 +23,8 @@ export function make_project(v) { return JSON.stringify(v); }
         script.push_str(&format!("export function make_{}(v) {{ return v; }}", name));
     }
 
-    let helper = String::from(r#"
+    let helper = String::from(
+        r#"
 export class Color {
     static rgb2vec3(r, g, b) {
         return [r / 255, g / 255, b / 255];
@@ -80,7 +81,8 @@ export class Utils {
         }
     }
 }
-    "#);
+    "#,
+    );
 
     script.push_str(&helper);
 
@@ -103,7 +105,7 @@ pub mod nodejs {
 
     use tempdir::TempDir;
 
-    pub fn load_from_js(script: &str) -> anyhow::Result<ProjectConfig> {
+    pub fn load_from_js<P: AsRef<Path>>(script: &str, _path: P) -> anyhow::Result<ProjectConfig> {
         let inner_module_script = create_internal_module_script();
 
         let mut module_script = String::from("");
@@ -156,15 +158,27 @@ pub mod nodejs {
 
 #[cfg(feature = "quickjs")]
 pub mod quickjs {
+    use std::path::Path;
+
     use anyhow::{Context, Ok};
-    use rquickjs::{FromJs, Module, Runtime};
+    use rquickjs::{FileResolver, FromJs, Module, Runtime, ScriptLoader};
 
     use super::create_internal_module_script;
     use crate::scene_builder::ProjectConfig;
 
-    pub fn load_from_js(script: &str) -> anyhow::Result<ProjectConfig> {
+    pub fn load_from_js<P: AsRef<Path>>(script: &str, path: P) -> anyhow::Result<ProjectConfig> {
+        // let script_dir = path
+        //     .as_ref()
+        //     .parent()
+        //     .context("failed to load parent of path")?;
         let rt = Runtime::new()?;
         let ctx = rquickjs::Context::full(&rt)?;
+
+        {
+            let resolver = (FileResolver::default().with_path("./"),);
+            let loader = (ScriptLoader::default(),);
+            rt.set_loader(resolver, loader);
+        }
 
         let project_config = ctx.with(|ctx| -> anyhow::Result<ProjectConfig> {
             let inner_module_script = create_internal_module_script();
@@ -185,7 +199,9 @@ pub mod quickjs {
                 rquickjs::Func::new("log_string", move |v: String| println!("{:?}", v)),
             )?;
 
-            let m = rquickjs::Module::new(ctx, "script", script)?;
+            let script_path = path.as_ref().to_string_lossy().to_string();
+
+            let m = rquickjs::Module::new(ctx, script_path, script)?;
 
             let str_value: rquickjs::Value = m.eval()?.get("default").unwrap();
             let str: String = String::from_js(ctx, str_value)?;
@@ -244,6 +260,7 @@ mod tests {
         }
     });
     "#,
+            ".",
         )
         .unwrap();
 

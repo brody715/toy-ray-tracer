@@ -126,6 +126,7 @@ impl Engine {
                 pdf: pdf_scatter,
             }) = rec.material.scatter(r, &rec)
             {
+                // 镜面反射
                 if let Some(specular_ray) = specular_ray {
                     return vec3::elementwise_mult(
                         &attenuation,
@@ -133,6 +134,7 @@ impl Engine {
                     );
                 }
 
+                // 漫反射
                 let mixture_pdf: MixturePDF;
                 let light_pdf = HittablePDF::new(rec.p, light_shape);
 
@@ -144,8 +146,8 @@ impl Engine {
                     None => &light_pdf,
                 };
 
-                let scattered = Ray::new(rec.p, mixture_pdf.generate(), r.time());
-                let pdf_val = mixture_pdf.value(&scattered.direction());
+                let scattered = Ray::new(rec.p, mixture_pdf.generate_direction(), r.time());
+                let pdf_val = mixture_pdf.pdf_value(&scattered.direction());
 
                 let new_color = self.get_ray_color(&scattered, world, sky, light_shape, depth - 1);
                 return emitted

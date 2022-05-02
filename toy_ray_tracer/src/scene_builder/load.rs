@@ -9,7 +9,7 @@ pub fn load_project_config<P: AsRef<Path>>(path: P) -> anyhow::Result<ProjectCon
     if let Some(ext) = extension {
         let content = std::fs::read_to_string(path.as_ref())?;
         return match ext {
-            "js" => load_from_js(&content),
+            "js" => load_from_js(&content, path),
             "json" => load_from_json(&content),
             _ => Err(anyhow!(
                 "unsupported file format: {}",

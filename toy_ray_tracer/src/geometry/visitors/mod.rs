@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
     geometry::{containers::TagsHittable, EnterContext, GeometryWalker},
     hittable::{Hittable, HittablePtr},
-    hittable_list::HittableList,
+    hittable_list::HittableList
 };
 
 pub fn try_get_light_from_world<'a>(world: &'a dyn Hittable) -> Option<HittablePtr> {
@@ -18,7 +18,8 @@ pub fn try_get_light_from_world<'a>(world: &'a dyn Hittable) -> Option<HittableP
             let tags = &ctx.node.tags;
 
             if tags.contains("lights") || tags.contains("light") {
-                self.results.push(ctx.node.child.clone());
+                let child = ctx.node.child.clone();
+                self.results.push(child);
             }
         }
     }

@@ -253,6 +253,16 @@
             "normal": {
               "$ref": "#/definitions/Vec3f"
             },
+            "properties": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Properties"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "radius": {
               "type": "number",
               "format": "float"
@@ -403,6 +413,13 @@
               "enum": [
                 "tags"
               ]
+            },
+            "properties": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
             },
             "tags": {
               "type": "array",
@@ -691,6 +708,107 @@
             }
           },
           "additionalProperties": false
+        }
+      ]
+    },
+    "Properties": {
+      "type": "object",
+      "required": [
+        "sampler"
+      ],
+      "properties": {
+        "sampler": {
+          "$ref": "#/definitions/SamplerType"
+        }
+      }
+    },
+    "SamplerType": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "block_size",
+            "kind"
+          ],
+          "properties": {
+            "block_size": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "maxItems": 2,
+              "minItems": 2
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "uniform"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "random"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "block_size",
+            "kind"
+          ],
+          "properties": {
+            "block_size": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "maxItems": 2,
+              "minItems": 2
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "random_fixed"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "block_size",
+            "kind"
+          ],
+          "properties": {
+            "block_size": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "maxItems": 2,
+              "minItems": 2
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "blue_noise"
+              ]
+            }
+          }
         }
       ]
     },

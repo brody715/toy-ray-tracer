@@ -1,18 +1,25 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::{
     geometry::EnterContext,
     hittable::{Hittable, HittablePtr},
 };
 
+type PropertiesType = Option<HashMap<String, serde_json::Value>>;
+
 pub struct TagsHittable {
     pub(crate) tags: HashSet<String>,
+    _properties: PropertiesType,
     pub(crate) child: HittablePtr,
 }
 
 impl TagsHittable {
-    pub fn new(tags: HashSet<String>, child: HittablePtr) -> Self {
-        Self { tags, child }
+    pub fn new(tags: HashSet<String>, child: HittablePtr, properties: PropertiesType) -> Self {
+        Self {
+            tags,
+            child,
+            _properties: properties,
+        }
     }
 }
 

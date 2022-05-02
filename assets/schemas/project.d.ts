@@ -51,6 +51,7 @@ export type GeometryConfig =
       kind: "disk";
       material: MaterialConfig;
       normal: Vec3F;
+      properties?: Properties | null;
       radius: number;
       [k: string]: unknown | undefined;
     }
@@ -88,6 +89,9 @@ export type GeometryConfig =
   | {
       child: GeometryConfig;
       kind: "tags";
+      properties?: {
+        [k: string]: unknown | undefined;
+      } | null;
       tags: string[];
       [k: string]: unknown | undefined;
     }
@@ -171,6 +175,26 @@ export type TextureConfig =
       odd: TextureConfig;
       [k: string]: unknown | undefined;
     };
+export type SamplerType =
+  | {
+      block_size: [number, number];
+      kind: "uniform";
+      [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "random";
+      [k: string]: unknown | undefined;
+    }
+  | {
+      block_size: [number, number];
+      kind: "random_fixed";
+      [k: string]: unknown | undefined;
+    }
+  | {
+      block_size: [number, number];
+      kind: "blue_noise";
+      [k: string]: unknown | undefined;
+    };
 export type MeshObjectConfig =
   | {
       file_path: string;
@@ -221,6 +245,10 @@ export interface CameraConfig {
   time1: number;
   vertical_fov: number;
   view_up: Vec3F;
+  [k: string]: unknown | undefined;
+}
+export interface Properties {
+  sampler: SamplerType;
   [k: string]: unknown | undefined;
 }
 export interface MeshLoadOptions {

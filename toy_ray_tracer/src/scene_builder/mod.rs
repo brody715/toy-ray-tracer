@@ -1,7 +1,7 @@
 mod js;
 mod load;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use anyhow::Context;
@@ -18,12 +18,13 @@ use crate::geometry::shapes::{
     Triangle,
 };
 use crate::geometry::transforms::{Axis, FlipFace, Rotate, TransformParam, Transforms, Translate};
-use crate::geometry::try_get_light_from_world;
+use crate::geometry::visitors::try_get_light_from_world;
 use crate::geometry::volumes::ConstantMedium;
-use crate::hittable::HittablePtr;
+use crate::hittable::{Hittable, HittablePtr};
 use crate::hittable_list::HittableList;
 use crate::material::MaterialPtr;
 use crate::materials::{Dielectric, DiffuseLight, Isotropic, Lambertian, Metal};
+use crate::math::SamplerType;
 use crate::nimage;
 use crate::project::{Project, Settings};
 use crate::scene::Scene;
@@ -107,6 +108,11 @@ impl Buildable for ProjectConfig {
             scene: self.scene.build(),
         }
     }
+}
+
+#[derive(JsonSchema, Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Properties {
+    sampler: SamplerType,
 }
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug)]
@@ -318,6 +324,7 @@ pub enum GeometryConfig {
         material: MaterialConfig,
     },
     Disk {
+        properties: Option<Properties>,
         center: JVec3,
         radius: f32,
         normal: JVec3,
@@ -351,6 +358,7 @@ pub enum GeometryConfig {
     Tags {
         tags: Vec<String>,
         child: Box<GeometryConfig>,
+        properties: Option<HashMap<String, serde_json::Value>>,
     },
     List {
         children: Vec<GeometryConfig>,
@@ -412,16 +420,18 @@ impl Buildable for GeometryConfig {
                 material.build(),
             )),
             GeometryConfig::Disk {
+                properties,
                 center,
                 radius,
                 normal,
                 material,
-            } => Arc::new(Disk::new(
-                center.into(),
-                radius,
-                normal.into(),
-                material.build(),
-            )),
+            } => {
+                let mut disk = Disk::new(center.into(), radius, normal.into(), material.build());
+                if let Some(properties) = properties {
+                    disk.set_sampler(properties.sampler);
+                }
+                Arc::new(disk)
+            }
             GeometryConfig::BVH {
                 children,
                 time0,
@@ -462,9 +472,13 @@ impl Buildable for GeometryConfig {
                 Arc::new(Rect::new(v0.into(), v1.into(), material.build()))
             }
             GeometryConfig::FlipFace { child } => Arc::new(FlipFace::new(child.build())),
-            GeometryConfig::Tags { tags, child } => {
+            GeometryConfig::Tags {
+                tags,
+                child,
+                properties,
+            } => {
                 let tags: HashSet<String> = tags.iter().map(|t| String::from(t)).collect();
-                Arc::new(TagsHittable::new(tags, child.build()))
+                Arc::new(TagsHittable::new(tags, child.build(), properties))
             }
             GeometryConfig::Cylinder {
                 center0,

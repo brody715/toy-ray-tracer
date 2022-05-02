@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::aabb::AABB;
 use crate::geometry::{EnterContext, GeometryVisitor, GeometryWalker};
 use crate::material::Material;
+use crate::math::SamplerType;
 use crate::ray::Ray;
 use crate::vec::{Point3, Vec3};
 
@@ -50,6 +51,11 @@ impl<'a> HitRecord<'a> {
 pub trait Hittable: Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
+
+    // TODO: find a better way to change sample type
+    fn set_sampler(&mut self, _sampler_type: SamplerType) {
+        unimplemented!()
+    }
 
     fn pdf_value(&self, _origin: &Point3, _v: &Vec3) -> f32 {
         1.0
