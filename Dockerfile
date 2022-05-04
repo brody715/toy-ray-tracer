@@ -6,7 +6,9 @@ COPY ci/rust/config.toml /usr/local/cargo/config
 
 WORKDIR /app
 
-COPY . .
+COPY src ./src
+COPY toy_ray_tracer ./toy_ray_tracer
+COPY Cargo.lock Cargo.toml ./
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
@@ -21,6 +23,6 @@ WORKDIR /app
 RUN mkdir -p /app/output
 
 ENV RUST_BACKTRACE=full
-COPY --from=builder /app/assets /app/assets
 COPY --from=builder /app/target/release/toy_ray_tracer /usr/local/bin/toy_ray_tracer
+COPY assets /app/assets
 ENTRYPOINT ["toy_ray_tracer"]

@@ -20,7 +20,7 @@ build-exec-image:
 
 SCENE=homework1
 run-exec-image:
-	time docker run -v $(shell pwd)/output:/app/output ${EXEC_IMAGE} ${GARGS} render --project-file=/app/assets/projects/${SCENE}.js ${ARGS}
+	time docker run -v $(shell pwd)/output:/app/output ${EXEC_IMAGE} ${GARGS} render --project-file=assets/projects/${SCENE}.js ${ARGS}
 
 push-exec-image:
 	docker push ${EXEC_IMAGE}
