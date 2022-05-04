@@ -867,6 +867,11 @@
         "output_dir": {
           "type": "string"
         },
+        "weight": {
+          "default": 0.5,
+          "type": "number",
+          "format": "float"
+        },
         "width": {
           "type": "integer",
           "format": "uint",

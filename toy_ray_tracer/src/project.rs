@@ -10,6 +10,14 @@ pub struct Settings {
     pub height: usize,
     pub nsamples: i32,
     pub max_depth: i32,
+    #[serde(default = "Settings::default_pdf_weight")]
+    pub weight: f32,
+}
+
+impl Settings {
+    pub fn default_pdf_weight() -> f32 {
+        return 0.5;
+    }
 }
 
 impl Into<RenderOptions> for Settings {

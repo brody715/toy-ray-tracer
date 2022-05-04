@@ -8,9 +8,6 @@ WORKDIR /app
 
 COPY . .
 
-# remove bindgen when arch=x86
-RUN sed -i -e 's/, features = \["bindgen"\]//' toy_ray_tracer/Cargo.toml
-
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/usr/local/cargo/git \
     CARGO_HTTP_MULTIPLEXING=false cargo build -p toy_ray_tracer --release

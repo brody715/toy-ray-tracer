@@ -86,7 +86,7 @@ class DiskUniformSampler(Sampler):
             x = i / self.block_size[0]
             y = j / self.block_size[1]
             theta = 2.0 * math.pi * x
-            r = self.disk.radius * y
+            r = self.disk.radius * ti.sqrt(y)
 
             random_point = point_on_disk(theta, r, self.disk.center)
             self.sampled_points[idx] = random_point
@@ -110,7 +110,7 @@ class DiskBlueNoiseSampler(Sampler):
         for idx in range(self.n_points):
             xy = halton_sequence_2d(idx)
             theta = 2.0 * math.pi * xy[0]
-            r = self.disk.radius * xy[1]
+            r = self.disk.radius * ti.sqrt(xy[1])
 
             random_point = point_on_disk(theta, r, self.disk.center)
             self.sampled_points[idx] = random_point

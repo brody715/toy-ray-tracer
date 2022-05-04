@@ -98,24 +98,28 @@ impl<'a> PDF for WrapperPDF<'a> {
 }
 
 pub struct MixturePDF<'a> {
+    weight: f32,
     p: [&'a dyn PDF; 2],
 }
 
 impl<'a> MixturePDF<'a> {
     #[must_use]
-    pub fn new(p0: &'a dyn PDF, p1: &'a dyn PDF) -> Self {
-        Self { p: [p0, p1] }
+    pub fn new(weight: f32, p0: &'a dyn PDF, p1: &'a dyn PDF) -> Self {
+        Self {
+            weight,
+            p: [p0, p1],
+        }
     }
 }
 
-const WEIGHT: f32 = 0.5;
 impl<'a> PDF for MixturePDF<'a> {
     fn pdf_value(&self, direction: &Vec3) -> f32 {
-        return WEIGHT * self.p[0].pdf_value(direction) + (1.0 - WEIGHT) * self.p[1].pdf_value(direction);
+        return self.weight * self.p[0].pdf_value(direction)
+            + (1.0 - self.weight) * self.p[1].pdf_value(direction);
     }
 
     fn generate_direction(&self) -> Vec3 {
-        if random::f32() < WEIGHT {
+        if random::f32() < self.weight {
             self.p[0].generate_direction()
         } else {
             self.p[1].generate_direction()

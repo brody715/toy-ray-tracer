@@ -260,6 +260,7 @@ export interface Settings {
   max_depth: number;
   nsamples: number;
   output_dir: string;
+  weight?: number;
   width: number;
   [k: string]: unknown | undefined;
 }

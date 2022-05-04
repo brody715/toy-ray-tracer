@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{cell::RefCell, sync::Arc};
 
+use crate::project::Settings;
 use crate::{
     environment::Sky,
     material::ScatterRecord,
@@ -38,6 +39,7 @@ impl Engine {
         let max_depth = opts.max_depth;
 
         let scene = project.scene();
+        let settings = project.settings();
 
         let world = scene.world();
         let camera = scene.camera();
@@ -76,7 +78,7 @@ impl Engine {
                     let u = (i as f32 + rng.f32()) / width as f32;
                     let v = (j as f32 + rng.f32()) / height as f32;
                     let r = camera.get_ray(u, v);
-                    let c = self.get_ray_color(&r, world, sky, lights, max_depth);
+                    let c = self.get_ray_color(&r, world, sky, lights, settings, max_depth);
                     pixels[(height - j - 1) * width + i] += c;
                 }
             }
@@ -111,6 +113,7 @@ impl Engine {
         world: &'a dyn Hittable,
         sky: &dyn Sky,
         light_shape: &'a dyn Hittable,
+        settings: &'a Settings,
         depth: i32,
     ) -> Color3 {
         // no more light is gathered when reach the limit
@@ -130,7 +133,14 @@ impl Engine {
                 if let Some(specular_ray) = specular_ray {
                     return vec3::elementwise_mult(
                         &attenuation,
-                        &self.get_ray_color(&specular_ray, world, sky, light_shape, depth - 1),
+                        &self.get_ray_color(
+                            &specular_ray,
+                            world,
+                            sky,
+                            light_shape,
+                            settings,
+                            depth - 1,
+                        ),
                     );
                 }
 
@@ -140,7 +150,8 @@ impl Engine {
 
                 let mixture_pdf: &dyn PDF = match &pdf_scatter {
                     Some(pdf_scatter) => {
-                        mixture_pdf = MixturePDF::new(&light_pdf, pdf_scatter.as_ref());
+                        mixture_pdf =
+                            MixturePDF::new(settings.weight, &light_pdf, pdf_scatter.as_ref());
                         &mixture_pdf
                     }
                     None => &light_pdf,
@@ -149,7 +160,8 @@ impl Engine {
                 let scattered = Ray::new(rec.p, mixture_pdf.generate_direction(), r.time());
                 let pdf_val = mixture_pdf.pdf_value(&scattered.direction());
 
-                let new_color = self.get_ray_color(&scattered, world, sky, light_shape, depth - 1);
+                let new_color =
+                    self.get_ray_color(&scattered, world, sky, light_shape, settings, depth - 1);
                 return emitted
                     + vec3::elementwise_mult(&attenuation, &new_color)
                         * rec.material.scattering_pdf(r, &rec, &scattered)

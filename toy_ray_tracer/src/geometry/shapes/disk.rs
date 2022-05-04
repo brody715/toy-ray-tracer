@@ -222,7 +222,7 @@ impl DiskUniformSampler {
                 let x = i as f32 / block_size[0] as f32;
                 let y = j as f32 / block_size[1] as f32;
                 let theta = 2.0 * PI * x;
-                let r = disk.radius * y;
+                let r = disk.radius * y.sqrt();
 
                 let random_point = point_on_disk(theta, r, disk.center, disk.plane);
                 sampled_points.push(random_point);
@@ -254,7 +254,7 @@ impl DiskBlueNoiseSampler {
         for idx in 0..n_points {
             let (x, y) = Self::halton_sequense_2d(idx);
             let theta = 2.0 * PI * x;
-            let r = disk.radius * y;
+            let r = disk.radius * y.sqrt();
 
             let random_point = point_on_disk(theta, r, disk.center, disk.plane);
             sampled_points.push(random_point);
