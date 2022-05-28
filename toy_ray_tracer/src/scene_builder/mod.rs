@@ -17,7 +17,7 @@ use crate::geometry::shapes::{
     Cube, Cylinder, Disk, Mesh, MeshLoadOptions, MovingSphere, Pyramid, Rect, SkyLight, Sphere,
     Triangle,
 };
-use crate::geometry::transforms::{Axis, FlipFace, Rotate, TransformParam, Transforms, Translate};
+use crate::geometry::transforms::{Axis, FlipFace, Rotate, Transform, Transformed, Translate};
 use crate::geometry::visitors::try_get_light_from_world;
 use crate::geometry::volumes::ConstantMedium;
 use crate::hittable::{Hittable, HittablePtr};
@@ -79,6 +79,14 @@ impl JsonSchema for JVec3 {
         }
         .into()
     }
+}
+
+#[derive(JsonSchema, Serialize, Deserialize, Debug)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum TransformParam {
+    Rotate { axis: JVec3, angle: f32 },
+    Translate { offset: JVec3 },
+    Scale { scale: JVec3 },
 }
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug)]
@@ -260,6 +268,21 @@ pub enum TextureConfig {
         odd: Box<TextureConfig>,
         even: Box<TextureConfig>,
     },
+    NopTexture(NopTextureConfig),
+}
+
+#[derive(JsonSchema, Deserialize, Serialize, Debug)]
+#[serde(default)]
+pub struct NopTextureConfig {
+    name: String,
+}
+
+impl Default for NopTextureConfig {
+    fn default() -> Self {
+        NopTextureConfig {
+            name: String::from("nop"),
+        }
+    }
 }
 
 impl Buildable for TextureConfig {
@@ -280,6 +303,7 @@ impl Buildable for TextureConfig {
                 let even = even.build();
                 Arc::new(CheckerTexture::new(odd, even))
             }
+            TextureConfig::NopTexture(_) => todo!(),
         }
     }
 }
@@ -491,10 +515,23 @@ impl Buildable for GeometryConfig {
                 radius,
                 material.build(),
             )),
-            GeometryConfig::Transforms {
-                params: rotates,
-                child,
-            } => Arc::new(Transforms::new(&rotates, child.build())),
+            GeometryConfig::Transforms { params, child } => {
+                let mut transform = Transform::identity();
+                for param in params {
+                    match param {
+                        TransformParam::Rotate { axis, angle } => {
+                            transform = Transform::rotate(axis.into(), angle) * transform;
+                        }
+                        TransformParam::Translate { offset } => {
+                            transform = Transform::translate(offset.into()) * transform;
+                        }
+                        TransformParam::Scale { scale } => {
+                            transform = Transform::scale(scale.into()) * transform;
+                        },
+                    }
+                }
+                Arc::new(Transformed::new(child.build(), transform))
+            }
             GeometryConfig::Mesh {
                 from_obj,
                 material,

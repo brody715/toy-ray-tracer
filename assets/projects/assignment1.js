@@ -64,6 +64,11 @@ export function create_world() {
         kind: "flip_face",
         child: {
           kind: "disk",
+          properties: {
+            sampler: {
+              kind: "random",
+            },
+          },
           center: [box_width / 2, box_height - 1, box_depth / 2],
           radius: 0.2 * box_width,
           normal: [0, 1, 0],
@@ -102,7 +107,7 @@ export function create_world() {
     make_geometry({
       kind: "transforms",
       params: [
-        {kind: "rotate", axis: "Y", angle: -18},
+        {kind: "rotate", axis: [0, 1, 0], angle: -18},
         {kind: "translate", offset: [0.6 * box_width, 0, 0.5 * box_depth]},
       ],
       child: {
@@ -135,7 +140,7 @@ export function create_world() {
           {
             kind: "transforms",
             params: [
-              {kind: "rotate", axis: "Y", angle: 0},
+              {kind: "rotate", axis: [0, 1, 0], angle: 0},
               {
                 kind: "translate",
                 offset: [60, 320, 60],
@@ -176,7 +181,7 @@ export function create_world() {
     world.push({
       kind: "transforms",
       params: [
-        {kind: "rotate", axis: "Y", angle: 45},
+        {kind: "rotate", axis: [0, 1, 0], angle: 45},
         {
           kind: "translate",
           offset: [0.35 * box_width, 0.25 * box_height, 0.5 * box_depth],
@@ -215,7 +220,8 @@ export function create_world() {
   world.push({
     kind: "transforms",
     params: [
-      {kind: "rotate", axis: "Y", angle: -180},
+      {kind: "scale", scale: [cow_size, cow_size, cow_size]},
+      {kind: "rotate", axis: [0, 1, 0], angle: -180},
       {kind: "translate", offset: [1 * cow_size, 1 * cow_size, 2 * cow_size]},
     ],
     child: {
@@ -230,9 +236,6 @@ export function create_world() {
           file_path: "assets/models/cmu_cow/spot_texture.png",
         },
       },
-      load_options: {
-        scale: cow_size,
-      },
     },
   });
 
@@ -240,12 +243,12 @@ export function create_world() {
 }
 
 export default make_project({
-  name: "homework1-1",
+  name: "assignment1",
   settings: {
     output_dir: "./output",
     height: 800,
     width: 800,
-    nsamples: 100,
+    nsamples: 5,
     max_depth: 15,
   },
   scene: {

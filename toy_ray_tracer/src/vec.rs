@@ -1,9 +1,11 @@
 use std::ops::{Index, IndexMut};
 
-use nalgebra::{Vector2, Vector3};
+use nalgebra::{Vector2, Vector3, Vector4};
 
 #[allow(dead_code)]
 pub type Vec3 = Vector3<f32>;
+
+pub type Vec4f = Vector4<f32>;
 
 #[allow(dead_code)]
 pub type Vec2 = Vector2<f32>;
@@ -72,7 +74,7 @@ pub mod vec3 {
 
     use crate::utils::random;
 
-    use super::Vec3;
+    use super::{Vec3, Vec4f};
 
     #[allow(dead_code)]
     pub const YUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
@@ -193,5 +195,13 @@ pub mod vec3 {
     #[inline]
     pub fn max(v1: &Vec3, v2: &Vec3) -> Vec3 {
         return Vec3::new(v1.x.max(v2.x), v1.y.max(v2.y), v1.z.max(v2.z));
+    }
+
+    pub fn point3_to_homo(p: &Vec3) -> Vec4f {
+        return Vec4f::new(p[0], p[1], p[2], 1.0);
+    }
+
+    pub fn vec3_to_homo(v: &Vec3) -> Vec4f {
+        return Vec4f::new(v[0], v[1], v[2], 0.0);
     }
 }

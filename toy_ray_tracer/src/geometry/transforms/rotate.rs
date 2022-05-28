@@ -16,6 +16,14 @@ pub enum Axis {
     Z,
 }
 
+pub fn axis_to_vec3(axis: &Axis) -> Vec3 {
+    match axis {
+        Axis::X => Vec3::new(1.0, 0.0, 0.0),
+        Axis::Y => Vec3::new(0.0, 1.0, 0.0),
+        Axis::Z => Vec3::new(0.0, 0.0, 1.0),
+    }
+}
+
 fn get_axis(axis: &Axis) -> (usize, usize, usize) {
     match axis {
         Axis::X => (0, 1, 2),

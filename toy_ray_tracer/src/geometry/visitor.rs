@@ -6,7 +6,7 @@ use super::{
     shapes::{
         AARect, Cube, Cylinder, Disk, Mesh, MovingSphere, Pyramid, Rect, SkyLight, Sphere, Triangle,
     },
-    transforms::{FlipFace, Rotate, Transforms, Translate},
+    transforms::{FlipFace, Rotate, Transformed, Translate},
     volumes::ConstantMedium,
 };
 
@@ -37,7 +37,7 @@ make_visitor_walker!(Geometry {
     NopHittable,
     ConstantMedium,
     Rotate,
-    Transforms,
+    Transformed,
     FlipFace,
     Cube,
     Rect,

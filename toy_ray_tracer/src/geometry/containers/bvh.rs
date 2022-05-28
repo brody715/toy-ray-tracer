@@ -68,7 +68,7 @@ impl BVH {
                 let left = BVH::new(left_objs, time0, time1);
                 let right = BVH::new(right_objs, time0, time1);
 
-                let bbox = aabb::create_surrounding_box(&left.bbox, &right.bbox);
+                let bbox = left.bbox.union_bbox(&right.bbox);
                 BVH {
                     tree: BVHNode::Branch {
                         left: Box::new(left),

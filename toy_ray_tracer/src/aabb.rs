@@ -27,6 +27,40 @@ impl AABB {
     }
 }
 
+impl AABB {
+    pub fn union_point3(&self, point: Vec3) -> AABB {
+        let min = Vec3::new(
+            self.min.x.min(point.x),
+            self.min.y.min(point.y),
+            self.min.z.min(point.z),
+        );
+
+        let max = Vec3::new(
+            self.max.x.max(point.x),
+            self.max.y.max(point.y),
+            self.max.z.max(point.z),
+        );
+
+        AABB { min, max }
+    }
+
+    pub fn union_bbox(&self, bbox: &AABB) -> AABB {
+        let min = Vec3::new(
+            self.min.x.min(bbox.min.x),
+            self.min.y.min(bbox.min.y),
+            self.min.z.min(bbox.min.z),
+        );
+
+        let max = Vec3::new(
+            self.max.x.max(bbox.max.x),
+            self.max.y.max(bbox.max.y),
+            self.max.z.max(bbox.max.z),
+        );
+
+        AABB { min, max }
+    }
+}
+
 pub fn create_surrounding_box(box0: &AABB, box1: &AABB) -> AABB {
     let min = Vec3::new(
         f32::min(box0.min.x, box1.min.x),

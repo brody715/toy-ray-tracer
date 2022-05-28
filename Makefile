@@ -11,7 +11,7 @@ EXEC_IMAGE = ${EXEC_IMAGE_NOTAG}:${VERSION_TAG}
 GARGS =
 ARGS=
 
-export RAYON_NUM_THREADS=6
+export RAYON_NUM_THREADS=4
 
 build-exec-image:
 	docker buildx build . \

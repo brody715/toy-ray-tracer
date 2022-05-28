@@ -174,6 +174,11 @@ export type TextureConfig =
       kind: "checker_texture";
       odd: TextureConfig;
       [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "nop_texture";
+      name?: string;
+      [k: string]: unknown | undefined;
     };
 export type SamplerType =
   | {
@@ -206,13 +211,18 @@ export type Axis = "X" | "Y" | "Z";
 export type TransformParam =
   | {
       angle: number;
-      axis: Axis;
+      axis: Vec3F;
       kind: "rotate";
       [k: string]: unknown | undefined;
     }
   | {
       kind: "translate";
-      offset: [number, number, number];
+      offset: Vec3F;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "scale";
+      scale: Vec3F;
       [k: string]: unknown | undefined;
     };
 export type SkyConfig = {

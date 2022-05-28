@@ -960,6 +960,24 @@
               "$ref": "#/definitions/TextureConfig"
             }
           }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "nop_texture"
+              ]
+            },
+            "name": {
+              "default": "nop",
+              "type": "string"
+            }
+          }
         }
       ]
     },
@@ -978,7 +996,7 @@
               "format": "float"
             },
             "axis": {
-              "$ref": "#/definitions/Axis"
+              "$ref": "#/definitions/Vec3f"
             },
             "kind": {
               "type": "string",
@@ -1002,13 +1020,25 @@
               ]
             },
             "offset": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "format": "float"
-              },
-              "maxItems": 3,
-              "minItems": 3
+              "$ref": "#/definitions/Vec3f"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "scale"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "scale"
+              ]
+            },
+            "scale": {
+              "$ref": "#/definitions/Vec3f"
             }
           }
         }
