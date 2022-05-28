@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::vec::Vec3;
+use crate::core::Vec3;
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 #[serde(tag = "kind", rename_all = "snake_case")]

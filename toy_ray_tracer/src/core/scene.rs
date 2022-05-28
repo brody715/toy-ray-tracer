@@ -1,7 +1,7 @@
 use crate::{
-    camera::Camera,
+    core::Camera,
     environment::{Sky, SkyPtr},
-    hittable::{Hittable, HittablePtr},
+    core::{Hittable, HittablePtr},
 };
 
 pub struct Scene {
@@ -43,21 +43,3 @@ impl Scene {
     }
 }
 
-#[derive(Debug, Clone, Copy, clap::Parser)]
-pub struct RenderOptions {
-    #[clap(long, help = "image width", default_value_t = 800)]
-    pub width: usize,
-    #[clap(long, help = "image height", default_value_t = 800)]
-    pub height: usize,
-    #[clap(long, help = "number of samples", default_value_t = 100)]
-    pub nsamples: i32,
-    #[clap(long, help = "max depth of ray tracing", default_value_t = 15)]
-    pub max_depth: i32,
-}
-
-impl RenderOptions {
-    #[allow(dead_code)]
-    pub fn aspect(&self) -> f32 {
-        return self.width as f32 / self.height as f32;
-    }
-}

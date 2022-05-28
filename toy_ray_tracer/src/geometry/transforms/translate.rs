@@ -1,8 +1,8 @@
-use crate::aabb::AABB;
+use crate::core::AABB;
 use crate::geometry::EnterContext;
-use crate::hittable::{HitRecord, Hittable, HittablePtr};
-use crate::ray::Ray;
-use crate::vec::Vec3;
+use crate::core::{HitRecord, Hittable, HittablePtr};
+use crate::core::Ray;
+use crate::core::Vec3;
 
 pub struct Translate {
     hittable: HittablePtr,
@@ -32,7 +32,7 @@ impl Hittable for Translate {
         })
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
         self.hittable.pdf_value(origin, v)
     }
 

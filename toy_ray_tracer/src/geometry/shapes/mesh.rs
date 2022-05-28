@@ -7,10 +7,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     geometry::{shapes::Triangle, EnterContext},
-    hittable::{Hittable, HittablePtr},
-    hittable_list::HittableList,
-    material::MaterialPtr,
-    vec::{Vec2, Vec3},
+    core::{Hittable, HittablePtr},
+    core::HittableList,
+    core::MaterialPtr,
+    core::{Vec2, Vec3},
 };
 
 // TODO: Optmize mesh to use shared data
@@ -34,14 +34,14 @@ impl Mesh {
 impl Hittable for Mesh {
     fn hit(
         &self,
-        ray: &crate::ray::Ray,
+        ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<crate::hittable::HitRecord> {
+    ) -> Option<crate::core::HitRecord> {
         self.items.hit(ray, t_min, t_max)
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<crate::aabb::AABB> {
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<crate::core::AABB> {
         self.items.bounding_box(t0, t1)
     }
 

@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use crate::hittable::HitRecord;
+use crate::core::HitRecord;
 use crate::math::PDF;
-use crate::ray::Ray;
-use crate::vec::Color3;
+use crate::core::Ray;
+use crate::core::Color3;
 
 pub struct ScatterRecord {
     pub specular_ray: Option<Ray>,

@@ -1,4 +1,4 @@
-use crate::{ray::Ray, vec::Vec3};
+use crate::core::{Ray, Vec3};
 
 #[derive(Clone, Copy, Debug)]
 pub struct AABB {
@@ -59,25 +59,4 @@ impl AABB {
 
         AABB { min, max }
     }
-}
-
-pub fn create_surrounding_box(box0: &AABB, box1: &AABB) -> AABB {
-    let min = Vec3::new(
-        f32::min(box0.min.x, box1.min.x),
-        f32::min(box0.min.y, box1.min.y),
-        f32::min(box0.min.z, box1.min.z),
-    );
-    let max = Vec3::new(
-        f32::max(box0.max.x, box1.max.x),
-        f32::max(box0.max.y, box1.max.y),
-        f32::max(box0.max.z, box1.max.z),
-    );
-    AABB { min, max }
-}
-
-pub fn create_sphere_box(center: &Vec3, radius: f32) -> AABB {
-    return AABB {
-        min: center - Vec3::new(radius, radius, radius),
-        max: center + Vec3::new(radius, radius, radius),
-    };
 }

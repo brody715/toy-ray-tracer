@@ -1,15 +1,15 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{cell::RefCell, sync::Arc};
 
-use crate::project::Settings;
+use crate::core::Settings;
 use crate::{
     environment::Sky,
-    material::ScatterRecord,
+    core::ScatterRecord,
     math::{
         pdfs::{HittablePDF, MixturePDF},
         PDF,
     },
-    project::Project,
+    core::Project,
     utils::random,
 };
 use log::trace;
@@ -17,11 +17,11 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use thread_local::ThreadLocal;
 
 use crate::{
-    hittable::Hittable,
-    nimage::Image,
-    ray::Ray,
+    core::Hittable,
+    core::Image,
+    core::Ray,
     utils::ExecutionTimer,
-    vec::{vec3, Color3, Vec3List},
+    core::{vec3, Color3, Vec3List},
 };
 
 pub struct Engine {}

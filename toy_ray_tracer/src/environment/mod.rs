@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{ray::Ray, vec::Color3};
+use crate::core::{Color3, Ray};
 
 pub trait Sky: Send + Sync {
     fn color(&self, r: &Ray) -> Color3;

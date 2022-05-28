@@ -1,4 +1,4 @@
-use crate::vec::Vec3;
+use crate::core::Vec3;
 
 #[derive(Clone, Copy)]
 pub struct ONB {

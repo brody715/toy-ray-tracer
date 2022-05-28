@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{
     geometry::EnterContext,
-    hittable::{Hittable, HittablePtr},
+    core::{Hittable, HittablePtr},
 };
 
 type PropertiesType = Option<HashMap<String, serde_json::Value>>;
@@ -26,14 +26,14 @@ impl TagsHittable {
 impl Hittable for TagsHittable {
     fn hit(
         &self,
-        ray: &crate::ray::Ray,
+        ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<crate::hittable::HitRecord> {
+    ) -> Option<crate::core::HitRecord> {
         self.child.hit(ray, t_min, t_max)
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<crate::aabb::AABB> {
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<crate::core::AABB> {
         self.child.bounding_box(t0, t1)
     }
 
@@ -46,11 +46,11 @@ impl Hittable for TagsHittable {
         self.child.walk(walker);
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &crate::vec::Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &crate::core::Vec3) -> f32 {
         self.child.pdf_value(origin, v)
     }
 
-    fn random(&self, origin: &crate::vec::Vec3) -> crate::vec::Vec3 {
+    fn random(&self, origin: &crate::core::Vec3) -> crate::core::Vec3 {
         self.child.random(origin)
     }
 }

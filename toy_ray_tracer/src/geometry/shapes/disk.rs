@@ -1,19 +1,18 @@
 use crate::{
     math::{NopSampler, Sampler, SamplerPtr},
     utils::random,
-    vec::vec3,
+    core::{vec3, Vec3},
 };
 use std::f32::consts::PI;
 
 use visitor::EnterContext;
 
 use crate::{
-    aabb::AABB,
+    core::AABB,
     geometry::visitor,
-    hittable::{HitRecord, Hittable},
-    material::MaterialPtr,
-    ray::Ray,
-    vec::Vec3,
+    core::{HitRecord, Hittable},
+    core::MaterialPtr,
+    core::Ray,
 };
 
 use super::Plane;
@@ -82,7 +81,7 @@ impl<'a> Hittable for Disk {
         None
     }
 
-    fn bounding_box(&self, _t0: f32, _t11: f32) -> Option<crate::aabb::AABB> {
+    fn bounding_box(&self, _t0: f32, _t11: f32) -> Option<crate::core::AABB> {
         // (P - center) \cdot normal = 0
 
         // e = radius * (1.0 - normal * normal).sqrt()
@@ -120,7 +119,7 @@ impl<'a> Hittable for Disk {
         self.sampler = sampler;
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
         let rec = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
 
         // TODO: Consider not axis-aligned

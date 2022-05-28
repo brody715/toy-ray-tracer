@@ -10,7 +10,13 @@ use schemars::schema::{ArrayValidation, InstanceType, SchemaObject};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::camera::{Camera, CameraOpt};
+use crate::core::HittableList;
+use crate::core::MaterialPtr;
+use crate::core::TexturePtr;
+use crate::core::Vec3;
+use crate::core::{self, Camera, CameraOpt};
+use crate::core::{Hittable, HittablePtr};
+use crate::core::{Project, Scene, Settings};
 use crate::environment::{SkyPtr, SolidSky};
 use crate::geometry::containers::{TagsHittable, BVH};
 use crate::geometry::shapes::{
@@ -20,17 +26,9 @@ use crate::geometry::shapes::{
 use crate::geometry::transforms::{Axis, FlipFace, Rotate, Transform, Transformed, Translate};
 use crate::geometry::visitors::try_get_light_from_world;
 use crate::geometry::volumes::ConstantMedium;
-use crate::hittable::{Hittable, HittablePtr};
-use crate::hittable_list::HittableList;
-use crate::material::MaterialPtr;
 use crate::materials::{Dielectric, DiffuseLight, Isotropic, Lambertian, Metal};
 use crate::math::SamplerType;
-use crate::nimage;
-use crate::project::{Project, Settings};
-use crate::scene::Scene;
-use crate::texture::TexturePtr;
 use crate::textures::{CheckerTexture, ConstantTexture, ImageTexture};
-use crate::vec::Vec3;
 
 pub use load::load_project_config;
 
@@ -294,7 +292,7 @@ impl Buildable for TextureConfig {
                 Arc::new(ConstantTexture::new(color.into()))
             }
             TextureConfig::ImageTexture { file_path } => {
-                let img = nimage::Image::load_png(file_path.clone())
+                let img = core::Image::load_png(file_path.clone())
                     .expect(format!("failed to load image texture: {}", &file_path).as_str());
                 Arc::new(ImageTexture::new(img))
             }
@@ -527,7 +525,7 @@ impl Buildable for GeometryConfig {
                         }
                         TransformParam::Scale { scale } => {
                             transform = Transform::scale(scale.into()) * transform;
-                        },
+                        }
                     }
                 }
                 Arc::new(Transformed::new(child.build(), transform))

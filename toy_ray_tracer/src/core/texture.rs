@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::vec::Vec3;
+use crate::core::Vec3;
 
 pub trait Texture: Sync + Send {
     fn value(&self, u: f32, v: f32, p: &Vec3) -> Vec3;

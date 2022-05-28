@@ -1,9 +1,9 @@
 use crate::{
-    aabb::AABB,
+    core::AABB,
     geometry::EnterContext,
-    hittable::{HitRecord, Hittable},
-    material::MaterialPtr,
-    vec::{vec3, Vec2, Vec3},
+    core::{HitRecord, Hittable},
+    core::MaterialPtr,
+    core::{vec3, Vec2, Vec3},
 };
 
 #[derive(Clone)]
@@ -39,10 +39,10 @@ impl Triangle {
 impl Hittable for Triangle {
     fn hit(
         &self,
-        ray: &crate::ray::Ray,
+        ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<crate::hittable::HitRecord> {
+    ) -> Option<crate::core::HitRecord> {
         // @see https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
         // ray traingle intersection
 

@@ -2,10 +2,9 @@ use std::sync::Arc;
 
 use derive_new::new;
 
-use crate::aabb::{self, AABB};
+use crate::core::{Ray, AABB};
 use crate::geometry::EnterContext;
-use crate::hittable::{HitRecord, Hittable, HittablePtr};
-use crate::ray::Ray;
+use crate::core::{HitRecord, Hittable, HittablePtr};
 use crate::utils::random;
 
 #[derive(new)]
@@ -48,7 +47,7 @@ impl Hittable for HittableList {
                 match first.bounding_box(t0, t1) {
                     Some(bbox) => self.list.iter().skip(1).try_fold(bbox, |acc, hittable| {
                         match hittable.bounding_box(t0, t1) {
-                            Some(bbox) => Some(aabb::create_surrounding_box(&acc, &bbox)),
+                            Some(bbox) => Some(acc.union_bbox(&bbox)),
                             _ => None,
                         }
                     }),
@@ -59,7 +58,7 @@ impl Hittable for HittableList {
         }
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &crate::vec::Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &crate::core::Vec3) -> f32 {
         let weight = 1.0 / self.list.len() as f32;
 
         let sum = self
@@ -71,7 +70,7 @@ impl Hittable for HittableList {
         return sum;
     }
 
-    fn random(&self, origin: &crate::vec::Vec3) -> crate::vec::Vec3 {
+    fn random(&self, origin: &crate::core::Vec3) -> crate::core::Vec3 {
         let idx = random::usize(0..self.list.len());
         return self.list[idx].random(origin);
     }

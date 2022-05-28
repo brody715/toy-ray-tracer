@@ -1,4 +1,4 @@
-use crate::{hittable::NopHittable, hittable_list::HittableList};
+use crate::core::HittableList;
 use paste::paste;
 
 use super::{
@@ -34,7 +34,6 @@ pub struct EnterContext<'a, T> {
 
 make_visitor_walker!(Geometry {
     HittableList,
-    NopHittable,
     ConstantMedium,
     Rotate,
     Transformed,

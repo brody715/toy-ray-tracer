@@ -3,14 +3,12 @@ use std::ops::Mul;
 use nalgebra::{Matrix4, Unit};
 
 use crate::{
-    aabb::AABB,
+    core::AABB,
     geometry::EnterContext,
-    hittable::{HitRecord, Hittable, HittablePtr},
-    ray::Ray,
-    vec::{vec3, Vec3, Vec4f},
+    core::{HitRecord, Hittable, HittablePtr},
+    core::Ray,
+    core::{vec3, Vec3, Vec4f},
 };
-
-use super::rotate::axis_to_vec3;
 
 pub struct Transformed {
     pub hittable: HittablePtr,
@@ -53,11 +51,11 @@ impl Hittable for Transformed {
         self.hittable.walk(walker);
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &crate::vec::Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &crate::core::Vec3) -> f32 {
         self.hittable.pdf_value(origin, v)
     }
 
-    fn random(&self, origin: &crate::vec::Vec3) -> crate::vec::Vec3 {
+    fn random(&self, origin: &crate::core::Vec3) -> crate::core::Vec3 {
         self.hittable.random(origin)
     }
 }

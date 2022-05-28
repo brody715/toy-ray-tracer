@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use crate::{
     geometry::{containers::TagsHittable, EnterContext, GeometryWalker},
-    hittable::{Hittable, HittablePtr},
-    hittable_list::HittableList
+    core::{Hittable, HittablePtr},
+    core::HittableList
 };
 
 pub fn try_get_light_from_world<'a>(world: &'a dyn Hittable) -> Option<HittablePtr> {

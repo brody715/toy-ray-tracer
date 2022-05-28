@@ -3,11 +3,11 @@ use core::fmt;
 use visitor::EnterContext;
 
 use crate::{
-    aabb::AABB,
+    core::AABB,
     geometry::visitor,
-    hittable::{HitRecord, Hittable},
-    material::MaterialPtr,
-    vec::{vec3, Vec3},
+    core::{HitRecord, Hittable},
+    core::MaterialPtr,
+    core::{vec3, Vec3},
 };
 
 use super::Plane;
@@ -88,10 +88,10 @@ impl Cylinder {
 impl Hittable for Cylinder {
     fn hit(
         &self,
-        ray: &crate::ray::Ray,
+        ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<crate::hittable::HitRecord> {
+    ) -> Option<crate::core::HitRecord> {
         let (axis_a, axis_b, axis_c) = match self.plane {
             Plane::YZ => (1, 2, 0),
             Plane::ZX => (2, 0, 1),

@@ -1,4 +1,4 @@
-use crate::vec::Vec3;
+use crate::core::Vec3;
 
 // probability density Function
 pub trait PDF {

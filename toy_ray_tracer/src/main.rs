@@ -1,23 +1,12 @@
-mod aabb;
-mod camera;
+pub mod core;
 mod engine;
 mod environment;
 mod geometry;
-mod hittable;
-mod hittable_list;
-mod material;
 mod materials;
 mod math;
-mod nimage;
-mod perlin;
-mod project;
-mod ray;
-mod scene;
 mod scene_builder;
-mod texture;
 mod textures;
 mod utils;
-mod vec;
 
 use crate::scene_builder::{load_project_config, Buildable};
 use crate::{engine::Engine, utils::ExecutionTimer};

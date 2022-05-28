@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::vec::Color3;
+use crate::core::Color3;
 use anyhow::Context;
 use image::{save_buffer_with_format, ImageBuffer, ImageResult, Rgb};
 

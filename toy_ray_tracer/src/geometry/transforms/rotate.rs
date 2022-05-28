@@ -1,11 +1,11 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::aabb::AABB;
+use crate::core::Ray;
+use crate::core::Vec3;
+use crate::core::AABB;
 use crate::geometry::EnterContext;
-use crate::hittable::{HitRecord, Hittable, HittablePtr};
-use crate::ray::Ray;
-use crate::vec::Vec3;
+use crate::core::{HitRecord, Hittable, HittablePtr};
 use std::f32;
 
 #[allow(dead_code)]
@@ -14,14 +14,6 @@ pub enum Axis {
     X,
     Y,
     Z,
-}
-
-pub fn axis_to_vec3(axis: &Axis) -> Vec3 {
-    match axis {
-        Axis::X => Vec3::new(1.0, 0.0, 0.0),
-        Axis::Y => Vec3::new(0.0, 1.0, 0.0),
-        Axis::Z => Vec3::new(0.0, 0.0, 1.0),
-    }
 }
 
 fn get_axis(axis: &Axis) -> (usize, usize, usize) {
@@ -129,7 +121,7 @@ impl Hittable for Rotate {
         self.bbox.clone()
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
         self.hittable.pdf_value(origin, v)
     }
 

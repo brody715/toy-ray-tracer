@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use crate::aabb::AABB;
+use crate::core::AABB;
 use crate::geometry::{EnterContext, GeometryVisitor, GeometryWalker};
-use crate::material::Material;
+use crate::core::Material;
 use crate::math::SamplerType;
-use crate::ray::Ray;
-use crate::vec::{Point3, Vec3};
+use crate::core::Ray;
+use crate::core::{Point3, Vec3};
 
 pub struct HitRecord<'a> {
     pub t: f32,
@@ -72,30 +72,3 @@ pub trait Hittable: Sync + Send {
 
 pub type HittablePtr = Arc<dyn Hittable + Sync + Send>;
 pub type HittableRef<'a> = &'a (dyn Hittable);
-
-pub struct NopHittable {}
-
-impl NopHittable {
-    #[allow(dead_code)]
-    pub fn new() -> Self {
-        return NopHittable {};
-    }
-}
-
-impl Hittable for NopHittable {
-    fn hit(&self, _ray: &Ray, _t_minn: f32, _t_max: f32) -> Option<HitRecord> {
-        None
-    }
-
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        Some(AABB::new(Point3::zeros(), Point3::zeros()))
-    }
-
-    fn accept(&self, visitor: &mut dyn GeometryVisitor) {
-        visitor.visit_nop_hittable(self)
-    }
-
-    fn walk(&self, walker: &mut dyn GeometryWalker) {
-        walker.enter_nop_hittable(EnterContext::new(self))
-    }
-}

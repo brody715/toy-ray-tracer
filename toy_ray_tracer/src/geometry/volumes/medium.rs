@@ -1,14 +1,14 @@
-use crate::aabb::AABB;
+use crate::core::AABB;
 use crate::geometry::EnterContext;
-use crate::hittable::{HitRecord, Hittable, HittablePtr};
+use crate::core::{HitRecord, Hittable, HittablePtr};
 use crate::materials::Isotropic;
-use crate::ray::Ray;
-use crate::texture::TexturePtr;
+use crate::core::Ray;
+use crate::core::TexturePtr;
 use crate::utils::random;
 use std::f32;
 use std::sync::Arc;
 
-use crate::vec::Vec3;
+use crate::core::Vec3;
 
 pub struct ConstantMedium {
     boundary: HittablePtr,
@@ -61,7 +61,7 @@ impl Hittable for ConstantMedium {
         self.boundary.bounding_box(t0, t1)
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
         self.boundary.pdf_value(origin, v)
     }
 

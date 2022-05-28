@@ -1,8 +1,7 @@
-use crate::aabb;
-use crate::aabb::AABB;
+use crate::core::AABB;
 use crate::geometry::EnterContext;
-use crate::hittable::{HitRecord, Hittable, HittablePtr};
-use crate::ray::Ray;
+use crate::core::{HitRecord, Hittable, HittablePtr};
+use crate::core::Ray;
 use crate::utils::random;
 use std::cmp::Ordering;
 

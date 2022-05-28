@@ -1,8 +1,8 @@
+pub mod noise;
+
 use crate::{
-    nimage,
-    perlin::Perlin,
-    texture::{Texture, TexturePtr},
-    vec::Vec3,
+    core::{Image, Vec3},
+    core::{Texture, TexturePtr},
 };
 
 #[derive(Clone)]
@@ -46,36 +46,12 @@ impl Texture for CheckerTexture {
 }
 
 #[derive(Clone)]
-pub struct NoiseTexture {
-    noise: Perlin,
-    scale: f32,
-}
-
-impl NoiseTexture {
-    #[allow(dead_code)]
-    pub fn new(scale: f32) -> Self {
-        NoiseTexture {
-            noise: Perlin::new(),
-            scale,
-        }
-    }
-}
-
-impl Texture for NoiseTexture {
-    fn value(&self, _u: f32, _v: f32, p: &Vec3) -> Vec3 {
-        Vec3::new(1.0, 1.0, 1.0)
-            * 0.5
-            * (1.0 + f32::sin(self.scale * p.x + 5.0 * self.noise.turb(&p, 7)))
-    }
-}
-
-#[derive(Clone)]
 pub struct ImageTexture {
-    image: nimage::Image,
+    image: Image,
 }
 
 impl ImageTexture {
-    pub fn new(image: nimage::Image) -> Self {
+    pub fn new(image: Image) -> Self {
         ImageTexture { image }
     }
 }

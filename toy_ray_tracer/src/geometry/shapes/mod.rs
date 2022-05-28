@@ -18,7 +18,7 @@ pub use rect::{AARect, Rect};
 pub use sphere::{MovingSphere, Sphere};
 pub use triangle::Triangle;
 
-use crate::{hittable::Hittable, vec::vec3};
+use crate::{core::Hittable, core::vec3};
 
 // Use as light object, if no light provided by scene
 pub struct SkyLight {}
@@ -26,22 +26,22 @@ pub struct SkyLight {}
 impl Hittable for SkyLight {
     fn hit(
         &self,
-        _ray: &crate::ray::Ray,
+        _ray: &crate::core::Ray,
         _t_min: f32,
         _t_max: f32,
-    ) -> Option<crate::hittable::HitRecord> {
+    ) -> Option<crate::core::HitRecord> {
         None
     }
 
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<crate::aabb::AABB> {
+    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<crate::core::AABB> {
         None
     }
 
-    fn pdf_value(&self, _origin: &crate::vec::Point3, _v: &crate::vec::Vec3) -> f32 {
+    fn pdf_value(&self, _origin: &crate::core::Point3, _v: &crate::core::Vec3) -> f32 {
         1.0
     }
 
-    fn random(&self, _origin: &crate::vec::Vec3) -> crate::vec::Vec3 {
+    fn random(&self, _origin: &crate::core::Vec3) -> crate::core::Vec3 {
         // WARNING: not distributed in sphere, try random_in_unit_sphere
         vec3::random().normalize()
     }

@@ -1,13 +1,13 @@
 use std::f32::consts::PI;
 
 use crate::{
-    hittable::HitRecord,
-    material::{Material, ScatterRecord},
+    core::HitRecord,
+    core::{Material, ScatterRecord},
     math::{pdfs::CosinePDF, ONB},
-    ray::Ray,
-    texture::TexturePtr,
+    core::Ray,
+    core::TexturePtr,
     utils::random,
-    vec::{vec3, Color3, Vec3},
+    core::{vec3, Color3, Vec3},
 };
 
 pub struct NopMaterial;
@@ -162,7 +162,7 @@ impl Material for DiffuseLight {
         1.0
     }
 
-    fn emitted(&self, _ray: &Ray, rec: &HitRecord) -> crate::vec::Color3 {
+    fn emitted(&self, _ray: &Ray, rec: &HitRecord) -> crate::core::Color3 {
         if rec.front_face {
             return self.emit.value(rec.u, rec.v, &rec.p);
         } else {

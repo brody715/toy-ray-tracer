@@ -1,4 +1,4 @@
-use crate::{ray::Ray, utils, vec::vec3, vec::Vec3};
+use crate::{core::vec3, core::Vec3, core::Ray, utils};
 use std::f32;
 
 pub struct Camera {

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::scene::{RenderOptions, Scene};
+use crate::core::Scene;
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug)]
 pub struct Settings {
@@ -17,17 +17,6 @@ pub struct Settings {
 impl Settings {
     pub fn default_pdf_weight() -> f32 {
         return 0.5;
-    }
-}
-
-impl Into<RenderOptions> for Settings {
-    fn into(self) -> RenderOptions {
-        RenderOptions {
-            width: self.width,
-            height: self.height,
-            nsamples: self.nsamples,
-            max_depth: self.max_depth,
-        }
     }
 }
 

@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use crate::aabb::AABB;
+use crate::core::AABB;
 use crate::geometry::EnterContext;
-use crate::hittable::{HitRecord, Hittable, HittablePtr};
-use crate::material::MaterialPtr;
-use crate::ray::Ray;
+use crate::core::{HitRecord, Hittable, HittablePtr};
+use crate::core::MaterialPtr;
+use crate::core::Ray;
 use crate::utils::random;
-use crate::vec::Vec3;
+use crate::core::Vec3;
 
 use super::Plane;
 
@@ -62,7 +62,7 @@ impl Hittable for Rect {
         self._impl.bounding_box(t0, t1)
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
         self._impl.pdf_value(origin, v)
     }
 
@@ -158,7 +158,7 @@ impl Hittable for AARect {
         Some(AABB { min, max })
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
         let rec = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
 
         if let Some(rec) = rec {

@@ -2,8 +2,8 @@ use crate::utils::random;
 use std::f32::consts::PI;
 
 use crate::{
-    hittable::HittableRef,
-    vec::{vec3, Point3, Vec3},
+    core::HittableRef,
+    core::{vec3, Point3, Vec3},
 };
 
 use super::{ONB, PDF};
@@ -29,7 +29,7 @@ impl From<Vec3> for CosinePDF {
 }
 
 impl PDF for CosinePDF {
-    fn pdf_value(&self, direction: &crate::vec::Vec3) -> f32 {
+    fn pdf_value(&self, direction: &crate::core::Vec3) -> f32 {
         let cosine = direction.normalize().dot(&self.uvw.w());
         if cosine <= 0.0 {
             0.0
@@ -38,7 +38,7 @@ impl PDF for CosinePDF {
         }
     }
 
-    fn generate_direction(&self) -> crate::vec::Vec3 {
+    fn generate_direction(&self) -> crate::core::Vec3 {
         self.uvw.local(vec3::random_cosine_direction())
     }
 }
@@ -55,11 +55,11 @@ impl<'a> HittablePDF<'a> {
 }
 
 impl<'a> PDF for HittablePDF<'a> {
-    fn pdf_value(&self, direction: &crate::vec::Vec3) -> f32 {
+    fn pdf_value(&self, direction: &crate::core::Vec3) -> f32 {
         return self.hittable.pdf_value(&self.o, &direction);
     }
 
-    fn generate_direction(&self) -> crate::vec::Vec3 {
+    fn generate_direction(&self) -> crate::core::Vec3 {
         return self.hittable.random(&self.o);
     }
 }

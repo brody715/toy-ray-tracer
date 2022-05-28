@@ -1,12 +1,12 @@
 use super::rect::AARect;
 use super::Plane;
-use crate::aabb::AABB;
+use crate::core::AABB;
 use crate::geometry::EnterContext;
-use crate::hittable::{HitRecord, Hittable};
-use crate::hittable_list::HittableList;
-use crate::material::MaterialPtr;
-use crate::ray::Ray;
-use crate::vec::Vec3;
+use crate::core::{HitRecord, Hittable};
+use crate::core::HittableList;
+use crate::core::MaterialPtr;
+use crate::core::Ray;
+use crate::core::Vec3;
 
 pub struct Cube {
     p_min: Vec3,

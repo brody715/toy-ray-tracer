@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use crate::{
-    aabb::AABB,
+    core::HittableList,
+    core::MaterialPtr,
+    core::AABB,
+    core::{vec3, Vec3},
+    core::{Hittable, HittablePtr},
     geometry::EnterContext,
-    hittable::{Hittable, HittablePtr},
-    hittable_list::HittableList,
-    material::MaterialPtr,
-    vec::{vec3, Vec3},
 };
 
 use super::Triangle;
@@ -44,10 +44,10 @@ impl Pyramid {
 impl Hittable for Pyramid {
     fn hit(
         &self,
-        ray: &crate::ray::Ray,
+        ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<crate::hittable::HitRecord> {
+    ) -> Option<crate::core::HitRecord> {
         self.items.hit(ray, t_min, t_max)
     }
 
@@ -74,7 +74,7 @@ impl Hittable for Pyramid {
         self.items.walk(walker);
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
         self.items.pdf_value(origin, v)
     }
 

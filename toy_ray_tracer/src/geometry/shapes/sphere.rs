@@ -1,11 +1,10 @@
-use crate::aabb::AABB;
-use crate::aabb::{self, create_sphere_box};
+use crate::core::Ray;
+use crate::core::AABB;
 use crate::geometry::EnterContext;
-use crate::hittable::{HitRecord, Hittable};
-use crate::material::{Material, MaterialPtr};
+use crate::core::{HitRecord, Hittable};
+use crate::core::{Material, MaterialPtr};
 use crate::math::ONB;
-use crate::ray::Ray;
-use crate::vec::{vec3, Vec3};
+use crate::core::{vec3, Vec3};
 use nalgebra::Vector3;
 use std::f32;
 use std::f32::consts::PI;
@@ -99,7 +98,7 @@ impl Hittable for Sphere {
         Some(AABB { min, max })
     }
 
-    fn pdf_value(&self, origin: &crate::vec::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
         if let Some(_rec) = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX) {
             let cos_theta_max =
                 (1.0 - self.radius * self.radius / (self.center - origin).norm_squared()).sqrt();
@@ -175,7 +174,7 @@ impl Hittable for MovingSphere {
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         let box0 = create_sphere_box(&self.center0, self.radius);
         let box1 = create_sphere_box(&self.center1, self.radius);
-        Some(aabb::create_surrounding_box(&box0, &box1))
+        Some(box0.union_bbox(&box1))
     }
 
     fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
@@ -185,4 +184,11 @@ impl Hittable for MovingSphere {
     fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
         walker.enter_moving_sphere(EnterContext::new(self));
     }
+}
+
+pub fn create_sphere_box(center: &Vec3, radius: f32) -> AABB {
+    return AABB {
+        min: center - Vec3::new(radius, radius, radius),
+        max: center + Vec3::new(radius, radius, radius),
+    };
 }
