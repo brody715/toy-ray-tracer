@@ -1,13 +1,13 @@
-use crate::{core::vec3, core::Vec3, core::Ray, utils};
+use crate::{core::vec3, core::Vec3f, core::Ray, utils};
 use std::f32;
 
 pub struct Camera {
-    origin: Vec3,
-    lower_left_corner: Vec3,
-    horizontal: Vec3,
-    vertical: Vec3,
-    u: Vec3,
-    v: Vec3,
+    origin: Vec3f,
+    lower_left_corner: Vec3f,
+    horizontal: Vec3f,
+    vertical: Vec3f,
+    u: Vec3f,
+    v: Vec3f,
     time0: f32,
     time1: f32,
     lens_radius: f32,
@@ -15,9 +15,9 @@ pub struct Camera {
 }
 
 pub struct CameraOpt {
-    pub look_from: Vec3,
-    pub look_at: Vec3,
-    pub view_up: Vec3,
+    pub look_from: Vec3f,
+    pub look_at: Vec3f,
+    pub view_up: Vec3f,
     pub vertical_fov: f32,
     pub aspect: f32,
     pub aperture: f32,

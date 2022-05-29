@@ -1,13 +1,13 @@
 use crate::{
     core::Camera,
     environment::{Sky, SkyPtr},
-    core::{Hittable, HittablePtr},
+    core::{Primitive, PrimitivePtr},
 };
 
 pub struct Scene {
     pub(crate) camera: Camera,
-    pub(crate) world: HittablePtr,
-    pub(crate) light_shape: HittablePtr,
+    pub(crate) world: PrimitivePtr,
+    pub(crate) light_shape: PrimitivePtr,
     pub(crate) sky: SkyPtr,
     #[allow(dead_code)]
     pub(crate) name: String,
@@ -20,7 +20,7 @@ impl Scene {
         &self.camera
     }
 
-    pub fn world(&self) -> &dyn Hittable {
+    pub fn world(&self) -> &dyn Primitive {
         self.world.as_ref()
     }
 
@@ -38,7 +38,7 @@ impl Scene {
 
     /// Get a reference to the scene's light_shape.
     #[must_use]
-    pub fn light_shape(&self) -> &dyn Hittable {
+    pub fn light_shape(&self) -> &dyn Primitive {
         self.light_shape.as_ref()
     }
 }

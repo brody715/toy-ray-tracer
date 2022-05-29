@@ -3,32 +3,31 @@ use std::sync::Arc;
 use derive_new::new;
 
 use crate::core::{Ray, AABB};
-use crate::geometry::EnterContext;
-use crate::core::{HitRecord, Hittable, HittablePtr};
+use crate::core::{HitRecord, Primitive, PrimitivePtr};
 use crate::utils::random;
 
 #[derive(new)]
 pub struct HittableList {
     #[new(default)]
-    list: Vec<HittablePtr>,
+    list: Vec<PrimitivePtr>,
 }
 
 #[allow(dead_code)]
 pub type HittableListPtr = Arc<HittableList>;
 
-impl From<Vec<HittablePtr>> for HittableList {
-    fn from(list: Vec<HittablePtr>) -> Self {
+impl From<Vec<PrimitivePtr>> for HittableList {
+    fn from(list: Vec<PrimitivePtr>) -> Self {
         HittableList { list: list.into() }
     }
 }
 
 impl HittableList {
-    pub fn add(&mut self, hittable: impl Hittable + 'static) {
+    pub fn add(&mut self, hittable: impl Primitive + 'static) {
         self.list.push(Arc::new(hittable))
     }
 }
 
-impl Hittable for HittableList {
+impl Primitive for HittableList {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let mut closest_so_far = t_max;
         let mut hit_anything: Option<HitRecord> = None;
@@ -58,7 +57,7 @@ impl Hittable for HittableList {
         }
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3, v: &crate::core::Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
         let weight = 1.0 / self.list.len() as f32;
 
         let sum = self
@@ -70,20 +69,8 @@ impl Hittable for HittableList {
         return sum;
     }
 
-    fn random(&self, origin: &crate::core::Vec3) -> crate::core::Vec3 {
+    fn random(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
         let idx = random::usize(0..self.list.len());
         return self.list[idx].random(origin);
-    }
-
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_hittable_list(self)
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_hittable_list(EnterContext::new(self));
-
-        for child in self.list.iter() {
-            child.walk(walker);
-        }
     }
 }

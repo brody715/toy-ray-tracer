@@ -1,20 +1,19 @@
 use crate::{
-    geometry::{EnterContext, GeometryVisitor, GeometryWalker},
-    core::{Hittable, HittablePtr},
+    core::{Primitive, PrimitivePtr},
 };
 
 pub struct FlipFace {
-    hittable: HittablePtr,
+    hittable: PrimitivePtr,
 }
 
 impl FlipFace {
     #[must_use]
-    pub fn new(hittable: HittablePtr) -> Self {
+    pub fn new(hittable: PrimitivePtr) -> Self {
         Self { hittable }
     }
 }
 
-impl Hittable for FlipFace {
+impl Primitive for FlipFace {
     fn hit(
         &self,
         ray: &crate::core::Ray,
@@ -35,20 +34,11 @@ impl Hittable for FlipFace {
         self.hittable.bounding_box(t0, t1)
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3, v: &crate::core::Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
         self.hittable.pdf_value(origin, v)
     }
 
-    fn random(&self, origin: &crate::core::Vec3) -> crate::core::Vec3 {
+    fn random(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
         self.hittable.random(origin)
-    }
-
-    fn accept(&self, visitor: &mut dyn GeometryVisitor) {
-        visitor.visit_flip_face(self)
-    }
-
-    fn walk(&self, walker: &mut dyn GeometryWalker) {
-        walker.enter_flip_face(EnterContext::new(self));
-        self.hittable.walk(walker);
     }
 }

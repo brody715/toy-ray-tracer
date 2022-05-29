@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::core::Vec3;
+use crate::core::Vec3f;
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 #[serde(tag = "kind", rename_all = "snake_case")]
@@ -14,7 +14,7 @@ pub enum SamplerType {
 }
 
 pub trait Sampler {
-    fn sample_direction(&self, _origin: &Vec3) -> Vec3;
+    fn sample_direction(&self, _origin: &Vec3f) -> Vec3f;
 }
 
 pub type SamplerPtr = Box<dyn Sampler + Sync + Send>;
@@ -28,7 +28,7 @@ impl NopSampler {
 }
 
 impl Sampler for NopSampler {
-    fn sample_direction(&self, _origin: &Vec3) -> Vec3 {
+    fn sample_direction(&self, _origin: &Vec3f) -> Vec3f {
         unimplemented!()
     }
 }

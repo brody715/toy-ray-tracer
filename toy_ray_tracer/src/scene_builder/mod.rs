@@ -5,7 +5,6 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use anyhow::Context;
-use log::info;
 use schemars::schema::{ArrayValidation, InstanceType, SchemaObject};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -13,18 +12,17 @@ use serde::{Deserialize, Serialize};
 use crate::core::HittableList;
 use crate::core::MaterialPtr;
 use crate::core::TexturePtr;
-use crate::core::Vec3;
+use crate::core::Vec3f;
 use crate::core::{self, Camera, CameraOpt};
-use crate::core::{Hittable, HittablePtr};
+use crate::core::{Primitive, PrimitivePtr};
 use crate::core::{Project, Scene, Settings};
 use crate::environment::{SkyPtr, SolidSky};
-use crate::geometry::containers::{TagsHittable, BVH};
+use crate::geometry::containers::BVH;
 use crate::geometry::shapes::{
     Cube, Cylinder, Disk, Mesh, MeshLoadOptions, MovingSphere, Pyramid, Rect, SkyLight, Sphere,
     Triangle,
 };
-use crate::geometry::transforms::{Axis, FlipFace, Rotate, Transform, Transformed, Translate};
-use crate::geometry::visitors::try_get_light_from_world;
+use crate::geometry::transforms::{FlipFace, Transform, Transformed};
 use crate::geometry::volumes::ConstantMedium;
 use crate::materials::{Dielectric, DiffuseLight, Isotropic, Lambertian, Metal};
 use crate::math::SamplerType;
@@ -33,7 +31,7 @@ use crate::textures::{CheckerTexture, ConstantTexture, ImageTexture};
 pub use load::load_project_config;
 
 #[derive(Debug)]
-pub struct JVec3(Vec3);
+pub struct JVec3(Vec3f);
 
 impl Serialize for JVec3 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -53,8 +51,8 @@ impl<'de> Deserialize<'de> for JVec3 {
     }
 }
 
-impl Into<Vec3> for JVec3 {
-    fn into(self) -> Vec3 {
+impl Into<Vec3f> for JVec3 {
+    fn into(self) -> Vec3f {
         self.0
     }
 }
@@ -129,7 +127,7 @@ pub enum WorldConfig {
 }
 
 impl Buildable for WorldConfig {
-    type Out = HittablePtr;
+    type Out = PrimitivePtr;
 
     fn build(self) -> Self::Out {
         match self {
@@ -154,29 +152,17 @@ impl Buildable for SceneConfig {
         let sky = self.sky.build();
 
         let world = self.world.build();
-        let light_shape = match self.light {
-            Some(lights) => lights.build(),
-            None => {
-                let try_lights = try_get_light_from_world(world.as_ref());
+        // let light_shape = None;
+        todo!();
 
-                match try_lights {
-                    Some(lights) => {
-                        info!("found lights");
-                        lights
-                    }
-                    None => Arc::new(SkyLight {}),
-                }
-            }
-        };
-
-        Scene {
-            camera: self.camera.build(),
-            world,
-            light_shape,
-            sky,
-            name: String::from("no-name"),
-            description: String::from(""),
-        }
+        // Scene {
+        //     camera: self.camera.build(),
+        //     world,
+        //     light_shape,
+        //     sky,
+        //     name: String::from("no-name"),
+        //     description: String::from(""),
+        // }
     }
 }
 
@@ -377,25 +363,11 @@ pub enum GeometryConfig {
         time0: f32,
         time1: f32,
     },
-    Tags {
-        tags: Vec<String>,
-        child: Box<GeometryConfig>,
-        properties: Option<HashMap<String, serde_json::Value>>,
-    },
     List {
         children: Vec<GeometryConfig>,
     },
-    Rotate {
-        axis: Axis,
-        angle: f32,
-        child: Box<GeometryConfig>,
-    },
     Transforms {
         params: Vec<TransformParam>,
-        child: Box<GeometryConfig>,
-    },
-    Translate {
-        offset: JVec3,
         child: Box<GeometryConfig>,
     },
     FlipFace {
@@ -417,7 +389,7 @@ impl<T: Buildable> Buildable for Vec<T> {
 }
 
 impl Buildable for GeometryConfig {
-    type Out = HittablePtr;
+    type Out = PrimitivePtr;
 
     fn build(self) -> Self::Out {
         match self {
@@ -475,12 +447,6 @@ impl Buildable for GeometryConfig {
                 radius,
                 material.build(),
             )),
-            GeometryConfig::Rotate { axis, angle, child } => {
-                Arc::new(Rotate::new(axis, child.build(), angle))
-            }
-            GeometryConfig::Translate { offset, child } => {
-                Arc::new(Translate::new(child.build(), offset.into()))
-            }
             GeometryConfig::ConstantMedium {
                 boundary,
                 density,
@@ -494,14 +460,6 @@ impl Buildable for GeometryConfig {
                 Arc::new(Rect::new(v0.into(), v1.into(), material.build()))
             }
             GeometryConfig::FlipFace { child } => Arc::new(FlipFace::new(child.build())),
-            GeometryConfig::Tags {
-                tags,
-                child,
-                properties,
-            } => {
-                let tags: HashSet<String> = tags.iter().map(|t| String::from(t)).collect();
-                Arc::new(TagsHittable::new(tags, child.build(), properties))
-            }
             GeometryConfig::Cylinder {
                 center0,
                 center1,

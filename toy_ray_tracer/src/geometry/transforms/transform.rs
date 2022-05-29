@@ -4,19 +4,18 @@ use nalgebra::{Matrix4, Unit};
 
 use crate::{
     core::AABB,
-    geometry::EnterContext,
-    core::{HitRecord, Hittable, HittablePtr},
+    core::{HitRecord, Primitive, PrimitivePtr},
     core::Ray,
-    core::{vec3, Vec3, Vec4f},
+    core::{vec3, Vec3f, Vec4f},
 };
 
 pub struct Transformed {
-    pub hittable: HittablePtr,
+    pub hittable: PrimitivePtr,
     pub transform: Transform,
 }
 
 impl Transformed {
-    pub fn new(hittable: HittablePtr, transform: Transform) -> Self {
+    pub fn new(hittable: PrimitivePtr, transform: Transform) -> Self {
         Self {
             hittable,
             transform,
@@ -24,12 +23,12 @@ impl Transformed {
     }
 }
 
-impl Hittable for Transformed {
+impl Primitive for Transformed {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let moved_ray = self.transform.transform_ray(ray);
         let rec = self.hittable.hit(&moved_ray, t_min, t_max).map(|mut hit| {
             // transform from object space to world space
-            hit.p = self.transform.transform_point3(hit.p);
+            hit.point = self.transform.transform_point3(hit.point);
 
             hit
         });
@@ -42,20 +41,11 @@ impl Hittable for Transformed {
             .map(|b| self.transform.transform_bounding_box(b))
     }
 
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_transformed(self);
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_transformed(EnterContext::new(self));
-        self.hittable.walk(walker);
-    }
-
-    fn pdf_value(&self, origin: &crate::core::Point3, v: &crate::core::Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
         self.hittable.pdf_value(origin, v)
     }
 
-    fn random(&self, origin: &crate::core::Vec3) -> crate::core::Vec3 {
+    fn random(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
         self.hittable.random(origin)
     }
 }
@@ -77,18 +67,18 @@ impl Transform {
         Self::new(Matrix4::identity())
     }
 
-    pub fn translate(offset: Vec3) -> Transform {
+    pub fn translate(offset: Vec3f) -> Transform {
         let m = Matrix4::new_translation(&offset);
         Self::new(m)
     }
 
-    pub fn scale(scale: Vec3) -> Transform {
+    pub fn scale(scale: Vec3f) -> Transform {
         let m = Matrix4::new_nonuniform_scaling(&scale);
         Self::new(m)
     }
 
     // angle in degree
-    pub fn rotate(axis: Vec3, angle: f32) -> Transform {
+    pub fn rotate(axis: Vec3f, angle: f32) -> Transform {
         let m = Matrix4::from_axis_angle(&Unit::new_normalize(axis), angle.to_radians());
         Self::new(m)
     }
@@ -110,13 +100,13 @@ impl Transform {
         return Ray::new(origin, dir, ray.time());
     }
 
-    pub fn transform_point3(&self, point: Vec3) -> Vec3 {
+    pub fn transform_point3(&self, point: Vec3f) -> Vec3f {
         let point = Vec4f::new(point[0], point[1], point[2], 1.0);
         let point = self.m * point;
         return point.xyz();
     }
 
-    pub fn transform_vector3(&self, vec: Vec3) -> Vec3 {
+    pub fn transform_vector3(&self, vec: Vec3f) -> Vec3f {
         let vec = Vec4f::new(vec[0], vec[1], vec[2], 0.0);
         let vec = self.m * vec;
         return vec.xyz();
@@ -146,13 +136,13 @@ impl Transform {
         // get min and max
         let min = points
             .iter()
-            .fold(Vec3::new(f32::MAX, f32::MAX, f32::MAX), |acc, p| {
+            .fold(Vec3f::new(f32::MAX, f32::MAX, f32::MAX), |acc, p| {
                 vec3::min(&acc, &p)
             });
 
         let max = points
             .iter()
-            .fold(Vec3::new(-f32::MAX, -f32::MAX, -f32::MAX), |acc, p| {
+            .fold(Vec3f::new(-f32::MAX, -f32::MAX, -f32::MAX), |acc, p| {
                 vec3::max(&acc, &p)
             });
 

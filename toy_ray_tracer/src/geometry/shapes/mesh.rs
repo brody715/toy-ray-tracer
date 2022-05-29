@@ -5,54 +5,42 @@ use anyhow::{anyhow, Context, Ok};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::core::Primitive;
 use crate::{
-    geometry::{shapes::Triangle, EnterContext},
-    core::{Hittable, HittablePtr},
-    core::HittableList,
     core::MaterialPtr,
-    core::{Vec2, Vec3},
+    core::ShapePtr,
+    core::{Shape, Vec2f, Vec3f},
+    geometry::shapes::Triangle,
 };
+
+use super::shape_list::ShapeList;
 
 // TODO: Optmize mesh to use shared data
 pub struct Mesh {
-    items: HittablePtr,
+    items: ShapeList,
 }
 
 impl Mesh {
     pub fn new(faces: Vec<Arc<Triangle>>) -> Self {
-        let items: Vec<HittablePtr> = faces
-            .clone()
-            .into_iter()
-            .map(|v| v as HittablePtr)
-            .collect();
-        let items = Arc::new(HittableList::from(items));
+        let items: Vec<ShapePtr> = faces.clone().into_iter().map(|v| v as ShapePtr).collect();
+        let items = ShapeList::from(items);
 
         Self { items }
     }
 }
 
-impl Hittable for Mesh {
-    fn hit(
+impl Shape for Mesh {
+    fn intersect(
         &self,
         ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
     ) -> Option<crate::core::HitRecord> {
-        self.items.hit(ray, t_min, t_max)
+        self.items.intersect(ray, t_min, t_max)
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<crate::core::AABB> {
         self.items.bounding_box(t0, t1)
-    }
-
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_mesh(self)
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_mesh(EnterContext::new(self));
-
-        self.items.walk(walker);
     }
 }
 
@@ -118,31 +106,31 @@ impl Mesh {
         for f in (0..mesh.indices.len()).step_by(3) {
             let vertices_indices = &mesh.indices[f..(f + 3)];
 
-            let vertices: Vec<Vec3> = vertices_indices
+            let vertices: Vec<Vec3f> = vertices_indices
                 .iter()
                 .map(|idx| {
                     let idx = idx.clone() as usize * 3;
-                    let v = Vec3::from_column_slice(&mesh.positions[idx..(idx + 3)]);
+                    let v = Vec3f::from_column_slice(&mesh.positions[idx..(idx + 3)]);
                     // try scale first
                     let v = v * opt.scale;
                     v
                 })
                 .collect();
 
-            let vertices: [Vec3; 3] = vertices
+            let vertices: [Vec3f; 3] = vertices
                 .try_into()
                 .map_err(|_| anyhow!("failed to convert vertices to [_;3]"))?;
 
             let texcoords = if !mesh.texcoord_indices.is_empty() {
                 let texture_indices = &mesh.texcoord_indices[f..(f + 3)];
-                let texcoords: Vec<Vec2> = texture_indices
+                let texcoords: Vec<Vec2f> = texture_indices
                     .iter()
                     .map(|idx| {
                         let idx = idx.clone() as usize * 2;
-                        Vec2::from_column_slice(&mesh.texcoords[idx..(idx + 2)])
+                        Vec2f::from_column_slice(&mesh.texcoords[idx..(idx + 2)])
                     })
                     .collect();
-                let texcoords: [Vec2; 3] = texcoords
+                let texcoords: [Vec2f; 3] = texcoords
                     .try_into()
                     .map_err(|_| anyhow!("failed to convert texcoords to [_;2]"))?;
                 Some(texcoords)
@@ -150,7 +138,7 @@ impl Mesh {
                 None
             };
 
-            let triangle = Arc::new(Triangle::new(vertices, texcoords, material.clone()));
+            let triangle = Arc::new(Triangle::new(vertices, texcoords));
             faces.push(triangle);
         }
 

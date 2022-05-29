@@ -1,42 +1,39 @@
 use crate::{
+    core::{vec3, Point2f, Shape, Vec3f},
     math::{NopSampler, Sampler, SamplerPtr},
     utils::random,
-    core::{vec3, Vec3},
 };
 use std::f32::consts::PI;
 
-use visitor::EnterContext;
-
 use crate::{
-    core::AABB,
-    geometry::visitor,
-    core::{HitRecord, Hittable},
     core::MaterialPtr,
     core::Ray,
+    core::AABB,
+    core::{HitRecord, Primitive},
 };
 
 use super::Plane;
 
 #[derive(Debug, Clone, Copy)]
 struct DiskData {
-    center: Vec3,
+    center: Vec3f,
     radius: f32,
     #[allow(dead_code)]
-    normal: Vec3,
+    normal: Vec3f,
     plane: Plane,
 }
 
 pub struct Disk {
-    center: Vec3,
+    center: Vec3f,
     radius: f32,
-    normal: Vec3,
+    normal: Vec3f,
     material: MaterialPtr,
     plane: Plane,
     sampler: SamplerPtr,
 }
 
 impl Disk {
-    pub fn new(center: Vec3, radius: f32, normal: Vec3, material: MaterialPtr) -> Self {
+    pub fn new(center: Vec3f, radius: f32, normal: Vec3f, material: MaterialPtr) -> Self {
         let plane = if normal == vec3::XUP {
             Plane::YZ
         } else if normal == vec3::YUP {
@@ -58,11 +55,11 @@ impl Disk {
     }
 }
 
-impl<'a> Hittable for Disk {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
-        let o: Vec3 = ray.origin() - self.center;
+impl Shape for Disk {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+        let o: Vec3f = ray.origin() - self.center;
         let t = -self.normal.dot(&o) / ray.direction().dot(&self.normal);
-        let q: Vec3 = o + ray.direction() * t;
+        let q: Vec3f = o + ray.direction() * t;
 
         // trace!("q={}, o={}, t={}", q, o, t);
         // in disk
@@ -73,7 +70,7 @@ impl<'a> Hittable for Disk {
 
             // TODO: u, v, polar coordinates like sphere ?
             let p = ray.origin() + t * ray.direction();
-            let mut rec = HitRecord::new(t, 0.0, 0.0, p, self.material.as_ref());
+            let mut rec = HitRecord::new(t, Point2f::new(0.0, 0.0), p);
             rec.set_face_normal(ray, &self.normal);
             return Some(rec);
         }
@@ -97,30 +94,8 @@ impl<'a> Hittable for Disk {
         ));
     }
 
-    fn set_sampler(&mut self, sampler_type: crate::math::SamplerType) {
-        let disk_data = DiskData {
-            center: self.center,
-            radius: self.radius,
-            normal: self.normal,
-            plane: self.plane,
-        };
-        let sampler: SamplerPtr = match sampler_type {
-            crate::math::SamplerType::Uniform { block_size } => {
-                Box::new(DiskUniformSampler::new(disk_data, block_size))
-            }
-            crate::math::SamplerType::Random => Box::new(DiskRandomSampler::new(disk_data)),
-            crate::math::SamplerType::BlueNoise { block_size } => {
-                Box::new(DiskBlueNoiseSampler::new(disk_data, block_size))
-            }
-            crate::math::SamplerType::RandomFixed { block_size } => {
-                Box::new(DiskRandomFixedSampler::new(disk_data, block_size))
-            }
-        };
-        self.sampler = sampler;
-    }
-
-    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
-        let rec = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
+    fn pdf_value(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
+        let rec = self.intersect(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
 
         // TODO: Consider not axis-aligned
         if let Some(rec) = rec {
@@ -133,16 +108,8 @@ impl<'a> Hittable for Disk {
         0.0
     }
 
-    fn random(&self, origin: &Vec3) -> Vec3 {
+    fn random(&self, origin: &Vec3f) -> Vec3f {
         self.sampler.sample_direction(origin)
-    }
-
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_disk(self)
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_disk(EnterContext::new(self))
     }
 }
 
@@ -156,21 +123,21 @@ impl DiskRandomSampler {
     }
 }
 
-fn point_on_disk(theta: f32, r: f32, center: Vec3, plane: Plane) -> Vec3 {
+fn point_on_disk(theta: f32, r: f32, center: Vec3f, plane: Plane) -> Vec3f {
     let c = center;
     let a = r * theta.sin();
     let b = r * theta.cos();
 
     // currently only support axis-aligned
     return match plane {
-        Plane::YZ => Vec3::new(c.x, c.y + a, c.z + b),
-        Plane::ZX => Vec3::new(c.x + b, c.y, c.z + a),
-        Plane::XY => Vec3::new(c.x + a, c.y + b, c.z),
+        Plane::YZ => Vec3f::new(c.x, c.y + a, c.z + b),
+        Plane::ZX => Vec3f::new(c.x + b, c.y, c.z + a),
+        Plane::XY => Vec3f::new(c.x + a, c.y + b, c.z),
     };
 }
 
 impl Sampler for DiskRandomSampler {
-    fn sample_direction(&self, origin: &Vec3) -> Vec3 {
+    fn sample_direction(&self, origin: &Vec3f) -> Vec3f {
         let disk = &self.disk;
         // @see https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly
         let theta = random::f32_r(0.0, 2.0 * PI);
@@ -182,7 +149,7 @@ impl Sampler for DiskRandomSampler {
 }
 
 struct DiskRandomFixedSampler {
-    sampled_points: Vec<Vec3>,
+    sampled_points: Vec<Vec3f>,
 }
 
 impl DiskRandomFixedSampler {
@@ -202,19 +169,19 @@ impl DiskRandomFixedSampler {
 }
 
 impl Sampler for DiskRandomFixedSampler {
-    fn sample_direction(&self, origin: &Vec3) -> Vec3 {
+    fn sample_direction(&self, origin: &Vec3f) -> Vec3f {
         let index = random::usize(0..self.sampled_points.len());
         return self.sampled_points[index] - origin;
     }
 }
 
 struct DiskUniformSampler {
-    sampled_points: Vec<Vec3>,
+    sampled_points: Vec<Vec3f>,
 }
 
 impl DiskUniformSampler {
     pub fn new(disk: DiskData, block_size: [i32; 2]) -> Self {
-        let mut sampled_points: Vec<Vec3> = Vec::new();
+        let mut sampled_points: Vec<Vec3f> = Vec::new();
 
         for i in 0..block_size[0] {
             for j in 0..block_size[1] {
@@ -233,7 +200,7 @@ impl DiskUniformSampler {
 }
 
 impl Sampler for DiskUniformSampler {
-    fn sample_direction(&self, origin: &Vec3) -> Vec3 {
+    fn sample_direction(&self, origin: &Vec3f) -> Vec3f {
         let idx = random::usize(0..self.sampled_points.len());
         let random_point = self.sampled_points[idx];
         return random_point - origin;
@@ -241,12 +208,12 @@ impl Sampler for DiskUniformSampler {
 }
 
 struct DiskBlueNoiseSampler {
-    sampled_points: Vec<Vec3>,
+    sampled_points: Vec<Vec3f>,
 }
 
 impl DiskBlueNoiseSampler {
     pub fn new(disk: DiskData, block_size: [i32; 2]) -> Self {
-        let mut sampled_points: Vec<Vec3> = Vec::new();
+        let mut sampled_points: Vec<Vec3f> = Vec::new();
 
         // BlueNoise alg
         let n_points = block_size[0] * block_size[1];
@@ -283,7 +250,7 @@ impl DiskBlueNoiseSampler {
 }
 
 impl Sampler for DiskBlueNoiseSampler {
-    fn sample_direction(&self, origin: &Vec3) -> Vec3 {
+    fn sample_direction(&self, origin: &Vec3f) -> Vec3f {
         let idx = random::usize(0..self.sampled_points.len());
         let random_point = self.sampled_points[idx];
         return random_point - origin;

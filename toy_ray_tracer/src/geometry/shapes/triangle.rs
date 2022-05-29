@@ -1,22 +1,19 @@
 use crate::{
+    core::HitRecord,
     core::AABB,
-    geometry::EnterContext,
-    core::{HitRecord, Hittable},
-    core::MaterialPtr,
-    core::{vec3, Vec2, Vec3},
+    core::{vec3, Shape, Vec2f, Vec3f},
 };
 
 #[derive(Clone)]
 pub struct Triangle {
-    vertices: [Vec3; 3],
+    vertices: [Vec3f; 3],
     // texture position for vertices
-    texcoords: [Vec2; 3],
-    normal: Vec3,
-    material: MaterialPtr,
+    texcoords: [Vec2f; 3],
+    normal: Vec3f,
 }
 
 impl Triangle {
-    pub fn new(vertices: [Vec3; 3], texcoords: Option<[Vec2; 3]>, material: MaterialPtr) -> Self {
+    pub fn new(vertices: [Vec3f; 3], texcoords: Option<[Vec2f; 3]>) -> Self {
         let normal = (vertices[1] - vertices[0])
             .cross(&(vertices[2] - vertices[0]))
             .normalize();
@@ -24,25 +21,19 @@ impl Triangle {
         let texcoords = if let Some(textures) = texcoords {
             textures
         } else {
-            [Vec2::zeros(), Vec2::new(1.0, 0.0), Vec2::new(0.0, 1.0)]
+            [Vec2f::zeros(), Vec2f::new(1.0, 0.0), Vec2f::new(0.0, 1.0)]
         };
 
         Self {
             vertices,
             texcoords,
             normal,
-            material,
         }
     }
 }
 
-impl Hittable for Triangle {
-    fn hit(
-        &self,
-        ray: &crate::core::Ray,
-        t_min: f32,
-        t_max: f32,
-    ) -> Option<crate::core::HitRecord> {
+impl Shape for Triangle {
+    fn intersect(&self, ray: &crate::core::Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         // @see https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
         // ray traingle intersection
 
@@ -81,7 +72,7 @@ impl Hittable for Triangle {
 
         let uvw = b0 * self.texcoords[0] + b1 * self.texcoords[1] + b2 * self.texcoords[2];
 
-        let mut rec = HitRecord::new(t, uvw[0], uvw[1], p, self.material.as_ref());
+        let mut rec = HitRecord::new(t, uvw.xy(), p);
         rec.set_face_normal(ray, &self.normal);
 
         return Some(rec);
@@ -106,13 +97,5 @@ impl Hittable for Triangle {
 
         let bbox = AABB::new(min, max);
         Some(bbox)
-    }
-
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_triangle(self);
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_triangle(EnterContext::new(self));
     }
 }

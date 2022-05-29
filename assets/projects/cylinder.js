@@ -33,8 +33,8 @@ function create_world() {
   world.push({
     kind: "transforms",
     params: [
-      { kind: "rotate", axis: "Z", angle: -45},
-      { kind: "translate", offset: [0, 0.8, 0] },
+      {kind: "rotate", axis: [0, 0, 1], angle: -45},
+      {kind: "translate", offset: [0, 0.8, 0]},
     ],
     child: {
       kind: "cylinder",

@@ -7,6 +7,7 @@ mod pyramid;
 mod rect;
 mod sphere;
 mod triangle;
+mod shape_list;
 
 pub use cube::Cube;
 pub use cylinder::Cylinder;
@@ -15,15 +16,15 @@ pub use mesh::{Mesh, MeshLoadOptions};
 pub use plane::Plane;
 pub use pyramid::Pyramid;
 pub use rect::{AARect, Rect};
-pub use sphere::{MovingSphere, Sphere};
+pub use sphere::Sphere;
 pub use triangle::Triangle;
 
-use crate::{core::Hittable, core::vec3};
+use crate::{core::Primitive, core::vec3};
 
 // Use as light object, if no light provided by scene
 pub struct SkyLight {}
 
-impl Hittable for SkyLight {
+impl Primitive for SkyLight {
     fn hit(
         &self,
         _ray: &crate::core::Ray,
@@ -37,20 +38,12 @@ impl Hittable for SkyLight {
         None
     }
 
-    fn pdf_value(&self, _origin: &crate::core::Point3, _v: &crate::core::Vec3) -> f32 {
+    fn pdf_value(&self, _origin: &crate::core::Point3f, _v: &crate::core::Vec3f) -> f32 {
         1.0
     }
 
-    fn random(&self, _origin: &crate::core::Vec3) -> crate::core::Vec3 {
+    fn random(&self, _origin: &crate::core::Vec3f) -> crate::core::Vec3f {
         // WARNING: not distributed in sphere, try random_in_unit_sphere
         vec3::random().normalize()
-    }
-
-    fn accept(&self, visitor: &mut dyn super::GeometryVisitor) {
-        visitor.visit_sky_light(self)
-    }
-
-    fn walk(&self, walker: &mut dyn super::GeometryWalker) {
-        walker.enter_sky_light(super::EnterContext::new(self));
     }
 }

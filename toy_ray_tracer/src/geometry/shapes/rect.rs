@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
-use crate::core::AABB;
-use crate::geometry::EnterContext;
-use crate::core::{HitRecord, Hittable, HittablePtr};
+use crate::core::HitRecord;
 use crate::core::MaterialPtr;
 use crate::core::Ray;
+use crate::core::Vec3f;
+use crate::core::{Point2f, Shape, ShapePtr, AABB};
 use crate::utils::random;
-use crate::core::Vec3;
 
 use super::Plane;
 
@@ -16,12 +15,12 @@ pub struct Rect {
     // right-top vertex
     // p1: Vec3,
     // material: MaterialPtr,
-    _impl: HittablePtr,
+    _impl: ShapePtr,
 }
 
 impl Rect {
     #[must_use]
-    pub fn new(p0: Vec3, p1: Vec3, material: MaterialPtr) -> Self {
+    pub fn new(p0: Vec3f, p1: Vec3f, material: MaterialPtr) -> Self {
         let axiso = p0.iter().zip(p1.iter()).position(|(l, r)| l == r);
 
         let k_axis = axiso.unwrap_or(3);
@@ -48,35 +47,26 @@ impl Rect {
             // p0,
             // p1,
             // material: material.clone(),
-            _impl: Arc::new(AARect::new(plane, a0, a1, b0, b1, k, material.clone())),
+            _impl: Arc::new(AARect::new(plane, a0, a1, b0, b1, k)),
         }
     }
 }
 
-impl Hittable for Rect {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
-        self._impl.hit(ray, t_min, t_max)
+impl Shape for Rect {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+        self._impl.intersect(ray, t_min, t_max)
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
         self._impl.bounding_box(t0, t1)
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
+    fn pdf_value(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
         self._impl.pdf_value(origin, v)
     }
 
-    fn random(&self, origin: &Vec3) -> Vec3 {
+    fn random(&self, origin: &Vec3f) -> Vec3f {
         self._impl.random(origin)
-    }
-
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_rect(self)
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_rect(EnterContext::new(self));
-        self._impl.walk(walker);
     }
 }
 
@@ -87,19 +77,10 @@ pub struct AARect {
     b0: f32,
     b1: f32,
     k: f32,
-    material: MaterialPtr,
 }
 
 impl AARect {
-    pub fn new(
-        plane: Plane,
-        a0: f32,
-        a1: f32,
-        b0: f32,
-        b1: f32,
-        k: f32,
-        material: MaterialPtr,
-    ) -> Self {
+    pub fn new(plane: Plane, a0: f32, a1: f32, b0: f32, b1: f32, k: f32) -> Self {
         AARect {
             plane,
             a0,
@@ -107,13 +88,12 @@ impl AARect {
             b0,
             b1,
             k,
-            material,
         }
     }
 }
 
-impl Hittable for AARect {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+impl Shape for AARect {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let (k_axis, a_axis, b_axis) = match &self.plane {
             Plane::YZ => (0, 1, 2),
             Plane::ZX => (1, 2, 0),
@@ -131,9 +111,9 @@ impl Hittable for AARect {
                 let u = (a - self.a0) / (self.a1 - self.a0);
                 let v = (b - self.b0) / (self.b1 - self.b0);
                 let p = ray.point_at_parameter(t);
-                let mut normal = Vec3::zeros();
+                let mut normal = Vec3f::zeros();
                 normal[k_axis] = 1.0;
-                let mut rec = HitRecord::new(t, u, v, p, self.material.as_ref());
+                let mut rec = HitRecord::new(t, Point2f::new(u, v), p);
                 rec.set_face_normal(ray, &normal);
                 return Some(rec);
             }
@@ -143,23 +123,23 @@ impl Hittable for AARect {
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         let (min, max) = match &self.plane {
             Plane::YZ => (
-                Vec3::new(self.k - 0.0001, self.a0, self.b0),
-                Vec3::new(self.k + 0.0001, self.a1, self.b1),
+                Vec3f::new(self.k - 0.0001, self.a0, self.b0),
+                Vec3f::new(self.k + 0.0001, self.a1, self.b1),
             ),
             Plane::ZX => (
-                Vec3::new(self.b0, self.k - 0.0001, self.a0),
-                Vec3::new(self.b1, self.k + 0.0001, self.a1),
+                Vec3f::new(self.b0, self.k - 0.0001, self.a0),
+                Vec3f::new(self.b1, self.k + 0.0001, self.a1),
             ),
             Plane::XY => (
-                Vec3::new(self.a0, self.b0, self.k - 0.0001),
-                Vec3::new(self.a1, self.b1, self.k + 0.0001),
+                Vec3f::new(self.a0, self.b0, self.k - 0.0001),
+                Vec3f::new(self.a1, self.b1, self.k + 0.0001),
             ),
         };
         Some(AABB { min, max })
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3, v: &Vec3) -> f32 {
-        let rec = self.hit(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
+    fn pdf_value(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
+        let rec = self.intersect(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
 
         if let Some(rec) = rec {
             let area = (self.a1 - self.a0) * (self.b1 - self.b0);
@@ -172,23 +152,15 @@ impl Hittable for AARect {
         return 0.0;
     }
 
-    fn random(&self, origin: &Vec3) -> Vec3 {
+    fn random(&self, origin: &Vec3f) -> Vec3f {
         let rand_a = random::f32_r(self.a0, self.a1);
         let rand_b = random::f32_r(self.b0, self.b1);
 
         let random_point = match self.plane {
-            Plane::YZ => Vec3::new(self.k, rand_a, rand_b),
-            Plane::ZX => Vec3::new(rand_b, self.k, rand_a),
-            Plane::XY => Vec3::new(rand_a, rand_b, self.k),
+            Plane::YZ => Vec3f::new(self.k, rand_a, rand_b),
+            Plane::ZX => Vec3f::new(rand_b, self.k, rand_a),
+            Plane::XY => Vec3f::new(rand_a, rand_b, self.k),
         };
         return random_point - origin;
-    }
-
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_a_a_rect(self)
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_a_a_rect(EnterContext::new(self));
     }
 }

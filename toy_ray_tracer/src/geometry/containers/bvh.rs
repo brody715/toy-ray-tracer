@@ -1,13 +1,12 @@
-use crate::core::AABB;
-use crate::geometry::EnterContext;
-use crate::core::{HitRecord, Hittable, HittablePtr};
 use crate::core::Ray;
+use crate::core::AABB;
+use crate::core::{HitRecord, Primitive, PrimitivePtr};
 use crate::utils::random;
 use std::cmp::Ordering;
 
 enum BVHNode {
     Branch { left: Box<BVH>, right: Box<BVH> },
-    Leaf(HittablePtr),
+    Leaf(PrimitivePtr),
 }
 
 pub struct BVH {
@@ -19,7 +18,7 @@ fn box_compare(
     time0: f32,
     time1: f32,
     axis: usize,
-) -> impl Fn(&HittablePtr, &HittablePtr) -> Ordering {
+) -> impl Fn(&PrimitivePtr, &PrimitivePtr) -> Ordering {
     move |a, b| {
         let a_bbox = a.bounding_box(time0, time1);
         let b_bbox = b.bounding_box(time0, time1);
@@ -41,7 +40,7 @@ fn box_compare(
 }
 
 impl BVH {
-    pub fn new(mut objects: Vec<HittablePtr>, time0: f32, time1: f32) -> Self {
+    pub fn new(mut objects: Vec<PrimitivePtr>, time0: f32, time1: f32) -> Self {
         let axis = random::usize(0..3);
 
         objects.sort_unstable_by(box_compare(time0, time1, axis));
@@ -80,7 +79,7 @@ impl BVH {
     }
 }
 
-impl Hittable for BVH {
+impl Primitive for BVH {
     fn hit(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<HitRecord> {
         if !self.bbox.hit(&ray, t_min, t_max) {
             return None;
@@ -104,22 +103,5 @@ impl Hittable for BVH {
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         Some(self.bbox)
-    }
-
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_b_v_h(self);
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_b_v_h(EnterContext::new(self));
-        match &self.tree {
-            BVHNode::Branch { left, right } => {
-                left.walk(walker);
-                right.walk(walker);
-            }
-            BVHNode::Leaf(n) => {
-                n.walk(walker);
-            }
-        }
     }
 }

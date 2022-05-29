@@ -17,7 +17,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use thread_local::ThreadLocal;
 
 use crate::{
-    core::Hittable,
+    core::Primitive,
     core::Image,
     core::Ray,
     utils::ExecutionTimer,
@@ -110,9 +110,9 @@ impl Engine {
     fn get_ray_color<'a>(
         &self,
         r: &Ray,
-        world: &'a dyn Hittable,
+        world: &'a dyn Primitive,
         sky: &dyn Sky,
-        light_shape: &'a dyn Hittable,
+        light_shape: &'a dyn Primitive,
         settings: &'a Settings,
         depth: i32,
     ) -> Color3 {
@@ -146,7 +146,7 @@ impl Engine {
 
                 // 漫反射
                 let mixture_pdf: MixturePDF;
-                let light_pdf = HittablePDF::new(rec.p, light_shape);
+                let light_pdf = HittablePDF::new(rec.point, light_shape);
 
                 let mixture_pdf: &dyn PDF = match &pdf_scatter {
                     Some(pdf_scatter) => {
@@ -157,7 +157,7 @@ impl Engine {
                     None => &light_pdf,
                 };
 
-                let scattered = Ray::new(rec.p, mixture_pdf.generate_direction(), r.time());
+                let scattered = Ray::new(rec.point, mixture_pdf.generate_direction(), r.time());
                 let pdf_val = mixture_pdf.pdf_value(&scattered.direction());
 
                 let new_color =

@@ -1,22 +1,19 @@
 use core::fmt;
 
-use visitor::EnterContext;
-
 use crate::{
     core::AABB,
-    geometry::visitor,
-    core::{HitRecord, Hittable},
-    core::MaterialPtr,
-    core::{vec3, Vec3},
+    core::{vec3, Vec3f},
+    core::{HitRecord, Shape},
+    core::{MaterialPtr, Point2f},
 };
 
 use super::Plane;
 
 pub struct Cylinder {
     // center bottom
-    center0: Vec3,
+    center0: Vec3f,
     // center up
-    center1: Vec3,
+    center1: Vec3f,
     // radius
     radius: f32,
     // axis aligned plane
@@ -37,7 +34,7 @@ impl fmt::Debug for Cylinder {
 }
 
 #[allow(dead_code)]
-fn error_axis_aligned_cylinder(c0: Vec3, c1: Vec3, r: f32) -> ! {
+fn error_axis_aligned_cylinder(c0: Vec3f, c1: Vec3f, r: f32) -> ! {
     panic!(
         "we only support axis aligned cylinder, but got c0={:?} c1={:?} r={}",
         c0, c1, r
@@ -45,7 +42,7 @@ fn error_axis_aligned_cylinder(c0: Vec3, c1: Vec3, r: f32) -> ! {
 }
 
 impl Cylinder {
-    pub fn new(c0: Vec3, c1: Vec3, r: f32, material: MaterialPtr) -> Self {
+    pub fn new(c0: Vec3f, c1: Vec3f, r: f32, material: MaterialPtr) -> Self {
         let ko = c0.iter().zip(c1.iter()).position(|(l, r)| l != r);
 
         let k = ko.unwrap_or(3);
@@ -85,13 +82,13 @@ impl Cylinder {
     }
 }
 
-impl Hittable for Cylinder {
-    fn hit(
+impl Shape for Cylinder {
+    fn intersect(
         &self,
         ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<crate::core::HitRecord> {
+    ) -> Option<HitRecord> {
         let (axis_a, axis_b, axis_c) = match self.plane {
             Plane::YZ => (1, 2, 0),
             Plane::ZX => (2, 0, 1),
@@ -120,7 +117,7 @@ impl Hittable for Cylinder {
         };
 
         // base first
-        let t_normal: Option<(f32, Vec3)> = (move || {
+        let t_normal: Option<(f32, Vec3f)> = (move || {
             // check hit the base
             let (center, normal) = if ray.direction()[axis_c] < 0.0 {
                 (self.center1, up_normal)
@@ -173,7 +170,7 @@ impl Hittable for Cylinder {
 
             let p = ray.origin() + t * ray.direction();
             // TODO: uv
-            let mut rec = HitRecord::new(t, 0.0, 0.0, p, self.material.as_ref());
+            let mut rec = HitRecord::new(t, Point2f::new(0.0, 0.0), p);
             rec.set_face_normal(ray, &normal);
             return Some(rec);
         };
@@ -191,13 +188,5 @@ impl Hittable for Cylinder {
             vec3::min(&(self.center0 - e), &(self.center1 - e)),
             vec3::max(&(self.center0 + e), &(self.center1 + e)),
         ));
-    }
-
-    fn accept(&self, visitor: &mut dyn crate::geometry::GeometryVisitor) {
-        visitor.visit_cylinder(self)
-    }
-
-    fn walk(&self, walker: &mut dyn crate::geometry::GeometryWalker) {
-        walker.enter_cylinder(EnterContext::new(self))
     }
 }
