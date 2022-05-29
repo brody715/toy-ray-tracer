@@ -1,15 +1,14 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{cell::RefCell, sync::Arc};
 
-use crate::core::Settings;
+use crate::core::{Scene, Settings};
 use crate::{
-    environment::Sky,
+    core::Project,
     core::ScatterRecord,
     math::{
         pdfs::{HittablePDF, MixturePDF},
         PDF,
     },
-    core::Project,
     utils::random,
 };
 use log::trace;
@@ -17,11 +16,10 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use thread_local::ThreadLocal;
 
 use crate::{
-    core::Primitive,
     core::Image,
     core::Ray,
-    utils::ExecutionTimer,
     core::{vec3, Color3, Vec3List},
+    utils::ExecutionTimer,
 };
 
 pub struct Engine {}
@@ -41,10 +39,7 @@ impl Engine {
         let scene = project.scene();
         let settings = project.settings();
 
-        let world = scene.world();
-        let camera = scene.camera();
-        let sky = scene.sky();
-        let lights = scene.light_shape();
+        let camera = &scene.camera;
 
         let tasks_finished = Arc::new(AtomicUsize::new(0));
         let pixels_local = Arc::new(ThreadLocal::new());
@@ -78,7 +73,7 @@ impl Engine {
                     let u = (i as f32 + rng.f32()) / width as f32;
                     let v = (j as f32 + rng.f32()) / height as f32;
                     let r = camera.get_ray(u, v);
-                    let c = self.get_ray_color(&r, world, sky, lights, settings, max_depth);
+                    let c = self.trace_ray(&r, &scene, settings, max_depth);
                     pixels[(height - j - 1) * width + i] += c;
                 }
             }
@@ -107,45 +102,35 @@ impl Engine {
         return img;
     }
 
-    fn get_ray_color<'a>(
-        &self,
-        r: &Ray,
-        world: &'a dyn Primitive,
-        sky: &dyn Sky,
-        light_shape: &'a dyn Primitive,
-        settings: &'a Settings,
-        depth: i32,
-    ) -> Color3 {
+    fn trace_ray<'a>(&self, r: &Ray, scene: &Scene, settings: &'a Settings, depth: i32) -> Color3 {
         // no more light is gathered when reach the limit
         if depth <= 0 {
             return Color3::zeros();
         }
 
+        let world = &scene.world;
+
         if let Some(rec) = world.hit(r, 0.001, f32::MAX) {
-            let emitted = rec.material.emitted(&r, &rec);
+            // TODO: remove usage of material
+            let material = rec.material.unwrap();
+            let emitted = material.emitted(&r, &rec);
             if let Some(ScatterRecord {
                 specular_ray,
                 attenuation,
                 pdf: pdf_scatter,
-            }) = rec.material.scatter(r, &rec)
+            }) = material.scatter(r, &rec)
             {
                 // 镜面反射
                 if let Some(specular_ray) = specular_ray {
                     return vec3::elementwise_mult(
                         &attenuation,
-                        &self.get_ray_color(
-                            &specular_ray,
-                            world,
-                            sky,
-                            light_shape,
-                            settings,
-                            depth - 1,
-                        ),
+                        &self.trace_ray(&specular_ray, scene, settings, depth - 1),
                     );
                 }
 
                 // 漫反射
                 let mixture_pdf: MixturePDF;
+                let light_shape = scene.area_lights[0].get_light_primitive().unwrap();
                 let light_pdf = HittablePDF::new(rec.point, light_shape);
 
                 let mixture_pdf: &dyn PDF = match &pdf_scatter {
@@ -160,15 +145,15 @@ impl Engine {
                 let scattered = Ray::new(rec.point, mixture_pdf.generate_direction(), r.time());
                 let pdf_val = mixture_pdf.pdf_value(&scattered.direction());
 
-                let new_color =
-                    self.get_ray_color(&scattered, world, sky, light_shape, settings, depth - 1);
+                let new_color = self.trace_ray(&scattered, scene, settings, depth - 1);
                 return emitted
                     + vec3::elementwise_mult(&attenuation, &new_color)
-                        * rec.material.scattering_pdf(r, &rec, &scattered)
+                        * material.scattering_pdf(r, &rec, &scattered)
                         / pdf_val;
             }
             return emitted;
         }
-        return sky.color(&r);
+        // TODO: support multiple infinitite lights
+        return scene.infinite_lights[0].color(&r);
     }
 }

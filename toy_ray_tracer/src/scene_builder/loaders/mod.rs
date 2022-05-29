@@ -1,6 +1,9 @@
+mod js;
+
 use anyhow::{anyhow, Ok};
 
-use super::{js::load_from_js, ProjectConfig};
+use js::load_from_js;
+use super::types::ProjectConfig;
 use std::{ffi::OsStr, path::Path};
 
 pub fn load_project_config<P: AsRef<Path>>(path: P) -> anyhow::Result<ProjectConfig> {

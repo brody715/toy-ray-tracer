@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::core::{Shape, ShapePtr, AABB};
+use crate::core::{HitRecord, Shape, ShapePtr, AABB};
 use crate::utils::random;
 
 pub struct ShapeList {
@@ -14,14 +14,17 @@ impl From<Vec<ShapePtr>> for ShapeList {
 }
 
 impl ShapeList {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self { shapes: Vec::new() }
     }
 
+    #[allow(dead_code)]
     pub fn push(&mut self, shape: ShapePtr) {
         self.shapes.push(shape);
     }
 
+    #[allow(dead_code)]
     pub fn emplace_back(&mut self, shape: impl Shape + 'static) {
         self.shapes.push(Arc::new(shape));
     }
@@ -35,13 +38,16 @@ impl Shape for ShapeList {
         bbox
     }
 
-    fn intersect(
-        &self,
-        ray: &crate::core::Ray,
-        t_min: f32,
-        t_max: f32,
-    ) -> Option<crate::core::HitRecord> {
-        todo!()
+    fn intersect(&self, ray: &crate::core::Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+        let mut closest_so_far = t_max;
+        let mut hit_anything: Option<HitRecord> = None;
+        for h in self.shapes.iter() {
+            if let Some(hit) = h.intersect(ray, t_min, closest_so_far) {
+                closest_so_far = hit.t;
+                hit_anything = Some(hit);
+            }
+        }
+        hit_anything
     }
 
     fn pdf_value(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::Scene;
 
-#[derive(JsonSchema, Serialize, Deserialize, Debug)]
+#[derive(JsonSchema, Serialize, Deserialize, Debug, Clone)]
 pub struct Settings {
     pub output_dir: String,
     pub width: usize,
@@ -27,6 +27,8 @@ pub struct Project {
 }
 
 impl Project {
+    pub fn new(name: String, settings: Settings, scene: Scene) -> Self { Self { name, settings, scene } }
+
     /// Get a reference to the project's settings.
     #[must_use]
     pub fn settings(&self) -> &Settings {

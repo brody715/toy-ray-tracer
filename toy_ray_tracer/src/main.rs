@@ -1,19 +1,21 @@
+mod accelerators;
 pub mod core;
 mod engine;
-mod environment;
-mod geometry;
+mod lights;
 mod materials;
 mod math;
+mod primitives;
 mod scene_builder;
+mod shapes;
 mod textures;
 mod utils;
 
-use crate::scene_builder::{load_project_config, Buildable};
+use crate::scene_builder::{load_project_config, Builder};
 use crate::{engine::Engine, utils::ExecutionTimer};
 use anyhow::Ok;
 use clap::{Args, Parser, Subcommand};
 use log::{debug, info};
-use scene_builder::ProjectConfig;
+use scene_builder::types::ProjectConfig;
 use schemars::schema_for;
 use std::path::Path;
 
@@ -81,7 +83,7 @@ fn run_render(args: RenderCmdArgs) -> anyhow::Result<()> {
         }
     }
 
-    let project = project_config.build();
+    let project = Builder::new().build_project(&project_config)?;
 
     let engine = Engine::new();
 

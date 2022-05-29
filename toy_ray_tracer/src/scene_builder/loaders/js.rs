@@ -89,74 +89,6 @@ export class Utils {
     return script;
 }
 
-#[cfg(not(feature = "quickjs"))]
-pub mod nodejs {
-    use std::{
-        fs::File,
-        io::{BufReader, Write},
-        process::{Command, Stdio},
-    };
-
-    use anyhow::Context;
-
-    use crate::scene_builder::ProjectConfig;
-
-    use super::create_internal_module_script;
-
-    use tempdir::TempDir;
-
-    pub fn load_from_js<P: AsRef<Path>>(script: &str, _path: P) -> anyhow::Result<ProjectConfig> {
-        let inner_module_script = create_internal_module_script();
-
-        let mut module_script = String::from("");
-        module_script.push_str(&inner_module_script);
-        module_script.push('\n');
-        module_script.push_str(script);
-
-        let dir = TempDir::new("ray_tracing")?;
-        println!("default dir: {}", dir.path().display());
-
-        let module_file_path = dir.path().join("mod.mjs");
-        let mut module_file = File::create(module_file_path)?;
-        write!(module_file, "{}", module_script)?;
-        module_file.sync_all()?;
-
-        let outfile_path = dir.path().join("out.json");
-
-        let wrapper_script = format!(
-            r#"import config from './mod.mjs';
-               import fs from 'fs';
-               fs.writeFileSync('{}', config);
-        "#,
-            outfile_path.display(),
-        );
-
-        // sleep(Duration::from_secs(1000));
-
-        // start nodejs to run
-        let mut p = Command::new("node")
-            .current_dir(dir.path())
-            .arg("--input-type=module")
-            // .arg(AsRef::<OsStr>::as_ref(&wrapper_file_path))
-            .stdin(Stdio::piped())
-            .stdout(Stdio::null())
-            .spawn()?;
-
-        write!(p.stdin.as_mut().context("no stdin")?, "{}", wrapper_script)?;
-
-        let out_file = File::open(outfile_path)?;
-        let reader = BufReader::new(out_file);
-
-        let project_config: ProjectConfig =
-            serde_json::from_reader(reader).context(format!("error in parsing json"))?;
-
-        dir.close()?;
-
-        Ok(project_config)
-    }
-}
-
-#[cfg(feature = "quickjs")]
 pub mod quickjs {
     use std::path::Path;
 
@@ -164,7 +96,7 @@ pub mod quickjs {
     use rquickjs::{FileResolver, FromJs, Module, Runtime, ScriptLoader};
 
     use super::create_internal_module_script;
-    use crate::scene_builder::ProjectConfig;
+    use crate::scene_builder::types::ProjectConfig;
 
     pub fn load_from_js<P: AsRef<Path>>(script: &str, path: P) -> anyhow::Result<ProjectConfig> {
         // let script_dir = path
@@ -216,11 +148,7 @@ pub mod quickjs {
     }
 }
 
-#[cfg(feature = "quickjs")]
 pub use quickjs::load_from_js;
-
-#[cfg(not(feature = "quickjs"))]
-pub use nodejs::load_from_js;
 
 #[cfg(test)]
 mod tests {

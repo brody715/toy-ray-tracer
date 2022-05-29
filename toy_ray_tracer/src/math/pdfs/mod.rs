@@ -72,7 +72,7 @@ impl PDF for NopPDF {
     }
 
     fn generate_direction(&self) -> Vec3f {
-        todo!()
+        vec3::random_to_sphere(1.0, 1.0)
     }
 }
 

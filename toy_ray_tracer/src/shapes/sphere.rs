@@ -1,5 +1,4 @@
 use crate::core::HitRecord;
-use crate::core::MaterialPtr;
 use crate::core::Point3f;
 use crate::core::Ray;
 use crate::core::Shape;
@@ -14,16 +13,11 @@ use std::f32::consts::PI;
 pub struct Sphere {
     center: Vec3f,
     radius: f32,
-    material: MaterialPtr,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3f, radius: f32, material: MaterialPtr) -> Self {
-        Sphere {
-            center,
-            radius,
-            material,
-        }
+    pub fn new(center: Vec3f, radius: f32) -> Self {
+        Sphere { center, radius }
     }
 }
 

@@ -1,3 +1,4 @@
+
 use crate::core::Ray;
 use crate::core::AABB;
 use crate::core::{HitRecord, Primitive, PrimitivePtr};
@@ -5,11 +6,11 @@ use crate::utils::random;
 use std::cmp::Ordering;
 
 enum BVHNode {
-    Branch { left: Box<BVH>, right: Box<BVH> },
+    Branch { left: Box<BVHAccel>, right: Box<BVHAccel> },
     Leaf(PrimitivePtr),
 }
 
-pub struct BVH {
+pub struct BVHAccel {
     tree: BVHNode,
     bbox: AABB,
 }
@@ -39,7 +40,7 @@ fn box_compare(
     }
 }
 
-impl BVH {
+impl BVHAccel {
     pub fn new(mut objects: Vec<PrimitivePtr>, time0: f32, time1: f32) -> Self {
         let axis = random::usize(0..3);
 
@@ -51,7 +52,7 @@ impl BVH {
             1 => {
                 let leaf = objects.pop().unwrap();
                 if let Some(bbox) = leaf.bounding_box(time0, time1) {
-                    BVH {
+                    BVHAccel {
                         tree: BVHNode::Leaf(leaf),
                         bbox,
                     }
@@ -63,11 +64,11 @@ impl BVH {
                 let right_objs = objects.drain((len / 2)..).collect();
                 let left_objs = objects;
 
-                let left = BVH::new(left_objs, time0, time1);
-                let right = BVH::new(right_objs, time0, time1);
+                let left = BVHAccel::new(left_objs, time0, time1);
+                let right = BVHAccel::new(right_objs, time0, time1);
 
                 let bbox = left.bbox.union_bbox(&right.bbox);
-                BVH {
+                BVHAccel {
                     tree: BVHNode::Branch {
                         left: Box::new(left),
                         right: Box::new(right),
@@ -79,7 +80,7 @@ impl BVH {
     }
 }
 
-impl Primitive for BVH {
+impl Primitive for BVHAccel {
     fn hit(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<HitRecord> {
         if !self.bbox.hit(&ray, t_min, t_max) {
             return None;

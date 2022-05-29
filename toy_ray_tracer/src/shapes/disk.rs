@@ -27,13 +27,12 @@ pub struct Disk {
     center: Vec3f,
     radius: f32,
     normal: Vec3f,
-    material: MaterialPtr,
     plane: Plane,
     sampler: SamplerPtr,
 }
 
 impl Disk {
-    pub fn new(center: Vec3f, radius: f32, normal: Vec3f, material: MaterialPtr) -> Self {
+    pub fn new(center: Vec3f, radius: f32, normal: Vec3f) -> Self {
         let plane = if normal == vec3::XUP {
             Plane::YZ
         } else if normal == vec3::YUP {
@@ -48,7 +47,6 @@ impl Disk {
             center,
             radius,
             normal,
-            material,
             plane,
             sampler: Box::new(NopSampler::new()),
         }

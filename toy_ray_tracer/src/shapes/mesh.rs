@@ -10,7 +10,7 @@ use crate::{
     core::MaterialPtr,
     core::ShapePtr,
     core::{Shape, Vec2f, Vec3f},
-    geometry::shapes::Triangle,
+    shapes::Triangle,
 };
 
 use super::shape_list::ShapeList;

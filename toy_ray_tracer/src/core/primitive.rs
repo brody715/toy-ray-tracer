@@ -5,24 +5,22 @@ use crate::core::AABB;
 use crate::core::{Point3f, Vec3f};
 use crate::math::SamplerType;
 
-use super::Spectrum;
-use super::reflection::Bsdf;
 use super::vec::Point2f;
-use super::Color3;
+use super::Material;
 
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub t: f32,
     pub uv: Point2f,
     pub point: Point3f,
 
     pub normal: Vec3f,
     pub front_face: bool,
-
-    pub bsdf: Option<Bsdf>,
-    pub emitted: Spectrum,
+    pub material: Option<&'a dyn Material>,
+    // pub bsdf: Option<Bsdf>,
+    // pub emitted: Spectrum,
 }
 
-impl HitRecord {
+impl<'a> HitRecord<'a> {
     pub fn new(t: f32, uv: Point2f, p: Point3f) -> Self {
         Self {
             t,
@@ -30,8 +28,9 @@ impl HitRecord {
             point: p,
             normal: Vec3f::zeros(),
             front_face: false,
-            bsdf: None,
-            emitted: Color3::zeros(),
+            material: None,
+            // bsdf: None,
+            // emitted: Color3::zeros(),
         }
     }
 
@@ -72,5 +71,3 @@ pub trait Primitive: Sync + Send {
 
 pub type PrimitivePtr = Arc<dyn Primitive + Sync + Send>;
 pub type PrimitiveRef<'a> = &'a (dyn Primitive);
-
-pub struct GeometricPrimitive {}

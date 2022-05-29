@@ -2,54 +2,9 @@ use std::ops::Mul;
 
 use nalgebra::{Matrix4, Unit};
 
-use crate::{
-    core::AABB,
-    core::{HitRecord, Primitive, PrimitivePtr},
-    core::Ray,
-    core::{vec3, Vec3f, Vec4f},
-};
+use super::{vec3, Ray, Vec3f, Vec4f, AABB};
 
-pub struct Transformed {
-    pub hittable: PrimitivePtr,
-    pub transform: Transform,
-}
-
-impl Transformed {
-    pub fn new(hittable: PrimitivePtr, transform: Transform) -> Self {
-        Self {
-            hittable,
-            transform,
-        }
-    }
-}
-
-impl Primitive for Transformed {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
-        let moved_ray = self.transform.transform_ray(ray);
-        let rec = self.hittable.hit(&moved_ray, t_min, t_max).map(|mut hit| {
-            // transform from object space to world space
-            hit.point = self.transform.transform_point3(hit.point);
-
-            hit
-        });
-        rec
-    }
-
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
-        self.hittable
-            .bounding_box(t0, t1)
-            .map(|b| self.transform.transform_bounding_box(b))
-    }
-
-    fn pdf_value(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
-        self.hittable.pdf_value(origin, v)
-    }
-
-    fn random(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
-        self.hittable.random(origin)
-    }
-}
-
+#[derive(Clone)]
 pub struct Transform {
     m: Matrix4<f32>,
     inv_m: Matrix4<f32>,
@@ -110,6 +65,10 @@ impl Transform {
         let vec = Vec4f::new(vec[0], vec[1], vec[2], 0.0);
         let vec = self.m * vec;
         return vec.xyz();
+    }
+
+    pub fn transform_normal(&self, normal: Vec3f) -> Vec3f {
+        return self.transform_vector3(normal);
     }
 
     pub fn transform_bounding_box(&self, bbox: AABB) -> AABB {

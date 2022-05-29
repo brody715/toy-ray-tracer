@@ -1,29 +1,31 @@
 mod aabb;
 mod camera;
-mod hittable_list;
+pub(crate) mod light;
 mod material;
 mod nimage;
 mod primitive;
 mod project;
 mod ray;
+mod reflection;
 mod scene;
 mod shape;
-mod texture;
-mod vec;
-mod reflection;
 mod spectrum;
+mod texture;
+mod transform;
+mod vec;
 
-pub use spectrum::Spectrum;
 pub use aabb::AABB;
 pub use camera::{Camera, CameraOpt};
-pub use hittable_list::{HittableList, HittableListPtr};
+pub use light::{Light, LightFlags, LightPtr};
 pub use material::{Material, MaterialPtr, ScatterRecord};
 pub use nimage::Image;
 pub use primitive::{HitRecord, Primitive, PrimitivePtr, PrimitiveRef};
 pub use ray::Ray;
 pub use shape::{Shape, ShapePtr};
+pub use spectrum::Spectrum;
 pub use texture::{Texture, TexturePtr};
-pub use vec::{vec3, Color3, Point3f, Point2f, Vec2f, Vec3List, Vec3f, Vec4f};
+pub use transform::Transform;
+pub use vec::{vec3, Color3, Point2f, Point3f, Vec2f, Vec3List, Vec3f, Vec4f};
 
 pub use project::{Project, Settings};
 pub use scene::Scene;
