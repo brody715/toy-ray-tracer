@@ -1,4 +1,7 @@
 mod js;
+mod mesh;
+
+pub use mesh::{MeshLoader, MeshBundle};
 
 use anyhow::{anyhow, Ok};
 

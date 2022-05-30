@@ -1,12 +1,11 @@
 pub(super) fn create_internal_module_script() -> String {
     let object_names: Vec<&str> = vec![
         "scene",
-        "geometry_list",
-        "geometry",
+        "primitive_list",
+        "primitive",
         "material",
         "texture",
         "camera",
-        "sky",
         "settings",
         "vec3f",
     ];

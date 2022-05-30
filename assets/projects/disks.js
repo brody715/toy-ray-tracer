@@ -1,4 +1,4 @@
-const world = make_geometry({
+const world = make_primitive({
   kind: "bvh",
   time0: 0,
   time1: 1,

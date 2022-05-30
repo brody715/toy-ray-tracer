@@ -1,34 +1,22 @@
+use std::sync::Arc;
+
+use anyhow::{ensure, Result};
+
 use crate::{
-    core::HitRecord,
     core::AABB,
-    core::{vec3, Shape, Vec2f, Vec3f},
+    core::{vec3, Point2f, Shape, Vec3f},
+    core::{HitRecord, Point3f},
 };
 
 #[derive(Clone)]
 pub struct Triangle {
-    vertices: [Vec3f; 3],
-    // texture position for vertices
-    texcoords: [Vec2f; 3],
-    normal: Vec3f,
+    id: usize,
+    mesh: Arc<TriangleMeshStorage>,
 }
 
 impl Triangle {
-    pub fn new(vertices: [Vec3f; 3], texcoords: Option<[Vec2f; 3]>) -> Self {
-        let normal = (vertices[1] - vertices[0])
-            .cross(&(vertices[2] - vertices[0]))
-            .normalize();
-
-        let texcoords = if let Some(textures) = texcoords {
-            textures
-        } else {
-            [Vec2f::zeros(), Vec2f::new(1.0, 0.0), Vec2f::new(0.0, 1.0)]
-        };
-
-        Self {
-            vertices,
-            texcoords,
-            normal,
-        }
+    pub fn new(id: usize, mesh: Arc<TriangleMeshStorage>) -> Self {
+        Self { id, mesh }
     }
 }
 
@@ -37,8 +25,16 @@ impl Shape for Triangle {
         // @see https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
         // ray traingle intersection
 
-        let v0v1 = self.vertices[1] - self.vertices[0];
-        let v0v2 = self.vertices[2] - self.vertices[0];
+        let mesh = self.mesh.as_ref();
+
+        let idx = self.id * 3;
+        let indices = &mesh.vertex_indices[idx..(idx + 3)];
+        let v0 = mesh.positions[indices[0]];
+        let v1 = mesh.positions[indices[1]];
+        let v2 = mesh.positions[indices[2]];
+
+        let v0v1 = v1 - v0;
+        let v0v2 = v2 - v0;
         let pvec = ray.direction().cross(&v0v2);
         let det = v0v1.dot(&pvec);
 
@@ -47,7 +43,7 @@ impl Shape for Triangle {
         }
 
         let inv_det = 1.0 / det;
-        let tvec = ray.origin() - self.vertices[0];
+        let tvec = ray.origin() - v0;
 
         let b1 = tvec.dot(&pvec) * inv_det;
         if b1 < 0.0 || b1 > 1.0 {
@@ -62,7 +58,7 @@ impl Shape for Triangle {
 
         let b0 = 1.0 - b1 - b2;
 
-        let p = b0 * self.vertices[0] + b1 * self.vertices[1] + b2 * self.vertices[2];
+        let p = b0 * v0 + b1 * v1 + b2 * v2;
 
         let t = v0v2.dot(&qvec) * inv_det;
 
@@ -70,23 +66,36 @@ impl Shape for Triangle {
             return None;
         }
 
-        let uvw = b0 * self.texcoords[0] + b1 * self.texcoords[1] + b2 * self.texcoords[2];
+        let uvs: [Point2f; 3] = if mesh.uvs.is_empty() {
+            [
+                Point2f::new(0.0, 0.0),
+                Point2f::new(1.0, 0.0),
+                Point2f::new(1.0, 1.0),
+            ]
+        } else {
+            let m_uvs = &mesh.uvs;
+            [m_uvs[indices[0]], m_uvs[indices[1]], m_uvs[indices[2]]]
+        };
 
-        let mut rec = HitRecord::new(t, uvw.xy(), p);
-        rec.set_face_normal(ray, &self.normal);
+        let uv = uvs[0] * b0 + uvs[1] * b1 + uvs[2] * b2;
+
+        let mut rec = HitRecord::new(t, uv, p);
+        rec.set_face_normal(ray, &mesh.surface_normals[self.id]);
 
         return Some(rec);
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        let mut min = vec3::min(
-            &vec3::min(&self.vertices[0], &self.vertices[1]),
-            &self.vertices[2],
-        );
-        let mut max = vec3::max(
-            &vec3::max(&self.vertices[0], &self.vertices[1]),
-            &self.vertices[2],
-        );
+        let mesh = self.mesh.as_ref();
+
+        let idx = self.id * 3;
+        let indices = &mesh.vertex_indices[idx..(idx + 3)];
+        let v0 = mesh.positions[indices[0]];
+        let v1 = mesh.positions[indices[1]];
+        let v2 = mesh.positions[indices[2]];
+
+        let mut min = vec3::min(&vec3::min(&v0, &v1), &v2);
+        let mut max = vec3::max(&vec3::max(&v0, &v1), &v2);
 
         for axis in 0..3 {
             if min[axis] == max[axis] {
@@ -97,5 +106,73 @@ impl Shape for Triangle {
 
         let bbox = AABB::new(min, max);
         Some(bbox)
+    }
+}
+
+pub struct TriangleMeshStorage {
+    pub n_triangles: usize,
+    // vertex indices, 3 * n_triangles, [0, 0, 0, 1, 1, 1, id, id, id], id=<triangle id>
+    pub vertex_indices: Vec<usize>,
+    // 3 * n_triangles
+    pub positions: Vec<Point3f>,
+
+    // vertex normals, can be empty
+    pub vertex_normals: Vec<Vec3f>,
+    // vertex uv, can be empty
+    pub uvs: Vec<Point2f>,
+
+    // surface normals, by triangle_id
+    pub surface_normals: Vec<Vec3f>,
+}
+
+impl TriangleMeshStorage {
+    pub fn try_new(
+        n_triangles: usize,
+        vertex_indices: Vec<usize>,
+        positions: Vec<Point3f>,
+        normals: Vec<Vec3f>,
+        uvs: Vec<Point2f>,
+    ) -> Result<Self> {
+        let n_vertices = n_triangles * 3;
+        ensure!(n_vertices == vertex_indices.len());
+
+        let max_idx = vertex_indices.iter().max().unwrap_or(&0).to_owned();
+        ensure!(max_idx < positions.len());
+
+        let vertex_normals = if !normals.is_empty() {
+            ensure!(max_idx < normals.len());
+            normals
+        } else {
+            vec![]
+        };
+
+        let uvs = if !uvs.is_empty() {
+            ensure!(max_idx < uvs.len());
+            uvs
+        } else {
+            vec![]
+        };
+
+        let surface_normals: Vec<Vec3f> = vertex_indices[..]
+            .chunks(3)
+            .map(|indices| {
+                let v0 = positions[indices[0]];
+                let v1 = positions[indices[1]];
+                let v2 = positions[indices[2]];
+
+                let n = (v1 - v0).cross(&(v2 - v0)).normalize();
+
+                n
+            })
+            .collect();
+
+        Ok(Self {
+            n_triangles,
+            vertex_indices,
+            positions,
+            vertex_normals,
+            uvs,
+            surface_normals,
+        })
     }
 }

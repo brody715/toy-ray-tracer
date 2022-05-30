@@ -7,11 +7,11 @@ pub trait Shape: Sync + Send {
 
     fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
 
-    fn pdf_value(&self, origin: &Point3f, v: &Vec3f) -> f32 {
+    fn pdf_value(&self, _origin: &Point3f, _v: &Vec3f) -> f32 {
         1.0
     }
 
-    fn random(&self, origin: &Point3f) -> Vec3f {
+    fn random(&self, _origin: &Point3f) -> Vec3f {
         Vec3f::new(0.0, 0.0, 0.0)
     }
 }

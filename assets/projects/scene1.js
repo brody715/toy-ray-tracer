@@ -41,7 +41,7 @@ export function create_world() {
   const world = make_geometry_list([]);
 
   world.push(
-    make_geometry({
+    make_primitive({
       kind: "sphere",
       center: [0, -1000, 0],
       radius: 1000.0,
@@ -74,7 +74,7 @@ export function create_world() {
       if (vec3_normalize(vec3_sub(center, origin)) > 0.9) {
         if (choose_material < 0.8) {
           world.push(
-            make_geometry({
+            make_primitive({
               kind: "moving_sphere",
               center0: center,
               center1: vec3_add(center, [0, random_float(0, 0.5), 0]),
@@ -96,7 +96,7 @@ export function create_world() {
           );
         } else if (choose_material < 0.95) {
           world.push(
-            make_geometry({
+            make_primitive({
               kind: "sphere",
               center,
               radius: 0.2,
@@ -112,7 +112,7 @@ export function create_world() {
           );
         } else {
           world.push(
-            make_geometry({
+            make_primitive({
               kind: "sphere",
               center,
               radius: 0.2,
@@ -128,7 +128,7 @@ export function create_world() {
   }
 
   world.push(
-    make_geometry({
+    make_primitive({
       kind: "sphere",
       center: [0.0, 1.0, 0.0],
       radius: 1.0,
@@ -140,7 +140,7 @@ export function create_world() {
   );
 
   world.push(
-    make_geometry({
+    make_primitive({
       kind: "sphere",
       center: [-4, 1, 0],
       radius: 1,
@@ -155,7 +155,7 @@ export function create_world() {
   );
 
   world.push(
-    make_geometry({
+    make_primitive({
       kind: "sphere",
       center: [4, 1, 0],
       radius: 1,

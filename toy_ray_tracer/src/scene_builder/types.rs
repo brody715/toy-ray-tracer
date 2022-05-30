@@ -1,55 +1,23 @@
-use schemars::{
-    schema::{ArrayValidation, InstanceType, SchemaObject},
-    JsonSchema,
-};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Settings, Vec3f};
+use crate::core::Settings;
 
-#[derive(Debug, Clone, Copy)]
-pub struct JVec3f(pub Vec3f);
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+pub struct JVec3f(pub [f32; 3]);
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+pub struct JVec2f(pub [f32; 2]);
 
 impl JVec3f {
     fn new(x: f32, y: f32, z: f32) -> Self {
-        Self(Vec3f::new(x, y, z))
+        Self([x, y, z])
     }
 }
 
-impl Serialize for JVec3f {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        self.0.serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for JVec3f {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        Ok(Self(Deserialize::deserialize(deserializer)?))
-    }
-}
-
-impl JsonSchema for JVec3f {
-    fn schema_name() -> String {
-        format!("Vec3f")
-    }
-
-    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
-        SchemaObject {
-            instance_type: Some(InstanceType::Array.into()),
-            array: Some(Box::new(ArrayValidation {
-                items: Some(gen.subschema_for::<f32>().into()),
-                min_items: Some(3),
-                max_items: Some(3),
-                ..Default::default()
-            })),
-            ..Default::default()
-        }
-        .into()
+impl JVec2f {
+    fn new(x: f32, y: f32) -> Self {
+        Self([x, y])
     }
 }
 
@@ -66,12 +34,12 @@ pub struct ProjectConfig {
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum AcceleratorConfig {
     Nop {},
-    BVH {},
+    Bvh {},
 }
 
 impl Default for AcceleratorConfig {
     fn default() -> Self {
-        AcceleratorConfig::BVH {}
+        AcceleratorConfig::Bvh {}
     }
 }
 
@@ -167,10 +135,51 @@ pub enum TransformConfig {
     },
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema)]
+pub struct UriConfig {
+    pub uri: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum ShapeConfig {
-    Sphere { center: JVec3f, radius: f32 },
+    Sphere {
+        center: JVec3f,
+        radius: f32,
+    },
+    Cube {
+        p_min: JVec3f,
+        p_max: JVec3f,
+    },
+    Rect {
+        v0: JVec3f,
+        v1: JVec3f,
+    },
+    Disk {
+        center: JVec3f,
+        radius: f32,
+        normal: JVec3f,
+    },
+    Cylinder {
+        center0: JVec3f,
+        center1: JVec3f,
+        radius: f32,
+    },
+    Pyramid {
+        v0: JVec3f,
+        v1: JVec3f,
+        v2: JVec3f,
+        v3: JVec3f,
+    },
+    TriangleMesh {
+        indices: Vec<usize>,
+        positions: Vec<JVec3f>,
+        #[serde(default)]
+        uvs: Vec<JVec2f>,
+        #[serde(default)]
+        normals: Vec<JVec3f>,
+    },
+    Uri(UriConfig),
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
@@ -204,6 +213,14 @@ pub enum MaterialConfig {
 #[derive(JsonSchema, Deserialize, Serialize, Debug)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum TextureConfig {
-    ConstantTexture { value: JVec3f },
-    ImageTexture { file_path: String },
+    ConstantTexture {
+        value: JVec3f,
+    },
+    ImageTexture {
+        uri: String,
+    },
+    CheckerTexture {
+        odd: Box<TextureConfig>,
+        even: Box<TextureConfig>,
+    },
 }

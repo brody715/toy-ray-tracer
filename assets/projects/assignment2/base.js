@@ -35,7 +35,7 @@ function create_world(sampler) {
     material: white,
   });
 
-  let cube2 = make_geometry({
+  let cube2 = make_primitive({
     kind: "translate",
     offset: [265, 0, 295],
     child: {
@@ -54,7 +54,7 @@ function create_world(sampler) {
   world.push(cube2);
 
   world.push(
-    make_geometry({
+    make_primitive({
       kind: "tags",
       tags: ["lights"],
       child: {

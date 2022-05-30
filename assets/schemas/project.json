@@ -8,6 +8,16 @@
     "settings"
   ],
   "properties": {
+    "accelerator": {
+      "default": {
+        "kind": "bvh"
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/AcceleratorConfig"
+        }
+      ]
+    },
     "name": {
       "type": "string"
     },
@@ -19,557 +29,150 @@
     }
   },
   "definitions": {
-    "Axis": {
-      "type": "string",
-      "enum": [
-        "X",
-        "Y",
-        "Z"
-      ]
-    },
-    "CameraConfig": {
-      "type": "object",
-      "required": [
-        "aperture",
-        "aspect",
-        "focus_dist",
-        "look_at",
-        "look_from",
-        "time0",
-        "time1",
-        "vertical_fov",
-        "view_up"
-      ],
-      "properties": {
-        "aperture": {
-          "type": "number",
-          "format": "float"
-        },
-        "aspect": {
-          "type": "number",
-          "format": "float"
-        },
-        "focus_dist": {
-          "type": "number",
-          "format": "float"
-        },
-        "look_at": {
-          "$ref": "#/definitions/Vec3f"
-        },
-        "look_from": {
-          "$ref": "#/definitions/Vec3f"
-        },
-        "time0": {
-          "type": "number",
-          "format": "float"
-        },
-        "time1": {
-          "type": "number",
-          "format": "float"
-        },
-        "vertical_fov": {
-          "type": "number",
-          "format": "float"
-        },
-        "view_up": {
-          "$ref": "#/definitions/Vec3f"
-        }
-      }
-    },
-    "GeometryConfig": {
+    "AcceleratorConfig": {
       "oneOf": [
         {
           "type": "object",
           "required": [
-            "center",
-            "kind",
-            "material",
-            "radius"
+            "kind"
           ],
           "properties": {
-            "center": {
-              "$ref": "#/definitions/Vec3f"
-            },
             "kind": {
               "type": "string",
               "enum": [
-                "sphere"
+                "nop"
               ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            },
-            "radius": {
-              "type": "number",
-              "format": "float"
             }
           }
         },
         {
           "type": "object",
           "required": [
-            "center0",
-            "center1",
-            "kind",
-            "material",
-            "radius",
-            "time0",
-            "time1"
+            "kind"
           ],
           "properties": {
-            "center0": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "center1": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "moving_sphere"
-              ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            },
-            "radius": {
-              "type": "number",
-              "format": "float"
-            },
-            "time0": {
-              "type": "number",
-              "format": "float"
-            },
-            "time1": {
-              "type": "number",
-              "format": "float"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "kind",
-            "material",
-            "p_max",
-            "p_min"
-          ],
-          "properties": {
-            "kind": {
-              "type": "string",
-              "enum": [
-                "cube"
-              ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            },
-            "p_max": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "p_min": {
-              "$ref": "#/definitions/Vec3f"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "kind",
-            "material",
-            "v0",
-            "v1"
-          ],
-          "properties": {
-            "kind": {
-              "type": "string",
-              "enum": [
-                "rect"
-              ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            },
-            "v0": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "v1": {
-              "$ref": "#/definitions/Vec3f"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "kind",
-            "material",
-            "v0",
-            "v1",
-            "v2"
-          ],
-          "properties": {
-            "kind": {
-              "type": "string",
-              "enum": [
-                "triangle"
-              ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            },
-            "v0": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "v1": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "v2": {
-              "$ref": "#/definitions/Vec3f"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "center",
-            "kind",
-            "material",
-            "normal",
-            "radius"
-          ],
-          "properties": {
-            "center": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "disk"
-              ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            },
-            "normal": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "properties": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/Properties"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "radius": {
-              "type": "number",
-              "format": "float"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "center0",
-            "center1",
-            "kind",
-            "material",
-            "radius"
-          ],
-          "properties": {
-            "center0": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "center1": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "cylinder"
-              ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            },
-            "radius": {
-              "type": "number",
-              "format": "float"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "kind",
-            "material",
-            "v0",
-            "v1",
-            "v2",
-            "v3"
-          ],
-          "properties": {
-            "kind": {
-              "type": "string",
-              "enum": [
-                "pyramid"
-              ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            },
-            "v0": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "v1": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "v2": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "v3": {
-              "$ref": "#/definitions/Vec3f"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "from_obj",
-            "kind",
-            "material"
-          ],
-          "properties": {
-            "from_obj": {
-              "$ref": "#/definitions/MeshObjectConfig"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "mesh"
-              ]
-            },
-            "load_options": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/MeshLoadOptions"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "material": {
-              "$ref": "#/definitions/MaterialConfig"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "children",
-            "kind",
-            "time0",
-            "time1"
-          ],
-          "properties": {
-            "children": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/GeometryConfig"
-              }
-            },
             "kind": {
               "type": "string",
               "enum": [
                 "bvh"
               ]
-            },
-            "time0": {
-              "type": "number",
-              "format": "float"
-            },
-            "time1": {
-              "type": "number",
-              "format": "float"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "child",
-            "kind",
-            "tags"
-          ],
-          "properties": {
-            "child": {
-              "$ref": "#/definitions/GeometryConfig"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "tags"
-              ]
-            },
-            "properties": {
-              "type": [
-                "object",
-                "null"
-              ],
-              "additionalProperties": true
-            },
-            "tags": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "children",
-            "kind"
-          ],
-          "properties": {
-            "children": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/GeometryConfig"
-              }
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "list"
-              ]
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "angle",
-            "axis",
-            "child",
-            "kind"
-          ],
-          "properties": {
-            "angle": {
-              "type": "number",
-              "format": "float"
-            },
-            "axis": {
-              "$ref": "#/definitions/Axis"
-            },
-            "child": {
-              "$ref": "#/definitions/GeometryConfig"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "rotate"
-              ]
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "child",
-            "kind",
-            "params"
-          ],
-          "properties": {
-            "child": {
-              "$ref": "#/definitions/GeometryConfig"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "transforms"
-              ]
-            },
-            "params": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/TransformParam"
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "child",
-            "kind",
-            "offset"
-          ],
-          "properties": {
-            "child": {
-              "$ref": "#/definitions/GeometryConfig"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "translate"
-              ]
-            },
-            "offset": {
-              "$ref": "#/definitions/Vec3f"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "child",
-            "kind"
-          ],
-          "properties": {
-            "child": {
-              "$ref": "#/definitions/GeometryConfig"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "flip_face"
-              ]
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "boundary",
-            "density",
-            "kind",
-            "texture"
-          ],
-          "properties": {
-            "boundary": {
-              "$ref": "#/definitions/GeometryConfig"
-            },
-            "density": {
-              "type": "number",
-              "format": "float"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "constant_medium"
-              ]
-            },
-            "texture": {
-              "$ref": "#/definitions/TextureConfig"
             }
           }
         }
       ]
+    },
+    "AorB_for_TextureConfig_and_JVec3f": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TextureConfig"
+        },
+        {
+          "$ref": "#/definitions/JVec3f"
+        }
+      ]
+    },
+    "AreaLightConfig": {
+      "type": "object"
+    },
+    "CameraConfig": {
+      "type": "object",
+      "properties": {
+        "aperture": {
+          "default": 0.0,
+          "type": "number",
+          "format": "float"
+        },
+        "aspect": {
+          "default": 1.0,
+          "type": "number",
+          "format": "float"
+        },
+        "focus_dist": {
+          "default": 1.0,
+          "type": "number",
+          "format": "float"
+        },
+        "look_at": {
+          "default": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "allOf": [
+            {
+              "$ref": "#/definitions/JVec3f"
+            }
+          ]
+        },
+        "look_from": {
+          "default": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "allOf": [
+            {
+              "$ref": "#/definitions/JVec3f"
+            }
+          ]
+        },
+        "time0": {
+          "default": 0.0,
+          "type": "number",
+          "format": "float"
+        },
+        "time1": {
+          "default": 0.0,
+          "type": "number",
+          "format": "float"
+        },
+        "vertical_fov": {
+          "default": 90.0,
+          "type": "number",
+          "format": "float"
+        },
+        "view_up": {
+          "default": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "allOf": [
+            {
+              "$ref": "#/definitions/JVec3f"
+            }
+          ]
+        }
+      }
+    },
+    "EnvironmentConfig": {
+      "type": "object",
+      "required": [
+        "l"
+      ],
+      "properties": {
+        "l": {
+          "$ref": "#/definitions/JVec3f"
+        }
+      }
+    },
+    "JVec2f": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "format": "float"
+      },
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "JVec3f": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "format": "float"
+      },
+      "maxItems": 3,
+      "minItems": 3
     },
     "MaterialConfig": {
       "oneOf": [
@@ -581,7 +184,7 @@
           ],
           "properties": {
             "albedo": {
-              "$ref": "#/definitions/TextureConfig"
+              "$ref": "#/definitions/AorB_for_TextureConfig_and_JVec3f"
             },
             "kind": {
               "type": "string",
@@ -600,7 +203,7 @@
           ],
           "properties": {
             "albedo": {
-              "$ref": "#/definitions/TextureConfig"
+              "$ref": "#/definitions/AorB_for_TextureConfig_and_JVec3f"
             },
             "fuzz": {
               "type": "number",
@@ -641,7 +244,7 @@
           ],
           "properties": {
             "emit": {
-              "$ref": "#/definitions/TextureConfig"
+              "$ref": "#/definitions/AorB_for_TextureConfig_and_JVec3f"
             },
             "kind": {
               "type": "string",
@@ -659,7 +262,7 @@
           ],
           "properties": {
             "albedo": {
-              "$ref": "#/definitions/TextureConfig"
+              "$ref": "#/definitions/AorB_for_TextureConfig_and_JVec3f"
             },
             "kind": {
               "type": "string",
@@ -671,142 +274,76 @@
         }
       ]
     },
-    "MeshLoadOptions": {
-      "type": "object",
-      "required": [
-        "scale"
-      ],
-      "properties": {
-        "scale": {
-          "type": "number",
-          "format": "float"
-        }
-      }
-    },
-    "MeshObjectConfig": {
+    "PrimitiveConfig": {
       "oneOf": [
         {
           "type": "object",
           "required": [
-            "file_path"
+            "kind",
+            "material",
+            "shape"
           ],
           "properties": {
-            "file_path": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "required": [
-            "raw_string"
-          ],
-          "properties": {
-            "raw_string": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        }
-      ]
-    },
-    "Properties": {
-      "type": "object",
-      "required": [
-        "sampler"
-      ],
-      "properties": {
-        "sampler": {
-          "$ref": "#/definitions/SamplerType"
-        }
-      }
-    },
-    "SamplerType": {
-      "oneOf": [
-        {
-          "type": "object",
-          "required": [
-            "block_size",
-            "kind"
-          ],
-          "properties": {
-            "block_size": {
-              "type": "array",
-              "items": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "maxItems": 2,
-              "minItems": 2
+            "area_light": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AreaLightConfig"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "flip_face": {
+              "default": false,
+              "type": "boolean"
             },
             "kind": {
               "type": "string",
               "enum": [
-                "uniform"
+                "geom"
               ]
+            },
+            "material": {
+              "$ref": "#/definitions/MaterialConfig"
+            },
+            "shape": {
+              "$ref": "#/definitions/ShapeConfig"
+            },
+            "transforms": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TransformConfig"
+              }
             }
           }
         },
         {
           "type": "object",
           "required": [
+            "children",
             "kind"
           ],
           "properties": {
-            "kind": {
-              "type": "string",
-              "enum": [
-                "random"
-              ]
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "block_size",
-            "kind"
-          ],
-          "properties": {
-            "block_size": {
+            "children": {
               "type": "array",
               "items": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "maxItems": 2,
-              "minItems": 2
+                "$ref": "#/definitions/PrimitiveConfig"
+              }
             },
             "kind": {
               "type": "string",
               "enum": [
-                "random_fixed"
+                "container"
               ]
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "block_size",
-            "kind"
-          ],
-          "properties": {
-            "block_size": {
+            },
+            "transforms": {
+              "default": [],
               "type": "array",
               "items": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "maxItems": 2,
-              "minItems": 2
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "blue_noise"
-              ]
+                "$ref": "#/definitions/TransformConfig"
+              }
             }
           }
         }
@@ -816,28 +353,24 @@
       "type": "object",
       "required": [
         "camera",
-        "sky",
+        "environments",
         "world"
       ],
       "properties": {
         "camera": {
           "$ref": "#/definitions/CameraConfig"
         },
-        "light": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/GeometryConfig"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "sky": {
-          "$ref": "#/definitions/SkyConfig"
+        "environments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EnvironmentConfig"
+          }
         },
         "world": {
-          "$ref": "#/definitions/WorldConfig"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PrimitiveConfig"
+          }
         }
       }
     },
@@ -879,23 +412,218 @@
         }
       }
     },
-    "SkyConfig": {
+    "ShapeConfig": {
       "oneOf": [
         {
           "type": "object",
           "required": [
-            "background",
-            "kind"
+            "center",
+            "kind",
+            "radius"
           ],
           "properties": {
-            "background": {
-              "$ref": "#/definitions/Vec3f"
+            "center": {
+              "$ref": "#/definitions/JVec3f"
             },
             "kind": {
               "type": "string",
               "enum": [
-                "solid"
+                "sphere"
               ]
+            },
+            "radius": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "p_max",
+            "p_min"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "cube"
+              ]
+            },
+            "p_max": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "p_min": {
+              "$ref": "#/definitions/JVec3f"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "v0",
+            "v1"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "rect"
+              ]
+            },
+            "v0": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "v1": {
+              "$ref": "#/definitions/JVec3f"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "center",
+            "kind",
+            "normal",
+            "radius"
+          ],
+          "properties": {
+            "center": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "disk"
+              ]
+            },
+            "normal": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "radius": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "center0",
+            "center1",
+            "kind",
+            "radius"
+          ],
+          "properties": {
+            "center0": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "center1": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "cylinder"
+              ]
+            },
+            "radius": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "v0",
+            "v1",
+            "v2",
+            "v3"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "pyramid"
+              ]
+            },
+            "v0": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "v1": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "v2": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "v3": {
+              "$ref": "#/definitions/JVec3f"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "indices",
+            "kind",
+            "positions"
+          ],
+          "properties": {
+            "indices": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0.0
+              }
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "triangle_mesh"
+              ]
+            },
+            "normals": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/JVec3f"
+              }
+            },
+            "positions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/JVec3f"
+              }
+            },
+            "uvs": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/JVec2f"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "uri"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "uri"
+              ]
+            },
+            "uri": {
+              "type": "string"
             }
           }
         }
@@ -906,36 +634,36 @@
         {
           "type": "object",
           "required": [
-            "color",
-            "kind"
+            "kind",
+            "value"
           ],
           "properties": {
-            "color": {
-              "$ref": "#/definitions/Vec3f"
-            },
             "kind": {
               "type": "string",
               "enum": [
                 "constant_texture"
               ]
+            },
+            "value": {
+              "$ref": "#/definitions/JVec3f"
             }
           }
         },
         {
           "type": "object",
           "required": [
-            "file_path",
-            "kind"
+            "kind",
+            "uri"
           ],
           "properties": {
-            "file_path": {
-              "type": "string"
-            },
             "kind": {
               "type": "string",
               "enum": [
                 "image_texture"
               ]
+            },
+            "uri": {
+              "type": "string"
             }
           }
         },
@@ -960,52 +688,11 @@
               "$ref": "#/definitions/TextureConfig"
             }
           }
-        },
-        {
-          "type": "object",
-          "required": [
-            "kind"
-          ],
-          "properties": {
-            "kind": {
-              "type": "string",
-              "enum": [
-                "nop_texture"
-              ]
-            },
-            "name": {
-              "default": "nop",
-              "type": "string"
-            }
-          }
         }
       ]
     },
-    "TransformParam": {
+    "TransformConfig": {
       "oneOf": [
-        {
-          "type": "object",
-          "required": [
-            "angle",
-            "axis",
-            "kind"
-          ],
-          "properties": {
-            "angle": {
-              "type": "number",
-              "format": "float"
-            },
-            "axis": {
-              "$ref": "#/definitions/Vec3f"
-            },
-            "kind": {
-              "type": "string",
-              "enum": [
-                "rotate"
-              ]
-            }
-          }
-        },
         {
           "type": "object",
           "required": [
@@ -1020,7 +707,30 @@
               ]
             },
             "offset": {
-              "$ref": "#/definitions/Vec3f"
+              "$ref": "#/definitions/JVec3f"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "angle",
+            "axis",
+            "kind"
+          ],
+          "properties": {
+            "angle": {
+              "type": "number",
+              "format": "float"
+            },
+            "axis": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "rotate"
+              ]
             }
           }
         },
@@ -1038,31 +748,9 @@
               ]
             },
             "scale": {
-              "$ref": "#/definitions/Vec3f"
+              "$ref": "#/definitions/JVec3f"
             }
           }
-        }
-      ]
-    },
-    "Vec3f": {
-      "type": "array",
-      "items": {
-        "type": "number",
-        "format": "float"
-      },
-      "maxItems": 3,
-      "minItems": 3
-    },
-    "WorldConfig": {
-      "anyOf": [
-        {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GeometryConfig"
-          }
-        },
-        {
-          "$ref": "#/definitions/GeometryConfig"
         }
       ]
     }

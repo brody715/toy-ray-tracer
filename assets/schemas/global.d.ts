@@ -1,14 +1,16 @@
 import {
   CameraConfig,
-  GeometryConfig,
+  PrimitiveConfig,
   MaterialConfig,
   ProjectConfig,
   SceneConfig,
   Settings,
-  SkyConfig,
+  EnvironmentConfig,
   TextureConfig,
-  Vec3F,
 } from "./project";
+
+type Vec3F = [number, number, number];
+type Vec2F = [number, number];
 
 declare global {
   function log(v: unknown): void;
@@ -17,17 +19,15 @@ declare global {
 
   function make_scene(scene: SceneConfig): SceneConfig;
 
-  function make_geometry(geometry: GeometryConfig): GeometryConfig;
+  function make_primitive(primitive: PrimitiveConfig): PrimitiveConfig;
 
-  function make_geometry_list(children: GeometryConfig[]): GeometryConfig[];
+  function make_primitive_list(children: PrimitiveConfig[]): PrimitiveConfig[];
 
   function make_material(material: MaterialConfig): MaterialConfig;
 
   function make_texture(texture: TextureConfig): TextureConfig;
 
   function make_camera(camera: CameraConfig): CameraConfig;
-
-  function make_sky(sky: SkyConfig): SkyConfig;
 
   function make_settings(settings: Settings): Settings;
 
@@ -48,7 +48,7 @@ declare global {
   }
 
   class Utils {
-    static make_screen_size(size: { width: number; height: number }): {
+    static make_screen_size(size: {width: number; height: number}): {
       width: number;
       height: number;
       aspect: () => number;

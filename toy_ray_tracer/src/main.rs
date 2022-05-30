@@ -10,7 +10,7 @@ mod shapes;
 mod textures;
 mod utils;
 
-use crate::scene_builder::{load_project_config, Builder};
+use crate::scene_builder::{load_project_config, AssetsManager, Builder};
 use crate::{engine::Engine, utils::ExecutionTimer};
 use anyhow::Ok;
 use clap::{Args, Parser, Subcommand};
@@ -18,6 +18,7 @@ use log::{debug, info};
 use scene_builder::types::ProjectConfig;
 use schemars::schema_for;
 use std::path::Path;
+use std::rc::Rc;
 
 #[derive(Args, Debug)]
 struct RenderCmdArgs {
@@ -30,6 +31,9 @@ struct RenderCmdArgs {
     // render_opts: RenderOptions,
     #[clap(long, short = 'p', help = "project file")]
     project_file: String,
+
+    #[clap(long, short = 'o', help = "assets dir", default_value_t = String::from("./assets"))]
+    assets_dir: String,
 }
 
 #[derive(Args, Debug)]
@@ -83,7 +87,11 @@ fn run_render(args: RenderCmdArgs) -> anyhow::Result<()> {
         }
     }
 
-    let project = Builder::new().build_project(&project_config)?;
+    let project_dir = Path::new(&args.project_file).parent().unwrap();
+    let assets_dir = Path::new(&args.assets_dir);
+    let assets_manager = Rc::new(AssetsManager::new(assets_dir, project_dir));
+
+    let project = Builder::new(assets_manager).build_project(&project_config)?;
 
     let engine = Engine::new();
 

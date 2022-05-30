@@ -15,7 +15,7 @@ pub struct Cube {
 }
 
 impl Cube {
-    pub fn new(p_min: Vec3f, p_max: Vec3f, material: MaterialPtr) -> Self {
+    pub fn new(p_min: Vec3f, p_max: Vec3f) -> Self {
         let mut sides = ShapeList::new();
         sides.emplace_back(AARect::new(
             Plane::XY,
@@ -73,8 +73,8 @@ impl Cube {
     }
 }
 
-impl Primitive for Cube {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+impl Shape for Cube {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         self.sides.intersect(&ray, t_min, t_max)
     }
 

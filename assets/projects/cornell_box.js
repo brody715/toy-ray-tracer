@@ -48,7 +48,7 @@ export function create_world() {
   });
 
   world.push(
-    make_geometry({
+    make_primitive({
       kind: "tags",
       tags: ["lights"],
       child: {
@@ -96,7 +96,7 @@ export function create_world() {
   });
 
   // cubes
-  let cube1 = make_geometry({
+  let cube1 = make_primitive({
     kind: "translate",
     offset: [130, 0, 65],
     child: {
@@ -112,7 +112,7 @@ export function create_world() {
     },
   });
 
-  let cube2 = make_geometry({
+  let cube2 = make_primitive({
     kind: "translate",
     offset: [265, 0, 295],
     child: {

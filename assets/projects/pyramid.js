@@ -30,7 +30,7 @@ function create_world() {
     },
   });
 
-  const pyramid_builtin = make_geometry({
+  const pyramid_builtin = make_primitive({
     kind: "pyramid",
     v0: [0, 1, 0],
     v1: [-1, 0, 0],
@@ -39,7 +39,7 @@ function create_world() {
     material: m_pink,
   });
 
-  const pyramid_mesh_file = make_geometry({
+  const pyramid_mesh_file = make_primitive({
     kind: "mesh",
     from_obj: {
       file_path: "assets/models/simple/pyramid.obj",
@@ -47,7 +47,7 @@ function create_world() {
     material: m_pink,
   });
 
-  const pyramid_mesh_string = make_geometry({
+  const pyramid_mesh_string = make_primitive({
     kind: "mesh",
     from_obj: {
       raw_string: `

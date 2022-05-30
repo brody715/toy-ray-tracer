@@ -10,7 +10,7 @@ default = ["quickjs"]
 quickjs = []
 
 [dependencies]
-anyhow = "1.0"
+anyhow = { version = "1.0", features = ["backtrace"] }
 clap = { version = "3.1.6", features = ["derive"] }
 clap-verbosity-flag = "1.0"
 derive-new = "0.5.9"
@@ -29,6 +29,7 @@ tempdir = "0.3"
 tobj = "3.2.1"
 rquickjs = { version = "0.1.5", features = ["loader"] }
 paste = "1.0.7"
+url = "2.2.2"
 
 [target.'cfg(target_arch = "aarch64-apple-darwin")'.dependencies]
 rquickjs = { version = "0.1.5", features = ["bindgen", "loader"] }

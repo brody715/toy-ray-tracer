@@ -57,7 +57,7 @@ export function create_world() {
   });
 
   world.push(
-    make_geometry({
+    make_primitive({
       kind: "tags",
       tags: ["lights"],
       child: {
@@ -104,7 +104,7 @@ export function create_world() {
 
   // cube1
   world.push(
-    make_geometry({
+    make_primitive({
       kind: "transforms",
       params: [
         {kind: "rotate", axis: [0, 1, 0], angle: -18},

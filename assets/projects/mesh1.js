@@ -1,53 +1,63 @@
 function create_world() {
-  const world = make_geometry_list([]);
+  const world = make_primitive_list([]);
 
   // ground
   world.push({
-    kind: "sphere",
-    center: [0, -1000, 0],
-    radius: 1000.0,
+    kind: "geom",
+    shape: {
+      kind: "sphere",
+      center: [0, -1000, 0],
+      radius: 1000.0,
+    },
     material: {
       kind: "lambertian",
       albedo: {
         kind: "checker_texture",
         even: {
           kind: "constant_texture",
-          color: [0.2, 0.3, 0.1],
+          value: [0.2, 0.3, 0.1],
         },
         odd: {
           kind: "constant_texture",
-          color: [0.9, 0.9, 0.9],
+          value: [0.9, 0.9, 0.9],
         },
       },
     },
   });
 
   world.push({
-    kind: "transforms",
-    params: [
-      { kind: "rotate", axis: "Y", angle: -90 },
-      { kind: "translate", offset: [0, 1, 0] },
+    kind: "geom",
+    transforms: [
+      {kind: "rotate", axis: [0, 1, 0], angle: -90},
+      {kind: "translate", offset: [0, 1, 0]},
     ],
-    child: {
-      // kind: "sphere",
-      // center: [-4, 1, 0],
-      // radius: 1,
-      kind: "mesh",
-      from_obj_file: {
-        path: "",
-      },
-      from_obj: {
-        file_path: "assets/models/cmu_cow/spot.obj",
-      },
-      material: {
-        kind: "diffuse_light",
-        emit: {
-          kind: "image_texture",
-          // color: [0.4, 0.2, 0.1],
-          file_path: "assets/models/cmu_cow/spot_texture.png",
-        },
+    shape: {
+      kind: "uri",
+      uri: "assets:///models/cmu_cow/spot.obj",
+    },
+    material: {
+      kind: "lambertian",
+      albedo: {
+        kind: "image_texture",
+        // kind: "constant_texture",
+        // value: [0.4, 0.2, 0.1],
+        uri: "assets:///models/cmu_cow/spot_texture.png",
       },
     },
+  });
+
+  world.push({
+    kind: "geom",
+    shape: {
+      kind: "sphere",
+      center: [0, 10, 0],
+      radius: 1,
+    },
+    material: {
+      kind: "diffuse_light",
+      emit: [1.0, 1.0, 1.0],
+    },
+    area_light: {},
   });
   return world;
 }
@@ -64,7 +74,7 @@ export default make_project({
     width: size.width,
     height: size.height,
     nsamples: 10,
-    max_depth: 15,
+    max_depth: 4,
   },
   scene: {
     camera: {
@@ -78,10 +88,11 @@ export default make_project({
       time0: 0.0,
       time1: 1.0,
     },
-    sky: {
-      kind: "solid",
-      background: [0.7, 0.8, 1.0],
-    },
+    environments: [
+      {
+        l: [0.7, 0.8, 1.0],
+      },
+    ],
     world: create_world(),
   },
 });

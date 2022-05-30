@@ -5,12 +5,7 @@ use crate::{
 };
 use std::f32::consts::PI;
 
-use crate::{
-    core::MaterialPtr,
-    core::Ray,
-    core::AABB,
-    core::{HitRecord, Primitive},
-};
+use crate::{core::HitRecord, core::Ray, core::AABB};
 
 use super::Plane;
 
@@ -27,7 +22,6 @@ pub struct Disk {
     center: Vec3f,
     radius: f32,
     normal: Vec3f,
-    plane: Plane,
     sampler: SamplerPtr,
 }
 
@@ -47,7 +41,6 @@ impl Disk {
             center,
             radius,
             normal,
-            plane,
             sampler: Box::new(NopSampler::new()),
         }
     }

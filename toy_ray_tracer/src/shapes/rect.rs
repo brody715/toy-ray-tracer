@@ -14,13 +14,12 @@ pub struct Rect {
     // p0: Vec3,
     // right-top vertex
     // p1: Vec3,
-    // material: MaterialPtr,
     _impl: ShapePtr,
 }
 
 impl Rect {
     #[must_use]
-    pub fn new(p0: Vec3f, p1: Vec3f, material: MaterialPtr) -> Self {
+    pub fn new(p0: Vec3f, p1: Vec3f) -> Self {
         let axiso = p0.iter().zip(p1.iter()).position(|(l, r)| l == r);
 
         let k_axis = axiso.unwrap_or(3);

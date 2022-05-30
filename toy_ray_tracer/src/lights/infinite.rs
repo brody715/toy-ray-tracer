@@ -9,7 +9,7 @@ impl EnvironmentLight {
 }
 
 impl Light for EnvironmentLight {
-    fn color(&self, r: &Ray) -> Spectrum {
+    fn color(&self, _r: &Ray) -> Spectrum {
         self.background
     }
 

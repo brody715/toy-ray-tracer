@@ -21,58 +21,66 @@ export default make_project({
       time0: 0.0,
       time1: 1.0,
     },
-    sky: {
-      kind: "solid",
-      background: [0.1, 0.1, 0.1],
-    },
+    environments: [
+      {
+        l: [0.1, 0.1, 0.1],
+      },
+    ],
     world: [
       {
-        kind: "sphere",
+        kind: "geom",
+        shape: {
+          kind: "sphere",
+          center: [0.0, 2, 0],
+          radius: 0.5,
+        },
         material: {
           kind: "diffuse_light",
-          emit: {
-            kind: "constant_texture",
-            color: [1.0, 1.0, 1.0],
-          },
+          emit: [1.0, 1.0, 1.0],
         },
-        center: [0.0, 2.0, 0.0],
-        radius: 0.5,
+        area_light: {},
       },
       {
-        kind: "sphere",
+        kind: "geom",
+        shape: {
+          kind: "sphere",
+          center: [0.2, 0.2, 0.0],
+          radius: 0.5,
+        },
         material: {
           kind: "lambertian",
           albedo: {
             kind: "image_texture",
-            file_path: "assets/textures/earthmap.jpg",
+            uri: "assets:///textures/earthmap.jpg",
           },
         },
-        center: [0.2, 0.2, 0.0],
-        radius: 0.5,
       },
       {
-        kind: "sphere",
+        kind: "geom",
+        shape: {
+          kind: "sphere",
+          center: [0, -1, 0],
+          radius: 0.5,
+        },
         material: {
           kind: "lambertian",
           albedo: {
             kind: "constant_texture",
-            color: [1.0, 0, 0],
+            value: [1.0, 0, 0],
           },
         },
-        center: [0, -1, 0],
-        radius: 0.5,
       },
       {
-        kind: "sphere",
+        kind: "geom",
+        shape: {
+          kind: "sphere",
+          center: [0, -1000, 0],
+          radius: 1000,
+        },
         material: {
           kind: "lambertian",
-          albedo: {
-            kind: "constant_texture",
-            color: [0.2, 0.3, 0.1],
-          },
+          albedo: [0.2, 0.3, 0.1],
         },
-        center: [0, -1000, 0],
-        radius: 1000,
       },
     ],
   },

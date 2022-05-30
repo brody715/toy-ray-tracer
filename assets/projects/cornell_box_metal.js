@@ -61,7 +61,7 @@ export function create_world() {
     material: m_red,
   });
 
-  const lights = make_geometry({
+  const lights = make_primitive({
     kind: "list",
     children: [
       {
@@ -116,7 +116,7 @@ export function create_world() {
   });
 
   // cubes
-  let cube1 = make_geometry({
+  let cube1 = make_primitive({
     kind: "translate",
     offset: [265, 0, 295],
     child: {
@@ -132,7 +132,7 @@ export function create_world() {
     },
   });
 
-  let cube2 = make_geometry({
+  let cube2 = make_primitive({
     kind: "sphere",
     center: [190, 90, 190],
     radius: 90,
@@ -157,10 +157,10 @@ export function create_world() {
 
   world.push(cube1, cube2);
 
-  return { world, lights };
+  return {world, lights};
 }
 
-const { world, lights } = create_world();
+const {world, lights} = create_world();
 
 export default make_project({
   name: "cornell_box_metal",

@@ -9,6 +9,7 @@ use crate::{
 
 use super::Plane;
 
+#[derive(Debug)]
 pub struct Cylinder {
     // center bottom
     center0: Vec3f,
@@ -19,18 +20,6 @@ pub struct Cylinder {
     // axis aligned plane
     #[allow(dead_code)]
     plane: Plane,
-    material: MaterialPtr,
-}
-
-impl fmt::Debug for Cylinder {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Cylinder")
-            .field("center0", &self.center0)
-            .field("center1", &self.center1)
-            .field("radius", &self.radius)
-            .field("plane", &self.plane)
-            .finish()
-    }
 }
 
 #[allow(dead_code)]
@@ -42,7 +31,7 @@ fn error_axis_aligned_cylinder(c0: Vec3f, c1: Vec3f, r: f32) -> ! {
 }
 
 impl Cylinder {
-    pub fn new(c0: Vec3f, c1: Vec3f, r: f32, material: MaterialPtr) -> Self {
+    pub fn new(c0: Vec3f, c1: Vec3f, r: f32) -> Self {
         let ko = c0.iter().zip(c1.iter()).position(|(l, r)| l != r);
 
         let k = ko.unwrap_or(3);
@@ -77,7 +66,6 @@ impl Cylinder {
             center1,
             radius: r,
             plane,
-            material,
         }
     }
 }

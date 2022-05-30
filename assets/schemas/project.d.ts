@@ -5,140 +5,40 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Vec3F = [number, number, number];
-export type GeometryConfig =
+export type AcceleratorConfig =
   | {
-      center: Vec3F;
-      kind: "sphere";
-      material: MaterialConfig;
-      radius: number;
+      kind: "nop";
       [k: string]: unknown | undefined;
     }
   | {
-      center0: Vec3F;
-      center1: Vec3F;
-      kind: "moving_sphere";
-      material: MaterialConfig;
-      radius: number;
-      time0: number;
-      time1: number;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      kind: "cube";
-      material: MaterialConfig;
-      p_max: Vec3F;
-      p_min: Vec3F;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      kind: "rect";
-      material: MaterialConfig;
-      v0: Vec3F;
-      v1: Vec3F;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      kind: "triangle";
-      material: MaterialConfig;
-      v0: Vec3F;
-      v1: Vec3F;
-      v2: Vec3F;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      center: Vec3F;
-      kind: "disk";
-      material: MaterialConfig;
-      normal: Vec3F;
-      properties?: Properties | null;
-      radius: number;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      center0: Vec3F;
-      center1: Vec3F;
-      kind: "cylinder";
-      material: MaterialConfig;
-      radius: number;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      kind: "pyramid";
-      material: MaterialConfig;
-      v0: Vec3F;
-      v1: Vec3F;
-      v2: Vec3F;
-      v3: Vec3F;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      from_obj: MeshObjectConfig;
-      kind: "mesh";
-      load_options?: MeshLoadOptions | null;
-      material: MaterialConfig;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      children: GeometryConfig[];
       kind: "bvh";
-      time0: number;
-      time1: number;
+      [k: string]: unknown | undefined;
+    };
+export type JVec3F = [number, number, number];
+export type PrimitiveConfig =
+  | {
+      area_light?: AreaLightConfig | null;
+      flip_face?: boolean;
+      kind: "geom";
+      material: MaterialConfig;
+      shape: ShapeConfig;
+      transforms?: TransformConfig[];
       [k: string]: unknown | undefined;
     }
   | {
-      child: GeometryConfig;
-      kind: "tags";
-      properties?: {
-        [k: string]: unknown | undefined;
-      } | null;
-      tags: string[];
-      [k: string]: unknown | undefined;
-    }
-  | {
-      children: GeometryConfig[];
-      kind: "list";
-      [k: string]: unknown | undefined;
-    }
-  | {
-      angle: number;
-      axis: Axis;
-      child: GeometryConfig;
-      kind: "rotate";
-      [k: string]: unknown | undefined;
-    }
-  | {
-      child: GeometryConfig;
-      kind: "transforms";
-      params: TransformParam[];
-      [k: string]: unknown | undefined;
-    }
-  | {
-      child: GeometryConfig;
-      kind: "translate";
-      offset: Vec3F;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      child: GeometryConfig;
-      kind: "flip_face";
-      [k: string]: unknown | undefined;
-    }
-  | {
-      boundary: GeometryConfig;
-      density: number;
-      kind: "constant_medium";
-      texture: TextureConfig;
+      children: PrimitiveConfig[];
+      kind: "container";
+      transforms?: TransformConfig[];
       [k: string]: unknown | undefined;
     };
 export type MaterialConfig =
   | {
-      albedo: TextureConfig;
+      albedo: AorBFor_TextureConfigAnd_JVec3F;
       kind: "lambertian";
       [k: string]: unknown | undefined;
     }
   | {
-      albedo: TextureConfig;
+      albedo: AorBFor_TextureConfigAnd_JVec3F;
       fuzz: number;
       kind: "metal";
       [k: string]: unknown | undefined;
@@ -149,24 +49,25 @@ export type MaterialConfig =
       [k: string]: unknown | undefined;
     }
   | {
-      emit: TextureConfig;
+      emit: AorBFor_TextureConfigAnd_JVec3F;
       kind: "diffuse_light";
       [k: string]: unknown | undefined;
     }
   | {
-      albedo: TextureConfig;
+      albedo: AorBFor_TextureConfigAnd_JVec3F;
       kind: "isotropic";
       [k: string]: unknown | undefined;
     };
+export type AorBFor_TextureConfigAnd_JVec3F = TextureConfig | JVec3F;
 export type TextureConfig =
   | {
-      color: Vec3F;
       kind: "constant_texture";
+      value: JVec3F;
       [k: string]: unknown | undefined;
     }
   | {
-      file_path: string;
       kind: "image_texture";
+      uri: string;
       [k: string]: unknown | undefined;
     }
   | {
@@ -174,65 +75,82 @@ export type TextureConfig =
       kind: "checker_texture";
       odd: TextureConfig;
       [k: string]: unknown | undefined;
+    };
+export type ShapeConfig =
+  | {
+      center: JVec3F;
+      kind: "sphere";
+      radius: number;
+      [k: string]: unknown | undefined;
     }
   | {
-      kind: "nop_texture";
-      name?: string;
+      kind: "cube";
+      p_max: JVec3F;
+      p_min: JVec3F;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "rect";
+      v0: JVec3F;
+      v1: JVec3F;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      center: JVec3F;
+      kind: "disk";
+      normal: JVec3F;
+      radius: number;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      center0: JVec3F;
+      center1: JVec3F;
+      kind: "cylinder";
+      radius: number;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "pyramid";
+      v0: JVec3F;
+      v1: JVec3F;
+      v2: JVec3F;
+      v3: JVec3F;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      indices: number[];
+      kind: "triangle_mesh";
+      normals?: JVec3F[];
+      positions: JVec3F[];
+      uvs?: JVec2F[];
+      [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "uri";
+      uri: string;
       [k: string]: unknown | undefined;
     };
-export type SamplerType =
+export type JVec2F = [number, number];
+export type TransformConfig =
   | {
-      block_size: [number, number];
-      kind: "uniform";
+      kind: "translate";
+      offset: JVec3F;
       [k: string]: unknown | undefined;
     }
-  | {
-      kind: "random";
-      [k: string]: unknown | undefined;
-    }
-  | {
-      block_size: [number, number];
-      kind: "random_fixed";
-      [k: string]: unknown | undefined;
-    }
-  | {
-      block_size: [number, number];
-      kind: "blue_noise";
-      [k: string]: unknown | undefined;
-    };
-export type MeshObjectConfig =
-  | {
-      file_path: string;
-    }
-  | {
-      raw_string: string;
-    };
-export type Axis = "X" | "Y" | "Z";
-export type TransformParam =
   | {
       angle: number;
-      axis: Vec3F;
+      axis: JVec3F;
       kind: "rotate";
       [k: string]: unknown | undefined;
     }
   | {
-      kind: "translate";
-      offset: Vec3F;
-      [k: string]: unknown | undefined;
-    }
-  | {
       kind: "scale";
-      scale: Vec3F;
+      scale: JVec3F;
       [k: string]: unknown | undefined;
     };
-export type SkyConfig = {
-  background: Vec3F;
-  kind: "solid";
-  [k: string]: unknown | undefined;
-};
-export type WorldConfig = GeometryConfig[] | GeometryConfig;
 
 export interface ProjectConfig {
+  accelerator?: AcceleratorConfig;
   name: string;
   scene: SceneConfig;
   settings: Settings;
@@ -240,29 +158,27 @@ export interface ProjectConfig {
 }
 export interface SceneConfig {
   camera: CameraConfig;
-  light?: GeometryConfig | null;
-  sky: SkyConfig;
-  world: WorldConfig;
+  environments: EnvironmentConfig[];
+  world: PrimitiveConfig[];
   [k: string]: unknown | undefined;
 }
 export interface CameraConfig {
-  aperture: number;
-  aspect: number;
-  focus_dist: number;
-  look_at: Vec3F;
-  look_from: Vec3F;
-  time0: number;
-  time1: number;
-  vertical_fov: number;
-  view_up: Vec3F;
+  aperture?: number;
+  aspect?: number;
+  focus_dist?: number;
+  look_at?: JVec3F;
+  look_from?: JVec3F;
+  time0?: number;
+  time1?: number;
+  vertical_fov?: number;
+  view_up?: JVec3F;
   [k: string]: unknown | undefined;
 }
-export interface Properties {
-  sampler: SamplerType;
+export interface EnvironmentConfig {
+  l: JVec3F;
   [k: string]: unknown | undefined;
 }
-export interface MeshLoadOptions {
-  scale: number;
+export interface AreaLightConfig {
   [k: string]: unknown | undefined;
 }
 export interface Settings {

@@ -6,7 +6,7 @@ use crate::{
     core::{ShapePtr, AABB},
 };
 
-use super::{shape_list::ShapeList, Triangle};
+use super::{shape_list::ShapeList, triangle::TriangleMeshStorage, Triangle};
 
 pub struct Pyramid {
     // actual, 4 triangles
@@ -15,17 +15,19 @@ pub struct Pyramid {
 
 impl Pyramid {
     pub fn new(vertices: [Vec3f; 4]) -> Self {
-        let mut triangles: Vec<Arc<Triangle>> = Vec::new();
+        let vertex_indices = vec![0, 1, 2, 0, 2, 3, 0, 3, 1, 1, 3, 2];
+        let positions = vertices.to_vec();
+
+        let mesh = Arc::new(
+            TriangleMeshStorage::try_new(4, vertex_indices, positions, vec![], vec![]).unwrap(),
+        );
+
+        let mut triangles: Vec<ShapePtr> = Vec::new();
 
         // C_4^3
         for i in 0..4 {
-            let av = vertices[(i + 1) % 4];
-            let bv = vertices[(i + 2) % 4];
-            let cv = vertices[(i + 3) % 4];
-            triangles.push(Arc::new(Triangle::new([av, bv, cv], None)))
+            triangles.push(Arc::new(Triangle::new(i, mesh.clone())));
         }
-
-        let triangles: Vec<ShapePtr> = triangles.into_iter().map(|v| v as ShapePtr).collect();
 
         let items = ShapeList::from(triangles);
 

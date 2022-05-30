@@ -11,7 +11,7 @@ impl AreaLight {
 }
 
 impl Light for AreaLight {
-    fn color(&self, r: &crate::core::Ray) -> Spectrum {
+    fn color(&self, _r: &crate::core::Ray) -> Spectrum {
         todo!()
     }
 

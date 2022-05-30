@@ -19,6 +19,7 @@ impl From<&[PrimitivePtr]> for PrimitiveList {
 }
 
 impl PrimitiveList {
+    #[allow(dead_code)]
     pub fn add(&mut self, primitive: impl Primitive + 'static) {
         self.items.push(Arc::new(primitive))
     }
