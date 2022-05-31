@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
-use crate::core::HitRecord;
-use crate::core::MaterialPtr;
 use crate::core::Ray;
+use crate::core::SurfaceInteraction;
 use crate::core::Vec3f;
 use crate::core::{Point2f, Shape, ShapePtr, AABB};
 use crate::utils::random;
@@ -52,7 +51,7 @@ impl Rect {
 }
 
 impl Shape for Rect {
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         self._impl.intersect(ray, t_min, t_max)
     }
 
@@ -92,7 +91,7 @@ impl AARect {
 }
 
 impl Shape for AARect {
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         let (k_axis, a_axis, b_axis) = match &self.plane {
             Plane::YZ => (0, 1, 2),
             Plane::ZX => (1, 2, 0),
@@ -112,8 +111,8 @@ impl Shape for AARect {
                 let p = ray.point_at_parameter(t);
                 let mut normal = Vec3f::zeros();
                 normal[k_axis] = 1.0;
-                let mut rec = HitRecord::new(t, Point2f::new(u, v), p);
-                rec.set_face_normal(ray, &normal);
+                let rec =
+                    SurfaceInteraction::new(t, p, Point2f::new(u, v), -ray.direction(), normal);
                 return Some(rec);
             }
         }
@@ -142,7 +141,7 @@ impl Shape for AARect {
 
         if let Some(rec) = rec {
             let area = (self.a1 - self.a0) * (self.b1 - self.b0);
-            let distance_squared = rec.t * rec.t * v.norm_squared();
+            let distance_squared = rec.t_hit * rec.t_hit * v.norm_squared();
             let cosine = (v.dot(&rec.normal) / v.norm()).abs();
 
             return distance_squared / (cosine * area);

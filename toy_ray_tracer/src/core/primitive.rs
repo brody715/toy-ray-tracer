@@ -5,54 +5,10 @@ use crate::core::AABB;
 use crate::core::{Point3f, Vec3f};
 use crate::math::SamplerType;
 
-use super::vec::Point2f;
-use super::Material;
-
-pub struct HitRecord<'a> {
-    pub t: f32,
-    pub uv: Point2f,
-    pub point: Point3f,
-
-    pub normal: Vec3f,
-    pub front_face: bool,
-    pub material: Option<&'a dyn Material>,
-    // pub bsdf: Option<Bsdf>,
-    // pub emitted: Spectrum,
-}
-
-impl<'a> HitRecord<'a> {
-    pub fn new(t: f32, uv: Point2f, p: Point3f) -> Self {
-        Self {
-            t,
-            uv,
-            point: p,
-            normal: Vec3f::zeros(),
-            front_face: false,
-            material: None,
-            // bsdf: None,
-            // emitted: Color3::zeros(),
-        }
-    }
-
-    pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3f) -> &mut Self {
-        self.front_face = ray.direction().dot(outward_normal) < 0.0;
-        self.normal = if self.front_face {
-            *outward_normal
-        } else {
-            -*outward_normal
-        };
-        return self;
-    }
-
-    pub fn flip_normal(&mut self) -> &mut Self {
-        self.front_face = !self.front_face;
-        self.normal = -self.normal;
-        return self;
-    }
-}
+use super::SurfaceInteraction;
 
 pub trait Primitive: Sync + Send {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction>;
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
 
     // TODO: find a better way to change sample type

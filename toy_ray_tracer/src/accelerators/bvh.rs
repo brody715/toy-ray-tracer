@@ -1,12 +1,14 @@
-
 use crate::core::Ray;
 use crate::core::AABB;
-use crate::core::{HitRecord, Primitive, PrimitivePtr};
+use crate::core::{Primitive, PrimitivePtr, SurfaceInteraction};
 use crate::utils::random;
 use std::cmp::Ordering;
 
 enum BVHNode {
-    Branch { left: Box<BVHAccel>, right: Box<BVHAccel> },
+    Branch {
+        left: Box<BVHAccel>,
+        right: Box<BVHAccel>,
+    },
     Leaf(PrimitivePtr),
 }
 
@@ -81,18 +83,18 @@ impl BVHAccel {
 }
 
 impl Primitive for BVHAccel {
-    fn hit(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<SurfaceInteraction> {
         if !self.bbox.hit(&ray, t_min, t_max) {
             return None;
         }
         match &self.tree {
-            BVHNode::Leaf(leaf) => leaf.hit(&ray, t_min, t_max),
+            BVHNode::Leaf(leaf) => leaf.intersect(&ray, t_min, t_max),
             BVHNode::Branch { left, right } => {
-                let left = left.hit(&ray, t_min, t_max);
+                let left = left.intersect(&ray, t_min, t_max);
                 if let Some(l) = &left {
-                    t_max = l.t
+                    t_max = l.t_hit
                 };
-                let right = right.hit(&ray, t_min, t_max);
+                let right = right.intersect(&ray, t_min, t_max);
                 if right.is_some() {
                     right
                 } else {

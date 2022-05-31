@@ -1,7 +1,7 @@
-use crate::core::HitRecord;
 use crate::core::Point3f;
 use crate::core::Ray;
 use crate::core::Shape;
+use crate::core::SurfaceInteraction;
 use crate::core::AABB;
 use crate::core::{vec3, Point2f, Vec3f};
 use crate::math::ONB;
@@ -30,7 +30,7 @@ fn get_sphere_uv(p: &Vec3f) -> (f32, f32) {
 }
 
 impl Shape for Sphere {
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         let oc = ray.origin() - self.center;
         let a = ray.direction().dot(&ray.direction());
         let b = 2.0 * oc.dot(&ray.direction());
@@ -59,9 +59,8 @@ impl Shape for Sphere {
             let p = ray.point_at_parameter(t);
             let normal = (p - self.center) / self.radius;
             let (u, v) = get_sphere_uv(&normal);
-            let mut rec = HitRecord::new(t, Point2f::new(u, v), p);
-            rec.set_face_normal(ray, &normal);
-            return Some(rec);
+            let si = SurfaceInteraction::new(t, p, Point2f::new(u, v), -ray.direction(), normal);
+            return Some(si);
         }
 
         return None;
@@ -93,11 +92,4 @@ impl Shape for Sphere {
         let uvw = ONB::build_form_w(&direction);
         return uvw.local(vec3::random_to_sphere(self.radius, distance_squared));
     }
-}
-
-pub fn create_sphere_box(center: &Vec3f, radius: f32) -> AABB {
-    return AABB {
-        min: center - Vec3f::new(radius, radius, radius),
-        max: center + Vec3f::new(radius, radius, radius),
-    };
 }

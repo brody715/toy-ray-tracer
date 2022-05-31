@@ -110,7 +110,7 @@ impl Engine {
 
         let world = &scene.world;
 
-        if let Some(rec) = world.hit(r, 0.001, f32::MAX) {
+        if let Some(rec) = world.intersect(r, 0.001, f32::MAX) {
             // TODO: remove usage of material
             let material = rec.material.unwrap();
             let emitted = material.emitted(&r, &rec);

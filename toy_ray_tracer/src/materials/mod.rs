@@ -1,8 +1,8 @@
 use std::f32::consts::PI;
 
 use crate::{
-    core::HitRecord,
     core::Ray,
+    core::SurfaceInteraction,
     core::TexturePtr,
     core::{vec3, Color3, Vec3f},
     core::{Material, ScatterRecord},
@@ -13,11 +13,11 @@ use crate::{
 pub struct NopMaterial;
 
 impl Material for NopMaterial {
-    fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, _rec: &SurfaceInteraction) -> Option<ScatterRecord> {
         None
     }
 
-    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &SurfaceInteraction, _scattered: &Ray) -> f32 {
         1.0
     }
 }
@@ -33,10 +33,7 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
-        let uvw = ONB::build_form_w(&rec.normal);
-        let direction = uvw.local(vec3::random_cosine_direction());
-        let _scattered = Ray::new(rec.point, direction.normalize(), ray.time());
+    fn scatter(&self, _ray: &Ray, rec: &SurfaceInteraction) -> Option<ScatterRecord> {
         let attenuation = self.albedo.value(rec.uv[0], rec.uv[1], &rec.point);
         let pdf = Box::new(CosinePDF::from(rec.normal));
 
@@ -47,7 +44,7 @@ impl Material for Lambertian {
         })
     }
 
-    fn scattering_pdf(&self, _ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, rec: &SurfaceInteraction, scattered: &Ray) -> f32 {
         let cosine = rec.normal.dot(&scattered.direction().normalize());
         if cosine < 0.0 {
             0.0
@@ -72,7 +69,7 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, rec: &SurfaceInteraction) -> Option<ScatterRecord> {
         let mut reflected = vec3::reflect(&ray.direction().normalize(), &rec.normal);
         if self.fuzz > 0.0 {
             reflected += self.fuzz * vec3::random_in_unit_sphere()
@@ -93,7 +90,7 @@ impl Material for Metal {
         }
     }
 
-    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &SurfaceInteraction, _scattered: &Ray) -> f32 {
         1.0
     }
 }
@@ -110,7 +107,7 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, rec: &SurfaceInteraction) -> Option<ScatterRecord> {
         let refraction_ratio = if rec.front_face {
             1.0 / self.ir
         } else {
@@ -138,7 +135,7 @@ impl Material for Dielectric {
         });
     }
 
-    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &SurfaceInteraction, _scattered: &Ray) -> f32 {
         1.0
     }
 }
@@ -154,15 +151,15 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, _rec: &SurfaceInteraction) -> Option<ScatterRecord> {
         None
     }
 
-    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &SurfaceInteraction, _scattered: &Ray) -> f32 {
         1.0
     }
 
-    fn emitted(&self, _ray: &Ray, rec: &HitRecord) -> crate::core::Color3 {
+    fn emitted(&self, _ray: &Ray, rec: &SurfaceInteraction) -> crate::core::Color3 {
         if rec.front_face {
             return self.emit.value(rec.uv[0], rec.uv[1], &rec.point);
         } else {
@@ -183,7 +180,7 @@ impl Isotropic {
 }
 
 impl Material for Isotropic {
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, rec: &SurfaceInteraction) -> Option<ScatterRecord> {
         let specular_ray = Some(Ray::new(
             rec.point,
             vec3::random_in_unit_sphere(),
@@ -196,7 +193,7 @@ impl Material for Isotropic {
         })
     }
 
-    fn scattering_pdf(&self, _ray: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f32 {
+    fn scattering_pdf(&self, _ray: &Ray, _rec: &SurfaceInteraction, _scattered: &Ray) -> f32 {
         1.0
     }
 }

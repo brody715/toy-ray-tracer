@@ -1,5 +1,6 @@
 mod aabb;
 mod camera;
+mod interaction;
 pub(crate) mod light;
 mod material;
 mod nimage;
@@ -16,10 +17,11 @@ mod vec;
 
 pub use aabb::AABB;
 pub use camera::{Camera, CameraOpt};
+pub use interaction::SurfaceInteraction;
 pub use light::{Light, LightFlags, LightPtr};
 pub use material::{Material, MaterialPtr, ScatterRecord};
 pub use nimage::Image;
-pub use primitive::{HitRecord, Primitive, PrimitivePtr, PrimitiveRef};
+pub use primitive::{Primitive, PrimitivePtr, PrimitiveRef};
 pub use ray::Ray;
 pub use shape::{Shape, ShapePtr};
 pub use spectrum::Spectrum;

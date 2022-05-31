@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use derive_new::new;
 
-use crate::core::{HitRecord, Primitive, PrimitivePtr};
+use crate::core::{Primitive, PrimitivePtr, SurfaceInteraction};
 use crate::core::{Ray, AABB};
 use crate::utils::random;
 
@@ -26,12 +26,12 @@ impl PrimitiveList {
 }
 
 impl Primitive for PrimitiveList {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         let mut closest_so_far = t_max;
-        let mut hit_anything: Option<HitRecord> = None;
+        let mut hit_anything: Option<SurfaceInteraction> = None;
         for h in self.items.iter() {
-            if let Some(hit) = h.hit(ray, t_min, closest_so_far) {
-                closest_so_far = hit.t;
+            if let Some(hit) = h.intersect(ray, t_min, closest_so_far) {
+                closest_so_far = hit.t_hit;
                 hit_anything = Some(hit);
             }
         }

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::core::{HitRecord, Shape, ShapePtr, AABB};
+use crate::core::{Shape, ShapePtr, SurfaceInteraction, AABB};
 use crate::utils::random;
 
 pub struct ShapeList {
@@ -38,12 +38,17 @@ impl Shape for ShapeList {
         bbox
     }
 
-    fn intersect(&self, ray: &crate::core::Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(
+        &self,
+        ray: &crate::core::Ray,
+        t_min: f32,
+        t_max: f32,
+    ) -> Option<SurfaceInteraction> {
         let mut closest_so_far = t_max;
-        let mut hit_anything: Option<HitRecord> = None;
+        let mut hit_anything: Option<SurfaceInteraction> = None;
         for h in self.shapes.iter() {
             if let Some(hit) = h.intersect(ray, t_min, closest_so_far) {
-                closest_so_far = hit.t;
+                closest_so_far = hit.t_hit;
                 hit_anything = Some(hit);
             }
         }

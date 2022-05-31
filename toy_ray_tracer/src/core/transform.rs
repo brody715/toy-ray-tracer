@@ -2,7 +2,7 @@ use std::ops::Mul;
 
 use nalgebra::{Matrix4, Unit};
 
-use super::{vec3, Ray, Vec3f, Vec4f, AABB};
+use super::{vec3, Ray, SurfaceInteraction, Vec3f, Vec4f, AABB};
 
 #[derive(Clone)]
 pub struct Transform {
@@ -106,6 +106,11 @@ impl Transform {
             });
 
         AABB { min, max }
+    }
+
+    pub fn transform_surface_iteraction(&self, si: &mut SurfaceInteraction) {
+        si.point = self.transform_point3(si.point);
+        si.normal = self.transform_normal(si.normal);
     }
 }
 

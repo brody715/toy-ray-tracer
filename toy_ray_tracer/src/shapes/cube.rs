@@ -1,12 +1,11 @@
 use super::rect::AARect;
 use super::shape_list::ShapeList;
 use super::Plane;
-use crate::core::MaterialPtr;
 use crate::core::Ray;
 use crate::core::Shape;
+use crate::core::SurfaceInteraction;
 use crate::core::Vec3f;
 use crate::core::AABB;
-use crate::core::{HitRecord, Primitive};
 
 pub struct Cube {
     p_min: Vec3f,
@@ -74,7 +73,7 @@ impl Cube {
 }
 
 impl Shape for Cube {
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         self.sides.intersect(&ray, t_min, t_max)
     }
 

@@ -11,13 +11,13 @@ impl FlipFacePrimitive {
 }
 
 impl Primitive for FlipFacePrimitive {
-    fn hit(
+    fn intersect(
         &self,
         ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<crate::core::HitRecord> {
-        let rec = self.primitive.hit(ray, t_min, t_max);
+    ) -> Option<crate::core::SurfaceInteraction> {
+        let rec = self.primitive.intersect(ray, t_min, t_max);
         let rec = rec.map(|mut rec| {
             rec.flip_normal();
             rec

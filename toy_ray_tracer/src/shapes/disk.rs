@@ -5,7 +5,7 @@ use crate::{
 };
 use std::f32::consts::PI;
 
-use crate::{core::HitRecord, core::Ray, core::AABB};
+use crate::{core::Ray, core::SurfaceInteraction, core::AABB};
 
 use super::Plane;
 
@@ -47,7 +47,7 @@ impl Disk {
 }
 
 impl Shape for Disk {
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         let o: Vec3f = ray.origin() - self.center;
         let t = -self.normal.dot(&o) / ray.direction().dot(&self.normal);
         let q: Vec3f = o + ray.direction() * t;
@@ -61,9 +61,15 @@ impl Shape for Disk {
 
             // TODO: u, v, polar coordinates like sphere ?
             let p = ray.origin() + t * ray.direction();
-            let mut rec = HitRecord::new(t, Point2f::new(0.0, 0.0), p);
-            rec.set_face_normal(ray, &self.normal);
-            return Some(rec);
+
+            let si = SurfaceInteraction::new(
+                t,
+                p,
+                Point2f::new(0.0, 0.0),
+                -ray.direction(),
+                self.normal,
+            );
+            return Some(si);
         }
 
         None
@@ -91,7 +97,8 @@ impl Shape for Disk {
         // TODO: Consider not axis-aligned
         if let Some(rec) = rec {
             let area = self.radius * self.radius * PI;
-            let distance_squared = rec.t * rec.t * v.norm_squared();
+
+            let distance_squared = rec.t_hit * rec.t_hit * v.norm_squared();
             let cosine = (v.dot(&rec.normal) / v.norm()).abs();
 
             return distance_squared / (cosine * area);

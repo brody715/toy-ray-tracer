@@ -5,7 +5,7 @@ use anyhow::{ensure, Result};
 use crate::{
     core::AABB,
     core::{vec3, Point2f, Shape, Vec3f},
-    core::{HitRecord, Point3f},
+    core::{Point3f, SurfaceInteraction},
 };
 
 #[derive(Clone)]
@@ -21,7 +21,12 @@ impl Triangle {
 }
 
 impl Shape for Triangle {
-    fn intersect(&self, ray: &crate::core::Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(
+        &self,
+        ray: &crate::core::Ray,
+        t_min: f32,
+        t_max: f32,
+    ) -> Option<SurfaceInteraction> {
         // @see https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
         // ray traingle intersection
 
@@ -79,10 +84,10 @@ impl Shape for Triangle {
 
         let uv = uvs[0] * b0 + uvs[1] * b1 + uvs[2] * b2;
 
-        let mut rec = HitRecord::new(t, uv, p);
-        rec.set_face_normal(ray, &mesh.surface_normals[self.id]);
+        let surface_normal = &mesh.surface_normals[self.id];
+        let si = SurfaceInteraction::new(t, p, uv, -ray.direction(), *surface_normal);
 
-        return Some(rec);
+        return Some(si);
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {

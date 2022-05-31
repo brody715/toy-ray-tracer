@@ -41,7 +41,7 @@ impl Shape for Pyramid {
         ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<crate::core::HitRecord> {
+    ) -> Option<crate::core::SurfaceInteraction> {
         self.items.intersect(ray, t_min, t_max)
     }
 

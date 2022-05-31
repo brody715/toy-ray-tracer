@@ -1,10 +1,7 @@
-use core::fmt;
-
 use crate::{
     core::AABB,
-    core::{vec3, Vec3f},
-    core::{HitRecord, Shape},
-    core::{MaterialPtr, Point2f},
+    core::{vec3, Point2f, Vec3f},
+    core::{Shape, SurfaceInteraction},
 };
 
 use super::Plane;
@@ -76,7 +73,7 @@ impl Shape for Cylinder {
         ray: &crate::core::Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<HitRecord> {
+    ) -> Option<SurfaceInteraction> {
         let (axis_a, axis_b, axis_c) = match self.plane {
             Plane::YZ => (1, 2, 0),
             Plane::ZX => (2, 0, 1),
@@ -158,8 +155,9 @@ impl Shape for Cylinder {
 
             let p = ray.origin() + t * ray.direction();
             // TODO: uv
-            let mut rec = HitRecord::new(t, Point2f::new(0.0, 0.0), p);
-            rec.set_face_normal(ray, &normal);
+
+            let rec =
+                SurfaceInteraction::new(t, p, Point2f::new(0.0, 0.0), -ray.direction(), normal);
             return Some(rec);
         };
 

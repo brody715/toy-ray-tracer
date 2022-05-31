@@ -1,4 +1,6 @@
-use crate::core::{HitRecord, LightPtr, MaterialPtr, Primitive, Ray, ShapePtr, Transform, AABB};
+use crate::core::{
+    LightPtr, MaterialPtr, Primitive, Ray, ShapePtr, SurfaceInteraction, Transform, AABB,
+};
 
 pub struct GeometricPrimitive {
     pub shape: ShapePtr,
@@ -24,20 +26,19 @@ impl GeometricPrimitive {
 }
 
 impl Primitive for GeometricPrimitive {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         let ray = self.transform.transform_ray(ray);
 
-        let rec = self.shape.intersect(&ray, t_min, t_max);
+        let si = self.shape.intersect(&ray, t_min, t_max);
 
-        let rec = rec.map(|mut rec| {
-            rec.point = self.transform.transform_point3(rec.point);
-            rec.normal = self.transform.transform_normal(rec.normal);
+        let si = si.map(|mut si| {
+            self.transform.transform_surface_iteraction(&mut si);
 
-            rec.material = Some(self.material.as_ref());
-            rec
+            si.material = Some(self.material.as_ref());
+            si
         });
 
-        rec
+        si
     }
 
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
