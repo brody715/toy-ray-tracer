@@ -1,12 +1,14 @@
+mod gltfpbr;
+
 use std::f32::consts::PI;
 
 use crate::{
     core::Ray,
     core::SurfaceInteraction,
     core::TexturePtr,
-    core::{vec3, Color3, Vec3f},
+    core::{vec3, Color3, Spectrum, Vec3f},
     core::{Material, ScatterRecord},
-    math::{pdfs::CosinePDF, ONB},
+    math::pdfs::CosinePDF,
     utils::random,
 };
 
@@ -23,19 +25,19 @@ impl Material for NopMaterial {
 }
 
 pub struct Lambertian {
-    albedo: TexturePtr,
+    albedo: TexturePtr<Spectrum>,
 }
 
 impl Lambertian {
-    pub fn new(albedo: TexturePtr) -> Self {
+    pub fn new(albedo: TexturePtr<Spectrum>) -> Self {
         Lambertian { albedo }
     }
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray: &Ray, rec: &SurfaceInteraction) -> Option<ScatterRecord> {
-        let attenuation = self.albedo.value(rec.uv[0], rec.uv[1], &rec.point);
-        let pdf = Box::new(CosinePDF::from(rec.normal));
+    fn scatter(&self, _ray: &Ray, si: &SurfaceInteraction) -> Option<ScatterRecord> {
+        let attenuation = self.albedo.evaluate(si);
+        let pdf = Box::new(CosinePDF::from(si.normal));
 
         Some(ScatterRecord {
             specular_ray: None,
@@ -55,12 +57,12 @@ impl Material for Lambertian {
 }
 
 pub struct Metal {
-    albedo: TexturePtr,
+    albedo: TexturePtr<Spectrum>,
     fuzz: f32,
 }
 
 impl Metal {
-    pub fn new(albedo: TexturePtr, fuzz: f32) -> Self {
+    pub fn new(albedo: TexturePtr<Spectrum>, fuzz: f32) -> Self {
         Metal {
             albedo,
             fuzz: if fuzz < 1.0 { fuzz } else { 1.0 },
@@ -69,16 +71,16 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, rec: &SurfaceInteraction) -> Option<ScatterRecord> {
-        let mut reflected = vec3::reflect(&ray.direction().normalize(), &rec.normal);
+    fn scatter(&self, ray: &Ray, si: &SurfaceInteraction) -> Option<ScatterRecord> {
+        let mut reflected = vec3::reflect(&ray.direction().normalize(), &si.normal);
         if self.fuzz > 0.0 {
             reflected += self.fuzz * vec3::random_in_unit_sphere()
         };
-        let attenuation = self.albedo.value(rec.uv[0], rec.uv[1], &rec.point);
+        let attenuation = self.albedo.evaluate(si);
         let pdf = None;
 
-        if reflected.dot(&rec.normal) > 0.0 {
-            let specular_ray = Some(Ray::new(rec.point, reflected, ray.time()));
+        if reflected.dot(&si.normal) > 0.0 {
+            let specular_ray = Some(Ray::new(si.point, reflected, ray.time()));
 
             return Some(ScatterRecord {
                 specular_ray,
@@ -141,11 +143,11 @@ impl Material for Dielectric {
 }
 
 pub struct DiffuseLight {
-    emit: TexturePtr,
+    emit: TexturePtr<Spectrum>,
 }
 
 impl DiffuseLight {
-    pub fn new(emit: TexturePtr) -> Self {
+    pub fn new(emit: TexturePtr<Spectrum>) -> Self {
         DiffuseLight { emit }
     }
 }
@@ -159,41 +161,11 @@ impl Material for DiffuseLight {
         1.0
     }
 
-    fn emitted(&self, _ray: &Ray, rec: &SurfaceInteraction) -> crate::core::Color3 {
-        if rec.front_face {
-            return self.emit.value(rec.uv[0], rec.uv[1], &rec.point);
+    fn emitted(&self, _ray: &Ray, si: &SurfaceInteraction) -> crate::core::Color3 {
+        if si.front_face {
+            return self.emit.evaluate(si);
         } else {
             return Color3::zeros();
         }
-    }
-}
-
-#[derive(Clone)]
-pub struct Isotropic {
-    albedo: TexturePtr,
-}
-
-impl Isotropic {
-    pub fn new(albedo: TexturePtr) -> Self {
-        Isotropic { albedo }
-    }
-}
-
-impl Material for Isotropic {
-    fn scatter(&self, ray: &Ray, rec: &SurfaceInteraction) -> Option<ScatterRecord> {
-        let specular_ray = Some(Ray::new(
-            rec.point,
-            vec3::random_in_unit_sphere(),
-            ray.time(),
-        ));
-        Some(ScatterRecord {
-            specular_ray,
-            attenuation: self.albedo.value(rec.uv[0], rec.uv[1], &rec.point),
-            pdf: None,
-        })
-    }
-
-    fn scattering_pdf(&self, _ray: &Ray, _rec: &SurfaceInteraction, _scattered: &Ray) -> f32 {
-        1.0
     }
 }

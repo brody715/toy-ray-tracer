@@ -205,9 +205,6 @@ pub enum MaterialConfig {
     DiffuseLight {
         emit: AorB<TextureConfig, JVec3f>,
     },
-    Isotropic {
-        albedo: AorB<TextureConfig, JVec3f>,
-    },
 }
 
 #[derive(JsonSchema, Deserialize, Serialize, Debug)]

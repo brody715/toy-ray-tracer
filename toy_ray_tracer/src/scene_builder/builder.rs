@@ -3,11 +3,11 @@ use std::{rc::Rc, sync::Arc};
 use crate::{
     accelerators::BVHAccel,
     core::{
-        Camera, CameraOpt, LightPtr, MaterialPtr, PrimitivePtr, Project, Scene, ShapePtr,
+        Camera, CameraOpt, LightPtr, MaterialPtr, PrimitivePtr, Project, Scene, ShapePtr, Spectrum,
         TexturePtr, Transform, Vec2f, Vec3f,
     },
     lights::{AreaLight, EnvironmentLight},
-    materials::{Dielectric, DiffuseLight, Isotropic, Lambertian, Metal},
+    materials::{Dielectric, DiffuseLight, Lambertian, Metal},
     primitives::{FlipFacePrimitive, GeometricPrimitive, PrimitiveList},
     shapes::{Cube, Cylinder, Disk, Pyramid, Rect, Sphere, Triangle, TriangleMeshStorage},
     textures::{CheckerTexture, ConstantTexture, ImageTexture},
@@ -98,8 +98,6 @@ impl Builder {
         let camera = scene_bundle.camera.clone().context("camera is not set")?;
 
         let world = self.build_accelerator(&conf.accelerator, &scene_bundle.primitives)?;
-
-        let aggregate = self.build_accelerator(&conf.accelerator, &scene_bundle.primitives);
 
         let scene = Scene::new(camera, world, scene_bundle.lights);
 
@@ -303,45 +301,45 @@ impl Builder {
     fn build_material(&self, conf: &MaterialConfig) -> Result<MaterialPtr> {
         let material: MaterialPtr = match conf {
             MaterialConfig::Lambertian { albedo } => {
-                let albedo = self.build_texture_or_vec3f(&albedo)?;
+                let albedo = self.build_texture_or_color3f(&albedo)?;
                 Arc::new(Lambertian::new(albedo))
             }
             MaterialConfig::Metal { albedo, fuzz } => {
-                Arc::new(Metal::new(self.build_texture_or_vec3f(&albedo)?, *fuzz))
+                Arc::new(Metal::new(self.build_texture_or_color3f(&albedo)?, *fuzz))
             }
             MaterialConfig::Dielectric { ir } => Arc::new(Dielectric::new(*ir)),
             MaterialConfig::DiffuseLight { emit } => {
-                Arc::new(DiffuseLight::new(self.build_texture_or_vec3f(&emit)?))
-            }
-            MaterialConfig::Isotropic { albedo } => {
-                Arc::new(Isotropic::new(self.build_texture_or_vec3f(&albedo)?))
+                Arc::new(DiffuseLight::new(self.build_texture_or_color3f(&emit)?))
             }
         };
 
         Ok(material)
     }
 
-    fn build_texture_or_vec3f(&self, conf: &AorB<TextureConfig, JVec3f>) -> Result<TexturePtr> {
-        let texture: TexturePtr = match conf {
-            AorB::A(conf) => self.build_texture(conf)?,
+    fn build_texture_or_color3f(
+        &self,
+        conf: &AorB<TextureConfig, JVec3f>,
+    ) -> Result<TexturePtr<Spectrum>> {
+        let texture: TexturePtr<Spectrum> = match conf {
+            AorB::A(conf) => self.build_texture_color3(conf)?,
             AorB::B(value) => Arc::new(ConstantTexture::new(value.into())),
         };
 
         Ok(texture)
     }
 
-    fn build_texture(&self, conf: &TextureConfig) -> Result<TexturePtr> {
+    fn build_texture_color3(&self, conf: &TextureConfig) -> Result<TexturePtr<Spectrum>> {
         Ok(match conf {
             TextureConfig::ConstantTexture { value } => {
                 Arc::new(ConstantTexture::new(value.into()))
             }
             TextureConfig::ImageTexture { uri } => {
                 let image = self.assets_manager.load_image(uri)?;
-                Arc::new(ImageTexture::new(image))
+                Arc::new(ImageTexture::<Spectrum>::from_image(image))
             }
             TextureConfig::CheckerTexture { odd, even } => {
-                let odd = self.build_texture(odd.as_ref())?;
-                let even = self.build_texture(even.as_ref())?;
+                let odd = self.build_texture_color3(odd.as_ref())?;
+                let even = self.build_texture_color3(even.as_ref())?;
 
                 Arc::new(CheckerTexture::new(odd, even))
             }

@@ -12,11 +12,11 @@ pub struct ScatterRecord {
 }
 
 pub trait Material: Sync {
-    fn scatter(&self, ray: &Ray, rec: &SurfaceInteraction) -> Option<ScatterRecord>;
+    fn scatter(&self, ray: &Ray, si: &SurfaceInteraction) -> Option<ScatterRecord>;
 
-    fn scattering_pdf(&self, ray: &Ray, rec: &SurfaceInteraction, scattered: &Ray) -> f32;
+    fn scattering_pdf(&self, ray: &Ray, si: &SurfaceInteraction, scattered: &Ray) -> f32;
 
-    fn emitted(&self, _ray: &Ray, _rec: &SurfaceInteraction) -> Color3 {
+    fn emitted(&self, _ray: &Ray, _si: &SurfaceInteraction) -> Color3 {
         Color3::zeros()
     }
 }

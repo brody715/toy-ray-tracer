@@ -86,6 +86,11 @@ pub mod vec3 {
 
     pub const INF: Vec3f = Vec3f::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
 
+    #[inline]
+    pub fn scalar(value: f32) -> Vec3f {
+        Vec3f::new(value, value, value)
+    }
+
     #[allow(dead_code)]
     pub fn random() -> Vec3f {
         return Vec3f::new(random::f32(), random::f32(), random::f32());
@@ -174,6 +179,11 @@ pub mod vec3 {
     #[inline]
     pub fn elementwise_mult(v1: &Vec3f, v2: &Vec3f) -> Vec3f {
         v1.zip_map(v2, |e1, e2| e1 * e2)
+    }
+
+    #[inline]
+    pub fn elementwise_div(v1: &Vec3f, v2: &Vec3f) -> Vec3f {
+        v1.zip_map(v2, |e1, e2| e1 / e2)
     }
 
     #[inline]

@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use crate::core::Vec3f;
+use super::SurfaceInteraction;
 
-pub trait Texture: Sync + Send {
-    fn value(&self, u: f32, v: f32, p: &Vec3f) -> Vec3f;
+pub trait Texture<T>: Sync + Send {
+    fn evaluate(&self, si: &SurfaceInteraction) -> T;
 }
 
-pub type TexturePtr = Arc<dyn Texture + Sync + Send>;
+pub type TexturePtr<T> = Arc<dyn Texture<T> + Sync + Send>;

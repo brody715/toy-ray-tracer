@@ -30,6 +30,7 @@ tobj = "3.2.1"
 rquickjs = { version = "0.1.5", features = ["loader"] }
 paste = "1.0.7"
 url = "2.2.2"
+enumflags2 = "0.7.5"
 
 [target.'cfg(target_arch = "aarch64-apple-darwin")'.dependencies]
 rquickjs = { version = "0.1.5", features = ["bindgen", "loader"] }
