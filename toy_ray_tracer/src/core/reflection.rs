@@ -1,288 +1,54 @@
 use std::rc::Rc;
 
-use super::{vec3, Point2f, Spectrum, Vec3f};
+use super::{vec3, Vec3f};
 use std::f32::consts::PI;
 
-use enumflags2::{bitflags, BitFlags};
-
-#[derive(Clone)]
 pub struct Bsdf {
-    pub eta: f32,
-    pub normal: Vec3f,
-    pub bxdfs: Vec<BxdfPtr>,
+    normal: Vec3f,
+    bxdf: BxdfPtr,
 }
 
 impl Bsdf {
-    pub fn new(eta: f32, normal: Vec3f) -> Self {
-        Self {
-            eta,
-            normal,
-            bxdfs: Vec::with_capacity(8),
-        }
+    pub fn new(normal: Vec3f, bxdf: BxdfPtr) -> Self {
+        Self { normal, bxdf }
     }
 
-    pub fn add(&mut self, bxdf: BxdfPtr) {
-        self.bxdfs.push(bxdf);
+    pub fn set_bxdf(&mut self, bxdf: BxdfPtr) {
+        self.bxdf = bxdf;
     }
 }
 
-#[derive(Default)]
-pub struct BsdfSampleFRecord {
-    pub f: Spectrum,
-    pub sampled_flag: BxdfTypeFlags,
-    pub pdf: f32,
-    pub wi_world: Vec3f,
+impl Bsdf {
+    pub fn is_delta(&self) -> bool {
+        self.bxdf.is_delta()
+    }
+
+    pub fn f(&self, wi: &Vec3f, wo: &Vec3f) -> Vec3f {
+        self.bxdf.f(wi, wo)
+    }
+
+    pub fn sample(&self, wo: &Vec3f) -> BxdfSampleRecord {
+        self.bxdf.sample(wo, &self.normal)
+    }
 }
 
-pub struct BxdfSampleFRecord {
-    pub f: Spectrum,
-    pub sampled_flag: BxdfTypeFlags,
-    pub pdf: f32,
+pub struct BxdfSampleRecord {
     pub wi: Vec3f,
-}
-
-impl Bsdf {
-    fn world_to_local(&self, v: &Vec3f) -> Vec3f {
-        // TODO: add local space
-        return v.clone();
-    }
-
-    fn local_to_world(&self, v: &Vec3f) -> Vec3f {
-        // TODO: add local space
-        return v.clone();
-    }
-
-    // Without importance sampling, f(p, w_o, w_i)
-    pub fn f(&self, wo: &Vec3f, wi: &Vec3f) -> Spectrum {
-        let cos_theta_o = wo.dot(&self.normal);
-        let cos_theta_i = wi.dot(&self.normal);
-
-        let is_reflected = cos_theta_o * cos_theta_i > 0.0;
-
-        let mut f = Spectrum::zeros();
-        for bxdf in self.bxdfs.iter() {
-            let cur_flag = bxdf.get_type();
-            // either reflection or transmission
-            if (is_reflected && cur_flag.contains(BxdfType::Reflection))
-                || (!is_reflected && cur_flag.contains(BxdfType::Transmission))
-            {
-                f += bxdf.f(wo, wi);
-            }
-        }
-
-        f
-    }
-
-    pub fn num_components(&self, flags: BxdfTypeFlags) -> usize {
-        self.bxdfs
-            .iter()
-            .filter(|bxdf| bxdf.match_flags(flags))
-            .count()
-    }
-
-    // Importance sampling
-    // sample_f, f with sampling or delta distribution
-    // u -> random sampled points
-    pub fn sample_f(
-        &self,
-        wo_world: &Vec3f,
-        u: Point2f,
-        bsdf_flags: BxdfTypeFlags,
-    ) -> BsdfSampleFRecord {
-        let mut rec = BsdfSampleFRecord::default();
-        // 随机选择一个 BxDF 进行采样
-        let matching_comps = self.num_components(bsdf_flags);
-        if matching_comps == 0 {
-            rec.pdf = 0.0;
-            return rec;
-        }
-
-        let comp = std::cmp::min(
-            (u[0] * matching_comps as f32).floor() as usize,
-            matching_comps - 1,
-        );
-
-        let (bxdf, bxdf_index) = {
-            let mut bxdf: Option<_> = None;
-            let mut bxdf_index: usize = 0;
-
-            let mut count = comp;
-            for i in 0..self.bxdfs.len() {
-                let matched = self.bxdfs[i].match_flags(bsdf_flags);
-                if matched && count == 0 {
-                    count -= 1;
-                    bxdf = self.bxdfs.get(i);
-                    bxdf_index = i;
-                    break;
-                } else {
-                    // fix count, if greater
-                    if matched {
-                        count -= 1;
-                    }
-                }
-            }
-            (bxdf, bxdf_index)
-        };
-
-        if let Some(bxdf) = bxdf {
-            // Remap BxDF sample u to [0, 1]^2
-            let u_remapped = Point2f::new(
-                (u[0] * matching_comps as f32 - comp as f32).min(0.99999994),
-                u[1],
-            );
-
-            let wo = self.world_to_local(wo_world);
-            if wo[2] == 0.0 {
-                return BsdfSampleFRecord::default();
-            }
-
-            rec.pdf = 0.0;
-            // Sample chosen BxDF, get rec
-            let bxdf_rec = bxdf.sample_f(wo_world, u_remapped, bxdf.get_type());
-
-            if bxdf_rec.pdf == 0.0 {
-                if rec.sampled_flag != BxdfTypeFlags::empty() {
-                    rec.sampled_flag = BxdfTypeFlags::empty();
-                }
-                return rec;
-            }
-
-            {
-                rec.f = bxdf_rec.f;
-                rec.pdf = bxdf_rec.pdf;
-                rec.wi_world = self.local_to_world(&bxdf_rec.wi);
-                rec.sampled_flag = bxdf.get_type();
-            }
-
-            // Compute overall PDF with all matching BxDFs, if not specular
-            if bxdf.match_flags(BxdfType::Specular.into()) && matching_comps > 1 {
-                for i in 0..self.bxdfs.len() {
-                    if i == bxdf_index {
-                        continue;
-                    }
-
-                    let bxdf = &self.bxdfs[i];
-                    if bxdf.match_flags(bsdf_flags) {
-                        rec.pdf += bxdf.pdf(wo_world, &rec.wi_world);
-                    }
-                }
-            }
-
-            // average pdf
-            if matching_comps > 1 {
-                rec.pdf /= matching_comps as f32;
-            }
-
-            // Compute value for BSDF for sampled direction
-            // If not specular
-            if !bxdf.match_flags(BxdfType::Specular.into()) && matching_comps > 1 {
-                let reflected = rec.wi_world.dot(&self.normal) * wo_world.dot(&self.normal) > 0.0;
-
-                let mut f = Spectrum::zeros();
-
-                for bxdf in self.bxdfs.iter() {
-                    let cur_flag = bxdf.get_type();
-                    // either reflection or transmission
-                    if (reflected && cur_flag.contains(BxdfType::Reflection))
-                        || (!reflected && cur_flag.contains(BxdfType::Transmission))
-                    {
-                        f += bxdf.f(wo_world, &rec.wi_world);
-                    }
-                }
-
-                rec.f = f;
-            }
-
-            return rec;
-        }
-
-        return BsdfSampleFRecord::default();
-    }
-
-    // pdf sample pdf
-    pub fn pdf(&self, wo: &Vec3f, wi: &Vec3f) -> f32 {
-        let mut pdf = 0.0;
-        let mut n_matching = 0;
-
-        for bxdf in self.bxdfs.iter() {
-            pdf += bxdf.pdf(wo, wi);
-            n_matching += 1;
-        }
-
-        if n_matching > 0 {
-            pdf / (n_matching as f32)
-        } else {
-            0.0
-        }
-    }
-}
-
-#[bitflags]
-#[repr(u8)]
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum BxdfType {
-    Reflection,
-    Transmission,
-    Diffuse,
-    Glossy,
-    Specular,
-    All,
-}
-
-pub type BxdfTypeFlags = BitFlags<BxdfType>;
-
-impl Default for BxdfType {
-    fn default() -> Self {
-        BxdfType::All
-    }
+    pub pdf: f32,
 }
 
 pub trait Bxdf {
-    fn match_flags(&self, flags: BxdfTypeFlags) -> bool {
-        self.get_type().contains(flags)
-    }
+    // delta distribution, like specular
+    fn is_delta(&self) -> bool;
 
-    fn get_type(&self) -> BxdfTypeFlags;
+    // f_r(w_i, w_o) -> value, brdf function
+    fn f(&self, wi: &Vec3f, wo: &Vec3f) -> Vec3f;
 
-    // Without importance sampling, f(p, w_o, w_i)
-    fn f(&self, wo: &Vec3f, wi: &Vec3f) -> Spectrum;
-
-    // Importance sampling
-    fn sample_f(&self, wo: &Vec3f, u: Point2f, bxdf_flags: BxdfTypeFlags) -> BxdfSampleFRecord;
-
-    // pdf sample pdf
-    fn pdf(&self, wo: &Vec3f, wi: &Vec3f) -> f32;
+    // importance sampling
+    fn sample(&self, wo: &Vec3f, normal: &Vec3f) -> BxdfSampleRecord;
 }
 
 pub type BxdfPtr = Rc<dyn Bxdf>;
-
-pub struct LambertianReflection {
-    pub albedo: Spectrum,
-}
-
-impl LambertianReflection {
-    pub fn new(albedo: Spectrum) -> Self {
-        Self { albedo }
-    }
-}
-
-// impl Bxdf for LambertianReflection {
-//     fn get_type(&self) -> BxdfTypeFlags {
-//         BxdfType::Diffuse | BxdfType::Reflection
-//     }
-
-//     fn f(&self, wo: &Vec3f, wi: &Vec3f) -> Spectrum {
-//         self.albedo * FRAC_1_PI
-//     }
-
-//     fn pdf(&self, wo: &Vec3f, wi: &Vec3f) -> f32 {
-//         todo!()
-//     }
-
-//     fn sample_f(&self, wo: &Vec3f) -> BxdfSampleFRecord {
-//         todo!()
-//     }
-// }
 
 // schlick of fresnel
 pub fn fresnet_schlick(specular: &Vec3f, normal: &Vec3f, outgoing: &Vec3f) -> Vec3f {

@@ -1,15 +1,19 @@
 use std::sync::Arc;
 
-use crate::core::Color3;
 use crate::core::Ray;
 use crate::core::SurfaceInteraction;
 use crate::math::PDF;
 
+use super::Color3;
+use super::Vec3f;
+
 pub struct ScatterRecord {
     pub specular_ray: Option<Ray>,
-    pub attenuation: Color3,
+    pub attenuation: Vec3f,
     pub pdf: Option<Box<dyn PDF>>,
 }
+
+
 
 pub trait Material: Sync {
     fn scatter(&self, ray: &Ray, si: &SurfaceInteraction) -> Option<ScatterRecord>;
