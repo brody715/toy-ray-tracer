@@ -49,11 +49,11 @@ impl Shape for Pyramid {
         self.items.bounding_box(t0, t1)
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
-        self.items.pdf_value(origin, v)
+    fn sample_pdf(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
+        self.items.sample_pdf(origin, v)
     }
 
-    fn random(&self, origin: &Vec3f) -> Vec3f {
-        self.items.random(origin)
+    fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
+        self.items.sample_wi(origin)
     }
 }

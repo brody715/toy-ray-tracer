@@ -61,13 +61,24 @@
         }
       ]
     },
-    "AorB_for_TextureConfig_and_JVec3f": {
+    "AorB_for_TextureConfig_for_JVec3f_and_JVec3f": {
       "anyOf": [
         {
-          "$ref": "#/definitions/TextureConfig"
+          "$ref": "#/definitions/TextureConfig_for_JVec3f"
         },
         {
           "$ref": "#/definitions/JVec3f"
+        }
+      ]
+    },
+    "AorB_for_TextureConfig_for_float_and_float": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TextureConfig_for_float"
+        },
+        {
+          "type": "number",
+          "format": "float"
         }
       ]
     },
@@ -184,7 +195,7 @@
           ],
           "properties": {
             "albedo": {
-              "$ref": "#/definitions/AorB_for_TextureConfig_and_JVec3f"
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_JVec3f_and_JVec3f"
             },
             "kind": {
               "type": "string",
@@ -203,7 +214,7 @@
           ],
           "properties": {
             "albedo": {
-              "$ref": "#/definitions/AorB_for_TextureConfig_and_JVec3f"
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_JVec3f_and_JVec3f"
             },
             "fuzz": {
               "type": "number",
@@ -244,7 +255,7 @@
           ],
           "properties": {
             "emit": {
-              "$ref": "#/definitions/AorB_for_TextureConfig_and_JVec3f"
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_JVec3f_and_JVec3f"
             },
             "kind": {
               "type": "string",
@@ -258,17 +269,69 @@
           "type": "object",
           "required": [
             "albedo",
-            "kind"
+            "eta",
+            "kind",
+            "roughness"
           ],
           "properties": {
             "albedo": {
-              "$ref": "#/definitions/AorB_for_TextureConfig_and_JVec3f"
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_JVec3f_and_JVec3f"
+            },
+            "eta": {
+              "type": "number",
+              "format": "float"
             },
             "kind": {
               "type": "string",
               "enum": [
-                "isotropic"
+                "transparent"
               ]
+            },
+            "roughness": {
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_float_and_float"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "base_color",
+            "kind",
+            "metallic",
+            "roughness"
+          ],
+          "properties": {
+            "base_color": {
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_JVec3f_and_JVec3f"
+            },
+            "emit": {
+              "default": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "allOf": [
+                {
+                  "$ref": "#/definitions/AorB_for_TextureConfig_for_JVec3f_and_JVec3f"
+                }
+              ]
+            },
+            "eta": {
+              "default": 1.5,
+              "type": "number",
+              "format": "float"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "gltf_pbr"
+              ]
+            },
+            "metallic": {
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_float_and_float"
+            },
+            "roughness": {
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_float_and_float"
             }
           }
         }
@@ -353,7 +416,6 @@
       "type": "object",
       "required": [
         "camera",
-        "environments",
         "world"
       ],
       "properties": {
@@ -361,6 +423,7 @@
           "$ref": "#/definitions/CameraConfig"
         },
         "environments": {
+          "default": [],
           "type": "array",
           "items": {
             "$ref": "#/definitions/EnvironmentConfig"
@@ -393,17 +456,17 @@
           "type": "integer",
           "format": "int32"
         },
+        "mis_weight": {
+          "default": 0.5,
+          "type": "number",
+          "format": "float"
+        },
         "nsamples": {
           "type": "integer",
           "format": "int32"
         },
         "output_dir": {
           "type": "string"
-        },
-        "weight": {
-          "default": 0.5,
-          "type": "number",
-          "format": "float"
         },
         "width": {
           "type": "integer",
@@ -629,7 +692,7 @@
         }
       ]
     },
-    "TextureConfig": {
+    "TextureConfig_for_JVec3f": {
       "oneOf": [
         {
           "type": "object",
@@ -676,7 +739,7 @@
           ],
           "properties": {
             "even": {
-              "$ref": "#/definitions/TextureConfig"
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_JVec3f_and_JVec3f"
             },
             "kind": {
               "type": "string",
@@ -685,7 +748,70 @@
               ]
             },
             "odd": {
-              "$ref": "#/definitions/TextureConfig"
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_JVec3f_and_JVec3f"
+            }
+          }
+        }
+      ]
+    },
+    "TextureConfig_for_float": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "constant_texture"
+              ]
+            },
+            "value": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "uri"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "image_texture"
+              ]
+            },
+            "uri": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "even",
+            "kind",
+            "odd"
+          ],
+          "properties": {
+            "even": {
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_float_and_float"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "checker_texture"
+              ]
+            },
+            "odd": {
+              "$ref": "#/definitions/AorB_for_TextureConfig_for_float_and_float"
             }
           }
         }

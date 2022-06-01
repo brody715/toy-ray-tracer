@@ -44,7 +44,8 @@ declare global {
     static sub(v1: Vec3F, v2: Vec3F): Vec3F;
     static add(v1: Vec3F, v2: Vec3F): Vec3F;
     static dot(v1: Vec3F, v2: Vec3F): Vec3F;
-    static normalize(v: Vec3F): Vec3F;
+    static normalize(v: Vec3F): number;
+    static mul(v1: Vec3F, v2: Vec3F | number): Vec3F;
   }
 
   class Utils {

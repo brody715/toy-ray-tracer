@@ -49,26 +49,31 @@ impl Transform {
 
     pub fn transform_ray(&self, ray: &Ray) -> Ray {
         // move from world space to object space
-        let inverse_ = self.inverse();
-        let origin = inverse_.transform_point3(ray.origin());
-        let dir = inverse_.transform_vector3(ray.direction());
+        let origin = self.transform_point3(&ray.origin());
+        let dir = self.transform_vector3(&ray.direction());
         return Ray::new(origin, dir, ray.time());
     }
 
-    pub fn transform_point3(&self, point: Vec3f) -> Vec3f {
+    pub fn transform_point3(&self, point: &Vec3f) -> Vec3f {
         let point = Vec4f::new(point[0], point[1], point[2], 1.0);
         let point = self.m * point;
         return point.xyz();
     }
 
-    pub fn transform_vector3(&self, vec: Vec3f) -> Vec3f {
+    pub fn transform_vector3(&self, vec: &Vec3f) -> Vec3f {
         let vec = Vec4f::new(vec[0], vec[1], vec[2], 0.0);
         let vec = self.m * vec;
         return vec.xyz();
     }
 
-    pub fn transform_normal(&self, normal: Vec3f) -> Vec3f {
-        return self.transform_vector3(normal);
+    pub fn transform_unit_dir(&self, vec: &Vec3f) -> Vec3f {
+        let vec = Vec4f::new(vec[0], vec[1], vec[2], 0.0);
+        let vec = self.m * vec;
+        return vec.xyz().normalize();
+    }
+
+    pub fn transform_normal(&self, normal: &Vec3f) -> Vec3f {
+        return self.transform_vector3(normal).normalize();
     }
 
     pub fn transform_bounding_box(&self, bbox: AABB) -> AABB {
@@ -109,8 +114,8 @@ impl Transform {
     }
 
     pub fn transform_surface_iteraction(&self, si: &mut SurfaceInteraction) {
-        si.point = self.transform_point3(si.point);
-        si.normal = self.transform_normal(si.normal);
+        si.point = self.transform_point3(&si.point);
+        si.normal = self.transform_normal(&si.normal);
     }
 }
 

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::core::Settings;
+use crate::core::{Settings, Spectrum};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 pub struct JVec3f(pub [f32; 3]);
@@ -16,6 +16,7 @@ impl JVec3f {
 }
 
 impl JVec2f {
+    #[allow(dead_code)]
     fn new(x: f32, y: f32) -> Self {
         Self([x, y])
     }
@@ -47,6 +48,7 @@ impl Default for AcceleratorConfig {
 pub struct SceneConfig {
     pub camera: CameraConfig,
     pub world: Vec<PrimitiveConfig>,
+    #[serde(default)]
     pub environments: Vec<EnvironmentConfig>,
 }
 
@@ -189,35 +191,59 @@ pub enum AorB<A, B> {
     B(B),
 }
 
+pub type TextureOrConst<T> = AorB<TextureConfig<T>, T>;
+
 #[derive(JsonSchema, Deserialize, Serialize, Debug)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum MaterialConfig {
     Lambertian {
-        albedo: AorB<TextureConfig, JVec3f>,
+        albedo: TextureOrConst<JVec3f>,
     },
     Metal {
-        albedo: AorB<TextureConfig, JVec3f>,
+        albedo: TextureOrConst<JVec3f>,
         fuzz: f32,
     },
     Dielectric {
         ir: f32,
     },
     DiffuseLight {
-        emit: AorB<TextureConfig, JVec3f>,
+        emit: TextureOrConst<JVec3f>,
     },
+    Transparent {
+        eta: f32,
+        roughness: TextureOrConst<f32>,
+        albedo: TextureOrConst<JVec3f>,
+    },
+    GltfPbr {
+        #[serde(default = "default_gltf_pbr_eta")]
+        eta: f32,
+        base_color: TextureOrConst<JVec3f>,
+        roughness: TextureOrConst<f32>,
+        metallic: TextureOrConst<f32>,
+        #[serde(default = "default_texture_vec3f")]
+        emit: TextureOrConst<JVec3f>,
+    },
+}
+
+fn default_gltf_pbr_eta() -> f32 {
+    1.5
+}
+
+fn default_texture_vec3f() -> TextureOrConst<JVec3f> {
+    return TextureOrConst::B(JVec3f::new(0.0, 0.0, 0.0));
 }
 
 #[derive(JsonSchema, Deserialize, Serialize, Debug)]
 #[serde(tag = "kind", rename_all = "snake_case")]
-pub enum TextureConfig {
+pub enum TextureConfig<T> {
     ConstantTexture {
-        value: JVec3f,
+        value: T,
     },
     ImageTexture {
         uri: String,
     },
     CheckerTexture {
-        odd: Box<TextureConfig>,
-        even: Box<TextureConfig>,
+        odd: Box<TextureOrConst<T>>,
+        even: Box<TextureOrConst<T>>,
     },
 }

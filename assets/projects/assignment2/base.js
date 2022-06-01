@@ -86,7 +86,6 @@ export function make_assignment2({name, nsamples = 500, sampler}) {
       width: 500,
       nsamples: nsamples,
       max_depth: 15,
-      weight: 0.5,
     },
     scene: {
       camera: {

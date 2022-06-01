@@ -1,4 +1,4 @@
-use crate::core::{Color3, Image, Point2f, Spectrum, Texture};
+use crate::core::{Color3, Image, Point2f, Spectrum, Texture, TextureData};
 
 struct MipMap<T> {
     data: Vec<T>,
@@ -57,7 +57,7 @@ impl<T: Clone> ImageTexture<T> {
     }
 }
 
-impl<T: Send + Sync + Clone> Texture<T> for ImageTexture<T> {
+impl<T: TextureData> Texture<T> for ImageTexture<T> {
     fn evaluate(&self, si: &crate::core::SurfaceInteraction) -> T {
         self.mipmap.get_value(si.uv)
     }

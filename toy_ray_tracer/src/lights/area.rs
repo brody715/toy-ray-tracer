@@ -1,4 +1,6 @@
-use crate::core::{Light, LightFlags, PrimitivePtr, Spectrum};
+use crate::core::{
+    light::LightTypeFlags, Light, LightType, Point3f, PrimitivePtr, Spectrum, Vec3f,
+};
 
 pub struct AreaLight {
     primitive: PrimitivePtr,
@@ -11,15 +13,21 @@ impl AreaLight {
 }
 
 impl Light for AreaLight {
-    fn color(&self, _r: &crate::core::Ray) -> Spectrum {
+    fn background_l(&self, _r: &crate::core::Ray) -> Spectrum {
         todo!()
     }
 
-    fn get_flags(&self) -> u8 {
-        return LightFlags::Area as u8;
+    fn get_flags(&self) -> LightTypeFlags {
+        LightType::Area.into()
     }
 
-    fn get_light_primitive(&self) -> Option<&dyn crate::core::Primitive> {
-        Some(self.primitive.as_ref())
+    fn sample_wi(&self, point: &Point3f) -> Vec3f {
+        let prim = &self.primitive;
+        prim.sample_wi(point)
+    }
+
+    fn sample_pdf(&self, point: &Point3f, wi: &Vec3f) -> f32 {
+        let prim = self.primitive.as_ref();
+        prim.sample_pdf(point, &wi)
     }
 }

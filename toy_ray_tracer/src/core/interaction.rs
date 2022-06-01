@@ -4,7 +4,7 @@ pub struct SurfaceInteraction<'a> {
     pub t_hit: f32,
     pub point: Point3f,
     pub uv: Point2f,
-    // 射出光线（ Ray 反方向）
+    // 出射光线（ Ray 反方向）
     pub wo: Vec3f,
 
     pub normal: Vec3f,
@@ -15,6 +15,9 @@ pub struct SurfaceInteraction<'a> {
 
 impl<'a> SurfaceInteraction<'a> {
     pub fn new(t_hit: f32, p: Point3f, uv: Point2f, wo: Vec3f, normal: Vec3f) -> Self {
+        let wo = wo.normalize();
+        let normal = normal.normalize();
+
         let front_face = wo.dot(&normal) > 0.0;
         let normal = if front_face { normal } else { -normal };
 
@@ -22,12 +25,10 @@ impl<'a> SurfaceInteraction<'a> {
             t_hit,
             point: p,
             uv,
-            wo: wo.normalize(),
+            wo,
             normal,
             front_face,
             material: None,
-            // bsdf: None,
-            // emitted: Color3::zeros(),
         }
     }
 

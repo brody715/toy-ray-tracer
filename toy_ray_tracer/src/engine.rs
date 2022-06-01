@@ -1,16 +1,8 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{cell::RefCell, sync::Arc};
 
-use crate::core::{Scene, Settings};
-use crate::{
-    core::Project,
-    core::ScatterRecord,
-    math::{
-        pdfs::{HittablePDF, MixturePDF},
-        PDF,
-    },
-    utils::random,
-};
+use crate::core::{Light, Scene, Settings, Vec3f};
+use crate::{core::Project, utils::random};
 use log::trace;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use thread_local::ThreadLocal;
@@ -50,7 +42,7 @@ impl Engine {
             let _timer = ExecutionTimer::new(|start_time| {
                 let val = tasks_finished.fetch_add(1, Ordering::Relaxed) + 1;
                 if val % unit_height == 0 || val == height {
-                    trace!(
+                    log::debug!(
                         "render elapsed {} ms, height_idx={}, progress={}/{} ({:.2}%)",
                         start_time.elapsed().as_millis(),
                         j,
@@ -110,50 +102,171 @@ impl Engine {
 
         let world = &scene.world;
 
-        if let Some(rec) = world.intersect(r, 0.001, f32::MAX) {
-            // TODO: remove usage of material
-            let material = rec.material.unwrap();
-            let emitted = material.emitted(&r, &rec);
-            if let Some(ScatterRecord {
-                specular_ray,
-                attenuation,
-                pdf: pdf_scatter,
-            }) = material.scatter(r, &rec)
-            {
-                // 镜面反射
-                if let Some(specular_ray) = specular_ray {
+        if let Some(si) = world.intersect(r, 0.001, f32::MAX) {
+            let material = si.material.unwrap();
+            let emitted = material.emitted(&si);
+
+            if let Some(bsdf) = material.compute_bsdf(&si) {
+                let wo = &si.wo;
+
+                // delta 分布 brdf，如 镜面反射
+                if bsdf.is_delta() {
+                    let wi = bsdf.sample_wi(wo);
+                    let pdf = bsdf.sample_pdf(&wi, wo);
+                    let bsdf_value = bsdf.f_cos(&wi, wo);
+
+                    let ray = Ray::new(si.point, wi, r.time());
                     return vec3::elementwise_mult(
-                        &attenuation,
-                        &self.trace_ray(&specular_ray, scene, settings, depth - 1),
-                    );
+                        &bsdf_value,
+                        &self.trace_ray(&ray, scene, settings, depth - 1),
+                    ) / pdf;
                 }
 
-                // 漫反射
-                let mixture_pdf: MixturePDF;
-                let light_shape = scene.area_lights[0].get_light_primitive().unwrap();
-                let light_pdf = HittablePDF::new(rec.point, light_shape);
+                // 非 delta 分布 brdf，如 漫反射
+                let lights = &scene.lights;
 
-                let mixture_pdf: &dyn PDF = match &pdf_scatter {
-                    Some(pdf_scatter) => {
-                        mixture_pdf =
-                            MixturePDF::new(settings.weight, &light_pdf, pdf_scatter.as_ref());
-                        &mixture_pdf
-                    }
-                    None => &light_pdf,
+                // bsdf and light sampling weight
+                let mis_weight = settings.mis_weight;
+
+                let wi = if random::f32() < mis_weight {
+                    bsdf.sample_wi(wo)
+                } else {
+                    lights.sample_wi(&si.point)
                 };
 
-                let scattered = Ray::new(rec.point, mixture_pdf.generate_direction(), r.time());
-                let pdf_val = mixture_pdf.pdf_value(&scattered.direction());
+                if vec3::is_near_zero(&wi) {
+                    return emitted;
+                }
 
-                let new_color = self.trace_ray(&scattered, scene, settings, depth - 1);
-                return emitted
-                    + vec3::elementwise_mult(&attenuation, &new_color)
-                        * material.scattering_pdf(r, &rec, &scattered)
-                        / pdf_val;
+                let pdf = mis_weight * bsdf.sample_pdf(&wi, wo)
+                    + (1.0 - mis_weight) * lights.sample_pdf(&si.point, &wi);
+
+                let bsdf_value = bsdf.f_cos(&wi, wo);
+
+                // black, stop trace
+                if vec3::is_black(&bsdf_value) || pdf < f32::EPSILON {
+                    return emitted;
+                }
+
+                let scattered = Ray::new(si.point, wi, r.time());
+                let new_radiance = self.trace_ray(&scattered, scene, settings, depth - 1);
+
+                // TODO: fix bsdf_pdf
+                return emitted + vec3::elementwise_mult(&bsdf_value, &new_radiance) / pdf;
             }
             return emitted;
         }
         // TODO: support multiple infinitite lights
-        return scene.infinite_lights[0].color(&r);
+        return scene.lights.background_l(&r);
+    }
+
+    fn trace_ray_loop<'a>(
+        &self,
+        ray: &Ray,
+        scene: &Scene,
+        settings: &'a Settings,
+        max_depth: i32,
+    ) -> Color3 {
+        let mut ray = ray.clone();
+        let mut color = Color3::zeros();
+        let mut beta = Vec3f::new(1.0, 1.0, 1.0);
+
+        let world = &scene.world;
+        let lights = &scene.lights;
+
+        for bounce in 0..max_depth {
+            if let Some(si) = world.intersect(&ray, 0.001, f32::MAX) {
+                let material = si.material.unwrap();
+                let emitted = material.emitted(&si);
+
+                color = color + vec3::elementwise_mult(&beta, &emitted);
+
+                if let Some(bsdf) = material.compute_bsdf(&si) {
+                    let wo = &si.wo;
+
+                    // delta 分布 brdf，如 镜面反射
+                    if bsdf.is_delta() {
+                        let wi = bsdf.sample_wi(wo);
+                        let pdf = bsdf.sample_pdf(&wi, wo);
+                        let bsdf_value = bsdf.f_cos(&wi, wo);
+
+                        ray = Ray::new(si.point, wi, ray.time());
+                        beta = vec3::elementwise_mult(&beta, &bsdf_value) / pdf;
+                    } else {
+                        // 非 delta 分布 brdf，如 漫反射
+                        let lights = &scene.lights;
+
+                        // bsdf and light sampling weight
+                        let mis_weight = settings.mis_weight;
+
+                        let wi = if random::f32() < mis_weight {
+                            bsdf.sample_wi(wo)
+                        } else {
+                            lights.sample_wi(&si.point)
+                        };
+
+                        // no light ray
+                        if vec3::is_near_zero(&wi) {
+                            break;
+                        }
+
+                        let pdf = mis_weight * bsdf.sample_pdf(&wi, wo)
+                            + (1.0 - mis_weight) * lights.sample_pdf(&si.point, &wi);
+
+                        let bsdf_value = bsdf.f_cos(&wi, wo);
+
+                        // black, stop trace
+                        if vec3::is_black(&bsdf_value) || pdf < f32::EPSILON {
+                            break;
+                        }
+
+                        ray = Ray::new(si.point, wi, ray.time());
+                        let old_beta = beta;
+                        beta = vec3::elementwise_mult(&beta, &bsdf_value) / pdf;
+
+                        if log::max_level() >= log::Level::Trace {
+                            log::trace!("wi: {:?}, wo: {:?}, normal: {:?}", &wi, &wo, &si.normal);
+                            log::trace!(
+                                "wi.norm(): {:?}, wo.norm(): {:?}, normal.norm(): {:?}",
+                                &wi.norm(),
+                                &wo.norm(),
+                                &si.normal.norm()
+                            );
+
+                            log::trace!(
+                                "pdf: {:?}, bsdf_value: {:?}, beta: {:?}, old_beta: {:?}",
+                                pdf,
+                                bsdf_value,
+                                beta,
+                                old_beta,
+                            );
+                        }
+                    }
+                }
+            } else {
+                // no hit, return environment lights
+                color = color + vec3::elementwise_mult(&beta, &lights.background_l(&ray));
+                break;
+            }
+
+            if beta == Vec3f::zeros() {
+                break;
+            }
+
+            if bounce > 3 {
+                // prop 0.99 or beta
+                let rr_prob = f32::min(0.99, beta.max());
+
+                // rr_prop stop trace
+                if random::f32() >= rr_prob {
+                    break;
+                }
+
+                // (1 - rr_prob) continue to trace
+                beta *= 1.0 / rr_prob;
+            }
+        }
+
+        return color;
     }
 }

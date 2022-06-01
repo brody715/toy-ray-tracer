@@ -1,3 +1,4 @@
+use crate::core::PrimitiveContainer;
 use crate::core::Ray;
 use crate::core::AABB;
 use crate::core::{Primitive, PrimitivePtr, SurfaceInteraction};
@@ -82,7 +83,7 @@ impl BVHAccel {
     }
 }
 
-impl Primitive for BVHAccel {
+impl PrimitiveContainer for BVHAccel {
     fn intersect(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<SurfaceInteraction> {
         if !self.bbox.hit(&ray, t_min, t_max) {
             return None;

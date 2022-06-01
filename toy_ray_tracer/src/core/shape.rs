@@ -7,11 +7,19 @@ pub trait Shape: Sync + Send {
 
     fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction>;
 
-    fn pdf_value(&self, _origin: &Point3f, _v: &Vec3f) -> f32 {
+    fn intersect_p(&self, ray: &Ray) -> bool {
+        // naive implementation
+        match self.intersect(ray, 0.0, f32::INFINITY) {
+            Some(_) => true,
+            None => false,
+        }
+    }
+
+    fn sample_pdf(&self, _point: &Point3f, _wi: &Vec3f) -> f32 {
         1.0
     }
 
-    fn random(&self, _origin: &Point3f) -> Vec3f {
+    fn sample_wi(&self, _point: &Point3f) -> Vec3f {
         Vec3f::new(0.0, 0.0, 0.0)
     }
 }

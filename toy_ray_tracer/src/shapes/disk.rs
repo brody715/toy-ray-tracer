@@ -91,7 +91,7 @@ impl Shape for Disk {
         ));
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
+    fn sample_pdf(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
         let rec = self.intersect(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
 
         // TODO: Consider not axis-aligned
@@ -106,7 +106,7 @@ impl Shape for Disk {
         0.0
     }
 
-    fn random(&self, origin: &Vec3f) -> Vec3f {
+    fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
         self.sampler.sample_direction(origin)
     }
 }

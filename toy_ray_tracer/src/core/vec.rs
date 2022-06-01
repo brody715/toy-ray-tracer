@@ -71,7 +71,7 @@ impl IndexMut<usize> for Vec3List {
 
 // utils for Vec3
 pub mod vec3 {
-    use std::f32::consts::PI;
+    use std::f32::{consts::PI, EPSILON};
 
     use crate::utils::random;
 
@@ -87,8 +87,28 @@ pub mod vec3 {
     pub const INF: Vec3f = Vec3f::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
 
     #[inline]
+    pub fn lerp(a: &Vec3f, b: &Vec3f, t: f32) -> Vec3f {
+        a + (b - a) * t
+    }
+
+    #[inline]
     pub fn scalar(value: f32) -> Vec3f {
         Vec3f::new(value, value, value)
+    }
+
+    #[inline]
+    pub fn is_near_zero(v: &Vec3f) -> bool {
+        let eps = EPSILON;
+        return v[0] < eps && v[1] < eps && v[2] < eps;
+    }
+
+    #[inline]
+    pub fn is_black(v: &Vec3f) -> bool {
+        self::is_near_zero(v)
+    }
+
+    pub fn is_same_hemisphere(wi: &Vec3f, wo: &Vec3f, normal: &Vec3f) -> bool {
+        return wi.dot(normal) * wo.dot(normal) > 0.0;
     }
 
     #[allow(dead_code)]
@@ -145,6 +165,15 @@ pub mod vec3 {
         return Vec3f::new(x, y, z);
     }
 
+    pub fn random_hemisphere_cosine(normal: &Vec3f) -> Vec3f {
+        let dir = self::random_cosine_direction();
+        if dir.dot(normal) > 0.0 {
+            dir
+        } else {
+            -dir
+        }
+    }
+
     pub fn random_to_sphere(radius: f32, distance_squared: f32) -> Vec3f {
         let r1 = random::f32();
         let r2 = random::f32();
@@ -159,7 +188,7 @@ pub mod vec3 {
 
     #[inline]
     pub fn reflect(v: &Vec3f, n: &Vec3f) -> Vec3f {
-        v - 2.0 * v.dot(&n) * n
+        -v + 2.0 * v.dot(&n) * n
     }
 
     #[inline]

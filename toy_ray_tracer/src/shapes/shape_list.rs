@@ -55,20 +55,20 @@ impl Shape for ShapeList {
         hit_anything
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
+    fn sample_pdf(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
         let weight = 1.0 / self.shapes.len() as f32;
 
         let sum = self
             .shapes
             .iter()
-            .map(|h| h.pdf_value(origin, v) * weight)
+            .map(|h| h.sample_pdf(origin, v) * weight)
             .fold(0.0 as f32, |acc, v| acc + v);
 
         return sum;
     }
 
-    fn random(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
+    fn sample_wi(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
         let idx = random::usize(0..self.shapes.len());
-        return self.shapes[idx].random(origin);
+        return self.shapes[idx].sample_wi(origin);
     }
 }

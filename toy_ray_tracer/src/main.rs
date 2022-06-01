@@ -9,7 +9,8 @@ mod scene_builder;
 mod shapes;
 mod textures;
 mod utils;
-mod brdfs;
+mod bxdfs;
+mod integrators;
 
 use crate::scene_builder::{load_project_config, AssetsManager, Builder};
 use crate::{engine::Engine, utils::ExecutionTimer};

@@ -66,6 +66,19 @@ impl Shape for Sphere {
         return None;
     }
 
+    fn intersect_p(&self, ray: &Ray) -> bool {
+        let oc = ray.origin() - self.center;
+        let a = ray.direction().dot(&ray.direction());
+        let b = 2.0 * oc.dot(&ray.direction());
+        let c = oc.dot(&oc) - self.radius * self.radius;
+        let discriminant = b * b - 4.0 * a * c;
+
+        if discriminant < 0.0 {
+            return false;
+        }
+        return true;
+    }
+
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
         let radius = Vector3::new(self.radius, self.radius, self.radius);
         let min = self.center - radius;
@@ -73,12 +86,11 @@ impl Shape for Sphere {
         Some(AABB { min, max })
     }
 
-    fn pdf_value(&self, origin: &Point3f, v: &Vec3f) -> f32 {
-        if let Some(_rec) =
-            self.intersect(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX)
-        {
+    fn sample_pdf(&self, point: &Point3f, wi: &Vec3f) -> f32 {
+        let ray = Ray::new(point.clone(), wi.clone(), 0.0);
+        if self.intersect_p(&ray) {
             let cos_theta_max =
-                (1.0 - self.radius * self.radius / (self.center - origin).norm_squared()).sqrt();
+                (1.0 - self.radius * self.radius / (self.center - point).norm_squared()).sqrt();
             let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
             return 1.0 / solid_angle;
         }
@@ -86,7 +98,7 @@ impl Shape for Sphere {
         return 0.0;
     }
 
-    fn random(&self, origin: &Vec3f) -> Vec3f {
+    fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
         let direction = self.center - origin;
         let distance_squared = direction.norm_squared();
         let uvw = ONB::build_form_w(&direction);

@@ -1,29 +1,28 @@
 use std::sync::Arc;
 
-use super::{Ray, Spectrum, Primitive};
+use super::{Point3f, Ray, Spectrum, Vec3f};
+use enumflags2::{bitflags, BitFlags};
 
+#[bitflags]
 #[repr(u8)]
-pub enum LightFlags {
-    Area = 4,
-    Infinite = 8,
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum LightType {
+    Area,
+    Infinite,
+    List,
 }
+
+pub type LightTypeFlags = BitFlags<LightType>;
 
 pub trait Light {
-    fn color(&self, r: &Ray) -> Spectrum;
+    // background_l for envrionment light
+    fn background_l(&self, r: &Ray) -> Spectrum;
 
-    fn get_flags(&self) -> u8;
+    fn get_flags(&self) -> LightTypeFlags;
 
-    fn get_light_primitive(&self) -> Option<& dyn Primitive> {
-        None
-    }
-}
+    fn sample_wi(&self, point: &Point3f) -> Vec3f;
 
-pub fn is_area_light(light: &dyn Light) -> bool {
-    light.get_flags() & LightFlags::Area as u8 != 0
-}
-
-pub fn is_infinite_light(light: &dyn Light) -> bool {
-    light.get_flags() & LightFlags::Infinite as u8 != 0
+    fn sample_pdf(&self, point: &Point3f, wi: &Vec3f) -> f32;
 }
 
 pub type LightPtr = Arc<dyn Light + Sync + Send>;

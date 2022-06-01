@@ -1,4 +1,4 @@
-use crate::core::Texture;
+use crate::core::{Texture, TextureData};
 
 pub struct ConstantTexture<T> {
     value: T,
@@ -10,7 +10,7 @@ impl<T> ConstantTexture<T> {
     }
 }
 
-impl<T: Send + Sync + Clone> Texture<T> for ConstantTexture<T> {
+impl<T: TextureData> Texture<T> for ConstantTexture<T> {
     fn evaluate(&self, _si: &crate::core::SurfaceInteraction) -> T {
         self.value.clone()
     }

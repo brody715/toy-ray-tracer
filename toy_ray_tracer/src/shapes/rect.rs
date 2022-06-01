@@ -59,12 +59,12 @@ impl Shape for Rect {
         self._impl.bounding_box(t0, t1)
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
-        self._impl.pdf_value(origin, v)
+    fn sample_pdf(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
+        self._impl.sample_pdf(origin, v)
     }
 
-    fn random(&self, origin: &Vec3f) -> Vec3f {
-        self._impl.random(origin)
+    fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
+        self._impl.sample_wi(origin)
     }
 }
 
@@ -136,7 +136,7 @@ impl Shape for AARect {
         Some(AABB { min, max })
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
+    fn sample_pdf(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
         let rec = self.intersect(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
 
         if let Some(rec) = rec {
@@ -150,7 +150,7 @@ impl Shape for AARect {
         return 0.0;
     }
 
-    fn random(&self, origin: &Vec3f) -> Vec3f {
+    fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
         let rand_a = random::f32_r(self.a0, self.a1);
         let rand_b = random::f32_r(self.b0, self.b1);
 

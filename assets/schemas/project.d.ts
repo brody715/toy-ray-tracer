@@ -33,12 +33,12 @@ export type PrimitiveConfig =
     };
 export type MaterialConfig =
   | {
-      albedo: AorBFor_TextureConfigAnd_JVec3F;
+      albedo: AorBFor_TextureConfigFor_JVec3FAnd_JVec3F;
       kind: "lambertian";
       [k: string]: unknown | undefined;
     }
   | {
-      albedo: AorBFor_TextureConfigAnd_JVec3F;
+      albedo: AorBFor_TextureConfigFor_JVec3FAnd_JVec3F;
       fuzz: number;
       kind: "metal";
       [k: string]: unknown | undefined;
@@ -49,17 +49,28 @@ export type MaterialConfig =
       [k: string]: unknown | undefined;
     }
   | {
-      emit: AorBFor_TextureConfigAnd_JVec3F;
+      emit: AorBFor_TextureConfigFor_JVec3FAnd_JVec3F;
       kind: "diffuse_light";
       [k: string]: unknown | undefined;
     }
   | {
-      albedo: AorBFor_TextureConfigAnd_JVec3F;
-      kind: "isotropic";
+      albedo: AorBFor_TextureConfigFor_JVec3FAnd_JVec3F;
+      eta: number;
+      kind: "transparent";
+      roughness: AorBFor_TextureConfigForFloatAndFloat;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      base_color: AorBFor_TextureConfigFor_JVec3FAnd_JVec3F;
+      emit?: AorBFor_TextureConfigFor_JVec3FAnd_JVec3F;
+      eta?: number;
+      kind: "gltf_pbr";
+      metallic: AorBFor_TextureConfigForFloatAndFloat;
+      roughness: AorBFor_TextureConfigForFloatAndFloat;
       [k: string]: unknown | undefined;
     };
-export type AorBFor_TextureConfigAnd_JVec3F = TextureConfig | JVec3F;
-export type TextureConfig =
+export type AorBFor_TextureConfigFor_JVec3FAnd_JVec3F = TextureConfigFor_JVec3F | JVec3F;
+export type TextureConfigFor_JVec3F =
   | {
       kind: "constant_texture";
       value: JVec3F;
@@ -71,9 +82,27 @@ export type TextureConfig =
       [k: string]: unknown | undefined;
     }
   | {
-      even: TextureConfig;
+      even: AorBFor_TextureConfigFor_JVec3FAnd_JVec3F;
       kind: "checker_texture";
-      odd: TextureConfig;
+      odd: AorBFor_TextureConfigFor_JVec3FAnd_JVec3F;
+      [k: string]: unknown | undefined;
+    };
+export type AorBFor_TextureConfigForFloatAndFloat = TextureConfigForFloat | number;
+export type TextureConfigForFloat =
+  | {
+      kind: "constant_texture";
+      value: number;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "image_texture";
+      uri: string;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      even: AorBFor_TextureConfigForFloatAndFloat;
+      kind: "checker_texture";
+      odd: AorBFor_TextureConfigForFloatAndFloat;
       [k: string]: unknown | undefined;
     };
 export type ShapeConfig =
@@ -158,7 +187,7 @@ export interface ProjectConfig {
 }
 export interface SceneConfig {
   camera: CameraConfig;
-  environments: EnvironmentConfig[];
+  environments?: EnvironmentConfig[];
   world: PrimitiveConfig[];
   [k: string]: unknown | undefined;
 }
@@ -184,9 +213,9 @@ export interface AreaLightConfig {
 export interface Settings {
   height: number;
   max_depth: number;
+  mis_weight?: number;
   nsamples: number;
   output_dir: string;
-  weight?: number;
   width: number;
   [k: string]: unknown | undefined;
 }

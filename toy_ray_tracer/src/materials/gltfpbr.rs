@@ -1,46 +1,49 @@
-use crate::core::{Color3, Material, Ray, ScatterRecord, Spectrum, SurfaceInteraction, TexturePtr};
+use crate::{
+    bxdfs::GltfPbrBxdf,
+    core::{Bsdf, Color3, Material, Spectrum, SurfaceInteraction, TexturePtr},
+};
 
 pub struct GltfPbrMaterial {
-    ior: f32,
+    eta: f32,
     base_color: TexturePtr<Spectrum>,
     metallic: TexturePtr<f32>,
     roughness: TexturePtr<f32>,
-    emitted_color: TexturePtr<Spectrum>,
+    emit: TexturePtr<Spectrum>,
 }
 
 impl GltfPbrMaterial {
     pub fn new(
-        ior: f32,
+        eta: f32,
         base_color: TexturePtr<Spectrum>,
         metallic: TexturePtr<f32>,
         roughness: TexturePtr<f32>,
-        emitted_color: TexturePtr<Spectrum>,
+        emit: TexturePtr<Spectrum>,
     ) -> Self {
         Self {
-            ior,
+            eta,
             base_color,
             metallic,
             roughness,
-            emitted_color,
+            emit,
         }
     }
 }
 
 impl Material for GltfPbrMaterial {
-    fn scatter(&self, ray: &Ray, si: &SurfaceInteraction) -> Option<ScatterRecord> {
-        todo!()
+    fn emitted(&self, si: &crate::core::SurfaceInteraction) -> Color3 {
+        return self.emit.evaluate(si);
     }
 
-    fn scattering_pdf(
-        &self,
-        ray: &crate::core::Ray,
-        si: &crate::core::SurfaceInteraction,
-        scattered: &crate::core::Ray,
-    ) -> f32 {
-        todo!()
-    }
+    fn compute_bsdf(&self, si: &SurfaceInteraction) -> Option<Bsdf> {
+        let mut bsdf = Bsdf::new(si.normal);
 
-    fn emitted(&self, _ray: &crate::core::Ray, si: &crate::core::SurfaceInteraction) -> Color3 {
-        return self.emitted_color.evaluate(si);
+        bsdf.set_raw(GltfPbrBxdf::new(
+            self.eta,
+            self.base_color.evaluate(si),
+            self.metallic.evaluate(si),
+            self.roughness.evaluate(si),
+        ));
+
+        Some(bsdf)
     }
 }

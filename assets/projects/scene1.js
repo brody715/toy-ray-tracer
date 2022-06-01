@@ -1,6 +1,6 @@
 /// <reference path="../schemas/global.d.ts" />
 
-/** @typedef {import("../schemas/project").Vec3F} Vec3F */
+/** @typedef {import("../schemas/project").JVec3F} JVec3F */
 
 const scenes = [].map((v) => make_scene(v));
 
@@ -8,54 +8,30 @@ function random_float(min = 0, max = 1) {
   return min + Math.random() * (max - min);
 }
 
-/** @returns {Vec3F} */
-function random_vec3(min = 0, max = 1) {
-  return [
-    random_float(min, max),
-    random_float(min, max),
-    random_float(min, max),
-  ];
-}
-
-/** @returns {Vec3F} */
-function vec3_sub(v1, v2) {
-  return [v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]];
-}
-
-/** @returns {Vec3F} */
-function vec3_add(v1, v2) {
-  return [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]];
-}
-
-function vec3_dot(v1, v2) {
-  return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
-}
-
-function vec3_normalize(v) {
-  return Math.sqrt(vec3_dot(v, v));
-}
-
 export function create_world() {
-  const origin = [4, 0.2, 0];
+  const origin = make_vec3f([4, 0.2, 0]);
 
-  const world = make_geometry_list([]);
+  const world = make_primitive_list([]);
 
   world.push(
     make_primitive({
-      kind: "sphere",
-      center: [0, -1000, 0],
-      radius: 1000.0,
+      kind: "geom",
+      shape: {
+        kind: "sphere",
+        center: [0, -1000, 0],
+        radius: 1000.0,
+      },
       material: {
         kind: "lambertian",
         albedo: {
           kind: "checker_texture",
           even: {
             kind: "constant_texture",
-            color: [0.2, 0.3, 0.1],
+            value: [0.2, 0.3, 0.1],
           },
           odd: {
             kind: "constant_texture",
-            color: [0.9, 0.9, 0.9],
+            value: [0.9, 0.9, 0.9],
           },
         },
       },
@@ -71,21 +47,21 @@ export function create_world() {
         b + 0.9 * random_float(),
       ]);
 
-      if (vec3_normalize(vec3_sub(center, origin)) > 0.9) {
+      if (Vec3.normalize(Vec3.sub(center, origin)) > 0.9) {
         if (choose_material < 0.8) {
           world.push(
             make_primitive({
-              kind: "moving_sphere",
-              center0: center,
-              center1: vec3_add(center, [0, random_float(0, 0.5), 0]),
-              time0: 0.0,
-              time1: 1.0,
-              radius: 0.2,
+              kind: "geom",
+              shape: {
+                kind: "sphere",
+                center,
+                radius: 0.2,
+              },
               material: {
                 kind: "lambertian",
                 albedo: {
                   kind: "constant_texture",
-                  color: [
+                  value: [
                     random_float() * random_float(),
                     random_float() * random_float(),
                     random_float() * random_float(),
@@ -97,31 +73,31 @@ export function create_world() {
         } else if (choose_material < 0.95) {
           world.push(
             make_primitive({
-              kind: "sphere",
-              center,
-              radius: 0.2,
+              kind: "geom",
+              shape: {
+                kind: "sphere",
+                center,
+                radius: 0.2,
+              },
               material: {
                 kind: "metal",
-                albedo: {
-                  kind: "constant_texture",
-                  color: random_vec3(0.5, 1.5),
-                },
+                albedo: Vec3.random_vec3(0.5, 1.5),
                 fuzz: 0.5 * random_float(),
               },
             })
           );
         } else {
-          world.push(
-            make_primitive({
-              kind: "sphere",
-              center,
-              radius: 0.2,
-              material: {
-                kind: "dielectric",
-                ir: 1.5,
-              },
-            })
-          );
+          // world.push(
+          //   make_primitive({
+          //     kind: "sphere",
+          //     center,
+          //     radius: 0.2,
+          //     material: {
+          //       kind: "dielectric",
+          //       ir: 1.5,
+          //     },
+          //   })
+          // );
         }
       }
     }
@@ -129,26 +105,42 @@ export function create_world() {
 
   world.push(
     make_primitive({
-      kind: "sphere",
-      center: [0.0, 1.0, 0.0],
-      radius: 1.0,
-      material: {
-        kind: "dielectric",
-        ir: 1.5,
+      kind: "geom",
+      shape: {
+        kind: "sphere",
+        center: [0.0, 1.0, 0.0],
+        radius: 1.0,
       },
+      // material: {
+      //   kind: "lambertian",
+      //   albedo: [0.4, 0.0, 0.0],
+      // },
+      material: {
+        kind: "transparent",
+        albedo: [1.0, 1.0, 1.0],
+        eta: 1.5,
+        roughness: 0.0,
+      },
+      // material: {
+      //   kind: "dielectric",
+      //   ir: 1.5,
+      // },
     })
   );
 
   world.push(
     make_primitive({
-      kind: "sphere",
-      center: [-4, 1, 0],
-      radius: 1,
+      kind: "geom",
+      shape: {
+        kind: "sphere",
+        center: [-4, 1, 0],
+        radius: 1,
+      },
       material: {
         kind: "lambertian",
         albedo: {
           kind: "constant_texture",
-          color: [0.4, 0.2, 0.1],
+          value: [0.4, 0.2, 0.1],
         },
       },
     })
@@ -156,14 +148,17 @@ export function create_world() {
 
   world.push(
     make_primitive({
-      kind: "sphere",
-      center: [4, 1, 0],
-      radius: 1,
+      kind: "geom",
+      shape: {
+        kind: "sphere",
+        center: [4, 1, 0],
+        radius: 1,
+      },
       material: {
         kind: "metal",
         albedo: {
           kind: "constant_texture",
-          color: [0.7, 0.6, 0.5],
+          value: [0.7, 0.6, 0.5],
         },
         fuzz: 0.0,
       },
@@ -174,8 +169,8 @@ export function create_world() {
 }
 
 const size = {
-  width: 1280,
-  height: 720,
+  width: 800,
+  height: 600,
   aspect: function () {
     return this.width / this.height;
   },
@@ -188,7 +183,8 @@ export default make_project({
     width: size.width,
     height: size.height,
     nsamples: 20,
-    max_depth: 15,
+    max_depth: 4,
+    mis_weight: 1.0,
   },
   scene: {
     camera: {
@@ -202,10 +198,11 @@ export default make_project({
       time0: 0.0,
       time1: 1.0,
     },
-    sky: {
-      kind: "solid",
-      background: [0.7, 0.8, 1.0],
-    },
+    environments: [
+      {
+        l: [0.7, 0.8, 1.0],
+      },
+    ],
     world: create_world(),
   },
 });

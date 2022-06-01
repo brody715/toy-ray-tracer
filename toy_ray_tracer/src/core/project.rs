@@ -10,12 +10,12 @@ pub struct Settings {
     pub height: usize,
     pub nsamples: i32,
     pub max_depth: i32,
-    #[serde(default = "Settings::default_pdf_weight")]
-    pub weight: f32,
+    #[serde(default = "Settings::default_mis_weight")]
+    pub mis_weight: f32,
 }
 
 impl Settings {
-    pub fn default_pdf_weight() -> f32 {
+    pub fn default_mis_weight() -> f32 {
         return 0.5;
     }
 }
@@ -27,7 +27,13 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn new(name: String, settings: Settings, scene: Scene) -> Self { Self { name, settings, scene } }
+    pub fn new(name: String, settings: Settings, scene: Scene) -> Self {
+        Self {
+            name,
+            settings,
+            scene,
+        }
+    }
 
     /// Get a reference to the project's settings.
     #[must_use]

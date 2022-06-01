@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use derive_new::new;
 
-use crate::core::{Primitive, PrimitivePtr, SurfaceInteraction};
+use crate::core::{Primitive, PrimitiveContainer, PrimitivePtr, SurfaceInteraction};
 use crate::core::{Ray, AABB};
 use crate::utils::random;
 
@@ -25,8 +25,9 @@ impl PrimitiveList {
     }
 }
 
-impl Primitive for PrimitiveList {
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
+impl PrimitiveList {
+    #[inline]
+    fn intersect_impl(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         let mut closest_so_far = t_max;
         let mut hit_anything: Option<SurfaceInteraction> = None;
         for h in self.items.iter() {
@@ -38,27 +39,48 @@ impl Primitive for PrimitiveList {
         hit_anything
     }
 
-    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+    #[inline]
+    fn bounding_box_impl(&self, t0: f32, t1: f32) -> Option<AABB> {
         let bbox = self.items.iter().fold(None, |acc, item| {
             AABB::union_optional_bbox(&acc, &item.bounding_box(t0, t1))
         });
         bbox
     }
+}
 
-    fn pdf_value(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
+impl Primitive for PrimitiveList {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
+        self.intersect_impl(ray, t_min, t_max)
+    }
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        self.bounding_box_impl(t0, t1)
+    }
+
+    fn sample_pdf(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
         let weight = 1.0 / self.items.len() as f32;
 
         let sum = self
             .items
             .iter()
-            .map(|h| h.pdf_value(origin, v) * weight)
+            .map(|h| h.sample_pdf(origin, v) * weight)
             .fold(0.0 as f32, |acc, v| acc + v);
 
         return sum;
     }
 
-    fn random(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
+    fn sample_wi(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
         let idx = random::usize(0..self.items.len());
-        return self.items[idx].random(origin);
+        return self.items[idx].sample_wi(origin);
+    }
+}
+
+impl PrimitiveContainer for PrimitiveList {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
+        self.intersect_impl(ray, t_min, t_max)
+    }
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        self.bounding_box_impl(t0, t1)
     }
 }

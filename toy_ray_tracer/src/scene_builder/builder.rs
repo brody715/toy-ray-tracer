@@ -3,11 +3,11 @@ use std::{rc::Rc, sync::Arc};
 use crate::{
     accelerators::BVHAccel,
     core::{
-        Camera, CameraOpt, LightPtr, MaterialPtr, PrimitivePtr, Project, Scene, ShapePtr, Spectrum,
-        TexturePtr, Transform, Vec2f, Vec3f,
+        Camera, CameraOpt, LightPtr, MaterialPtr, PrimitiveContainerPtr, PrimitivePtr, Project,
+        Scene, ShapePtr, TexturePtr, Transform, Vec2f, Vec3f,
     },
     lights::{AreaLight, EnvironmentLight},
-    materials::{Dielectric, DiffuseLight, Lambertian, Metal},
+    materials::{DiffuseLight, GltfPbrMaterial, Lambertian, Metal, Transparent},
     primitives::{FlipFacePrimitive, GeometricPrimitive, PrimitiveList},
     shapes::{Cube, Cylinder, Disk, Pyramid, Rect, Sphere, Triangle, TriangleMeshStorage},
     textures::{CheckerTexture, ConstantTexture, ImageTexture},
@@ -18,7 +18,8 @@ use super::{
     loaders::MeshLoader,
     types::{
         AcceleratorConfig, AorB, CameraConfig, JVec2f, JVec3f, MaterialConfig, PrimitiveConfig,
-        ProjectConfig, SceneConfig, ShapeConfig, TextureConfig, TransformConfig, UriConfig,
+        ProjectConfig, SceneConfig, ShapeConfig, TextureConfig, TextureOrConst, TransformConfig,
+        UriConfig,
     },
     AssetsManager,
 };
@@ -109,8 +110,8 @@ impl Builder {
         &self,
         conf: &AcceleratorConfig,
         prims: &[PrimitivePtr],
-    ) -> Result<PrimitivePtr> {
-        let primitive: PrimitivePtr = match conf {
+    ) -> Result<PrimitiveContainerPtr> {
+        let primitive: PrimitiveContainerPtr = match conf {
             AcceleratorConfig::Nop {} => Arc::new(PrimitiveList::from(prims)),
             AcceleratorConfig::Bvh {} => Arc::new(BVHAccel::new(prims.to_vec(), 0.0, 1.0)),
         };
@@ -171,7 +172,6 @@ impl Builder {
                             shape,
                             transform.clone(),
                             material.clone(),
-                            None,
                         ));
 
                         let prim = if *flip_face {
@@ -301,46 +301,92 @@ impl Builder {
     fn build_material(&self, conf: &MaterialConfig) -> Result<MaterialPtr> {
         let material: MaterialPtr = match conf {
             MaterialConfig::Lambertian { albedo } => {
-                let albedo = self.build_texture_or_color3f(&albedo)?;
+                let albedo = self.build_texture_or_vec3f(&albedo)?;
                 Arc::new(Lambertian::new(albedo))
             }
             MaterialConfig::Metal { albedo, fuzz } => {
-                Arc::new(Metal::new(self.build_texture_or_color3f(&albedo)?, *fuzz))
+                Arc::new(Metal::new(self.build_texture_or_vec3f(&albedo)?, *fuzz))
             }
-            MaterialConfig::Dielectric { ir } => Arc::new(Dielectric::new(*ir)),
+            MaterialConfig::Dielectric { ir } => {
+                todo!();
+                // Arc::new(Dielectric::new(*ir))
+            }
             MaterialConfig::DiffuseLight { emit } => {
-                Arc::new(DiffuseLight::new(self.build_texture_or_color3f(&emit)?))
+                Arc::new(DiffuseLight::new(self.build_texture_or_vec3f(&emit)?))
             }
+            MaterialConfig::Transparent {
+                eta,
+                roughness,
+                albedo,
+            } => Arc::new(Transparent::new(
+                *eta,
+                self.build_texture_or_f32(&roughness)?,
+                self.build_texture_or_vec3f(&albedo)?,
+            )),
+            MaterialConfig::GltfPbr {
+                eta,
+                base_color,
+                roughness,
+                metallic,
+                emit,
+            } => Arc::new(GltfPbrMaterial::new(
+                *eta,
+                self.build_texture_or_vec3f(base_color)?,
+                self.build_texture_or_f32(metallic)?,
+                self.build_texture_or_f32(roughness)?,
+                self.build_texture_or_vec3f(emit)?,
+            )),
         };
 
         Ok(material)
     }
 
-    fn build_texture_or_color3f(
-        &self,
-        conf: &AorB<TextureConfig, JVec3f>,
-    ) -> Result<TexturePtr<Spectrum>> {
-        let texture: TexturePtr<Spectrum> = match conf {
-            AorB::A(conf) => self.build_texture_color3(conf)?,
+    fn build_texture_or_vec3f(&self, conf: &TextureOrConst<JVec3f>) -> Result<TexturePtr<Vec3f>> {
+        let texture: TexturePtr<Vec3f> = match conf.clone() {
+            AorB::A(conf) => self.build_texture_vec3f(&conf)?,
             AorB::B(value) => Arc::new(ConstantTexture::new(value.into())),
         };
 
         Ok(texture)
     }
 
-    fn build_texture_color3(&self, conf: &TextureConfig) -> Result<TexturePtr<Spectrum>> {
+    fn build_texture_vec3f(&self, conf: &TextureConfig<JVec3f>) -> Result<TexturePtr<Vec3f>> {
         Ok(match conf {
             TextureConfig::ConstantTexture { value } => {
                 Arc::new(ConstantTexture::new(value.into()))
             }
             TextureConfig::ImageTexture { uri } => {
-                let image = self.assets_manager.load_image(uri)?;
-                Arc::new(ImageTexture::<Spectrum>::from_image(image))
+                let image = self.assets_manager.load_image(&uri)?;
+                Arc::new(ImageTexture::from_image_convert(image, |s| s.clone()))
             }
             TextureConfig::CheckerTexture { odd, even } => {
-                let odd = self.build_texture_color3(odd.as_ref())?;
-                let even = self.build_texture_color3(even.as_ref())?;
+                let odd = self.build_texture_or_vec3f(odd.as_ref())?;
+                let even = self.build_texture_or_vec3f(even.as_ref())?;
 
+                Arc::new(CheckerTexture::new(odd, even))
+            }
+        })
+    }
+
+    fn build_texture_or_f32(&self, conf: &TextureOrConst<f32>) -> Result<TexturePtr<f32>> {
+        let texture: TexturePtr<f32> = match conf {
+            AorB::A(conf) => self.build_texture_f32(conf)?,
+            AorB::B(value) => Arc::new(ConstantTexture::new(*value)),
+        };
+
+        Ok(texture)
+    }
+
+    fn build_texture_f32(&self, conf: &TextureConfig<f32>) -> Result<TexturePtr<f32>> {
+        Ok(match conf {
+            TextureConfig::ConstantTexture { value } => Arc::new(ConstantTexture::new(*value)),
+            TextureConfig::ImageTexture { uri } => {
+                let _image = self.assets_manager.load_image(&uri)?;
+                todo!()
+            }
+            TextureConfig::CheckerTexture { odd, even } => {
+                let odd = self.build_texture_or_f32(odd.as_ref())?;
+                let even = self.build_texture_or_f32(even.as_ref())?;
                 Arc::new(CheckerTexture::new(odd, even))
             }
         })

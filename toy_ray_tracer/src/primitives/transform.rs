@@ -30,15 +30,11 @@ impl Primitive for FlipFacePrimitive {
         self.primitive.bounding_box(t0, t1)
     }
 
-    fn set_sampler(&mut self, _sampler_type: crate::math::SamplerType) {
-        unimplemented!()
+    fn sample_pdf(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
+        self.primitive.sample_pdf(origin, v)
     }
 
-    fn pdf_value(&self, origin: &crate::core::Point3f, v: &crate::core::Vec3f) -> f32 {
-        self.primitive.pdf_value(origin, v)
-    }
-
-    fn random(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
-        self.primitive.random(origin)
+    fn sample_wi(&self, origin: &crate::core::Vec3f) -> crate::core::Vec3f {
+        self.primitive.sample_wi(origin)
     }
 }

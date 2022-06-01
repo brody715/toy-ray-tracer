@@ -45,20 +45,22 @@ function create_world() {
       },
     },
   });
+  // world.pop();
 
   world.push({
     kind: "geom",
     shape: {
       kind: "sphere",
-      center: [0, 10, 0],
+      center: [0, 4, 0],
       radius: 1,
     },
     material: {
       kind: "diffuse_light",
-      emit: [1.0, 1.0, 1.0],
+      emit: Vec3.mul([1.0, 1.0, 1.0], 4),
     },
     area_light: {},
   });
+  // world.pop();
   return world;
 }
 
@@ -73,8 +75,10 @@ export default make_project({
     output_dir: "./output",
     width: size.width,
     height: size.height,
-    nsamples: 10,
+    nsamples: 20,
     max_depth: 4,
+    mis_weight: 0.5,
+    // mis_weight: 1.0,
   },
   scene: {
     camera: {
@@ -89,9 +93,9 @@ export default make_project({
       time1: 1.0,
     },
     environments: [
-      {
-        l: [0.7, 0.8, 1.0],
-      },
+      // {
+      //   l: [0.7, 0.8, 1.0],
+      // },
     ],
     world: create_world(),
   },

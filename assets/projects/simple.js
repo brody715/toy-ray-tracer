@@ -6,8 +6,9 @@ export default make_project({
     output_dir: "./output",
     height: 800,
     width: 800,
-    nsamples: 100,
+    nsamples: 10,
     max_depth: 15,
+    mis_weight: 0.0,
   },
   scene: {
     camera: {
@@ -23,7 +24,7 @@ export default make_project({
     },
     environments: [
       {
-        l: [0.1, 0.1, 0.1],
+        l: [0.2, 0.2, 0.2],
       },
     ],
     world: [

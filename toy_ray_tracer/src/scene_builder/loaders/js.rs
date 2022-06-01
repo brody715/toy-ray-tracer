@@ -46,9 +46,9 @@ export class Vec3 {
 
     static random_vec3(min = 0, max = 1) {
         return [
-            random_f32(min, max),
-            random_f32(min, max),
-            random_f32(min, max),
+            Vec3.random_f32(min, max),
+            Vec3.random_f32(min, max),
+            Vec3.random_f32(min, max),
         ];
     }
 
@@ -62,6 +62,13 @@ export class Vec3 {
 
     static dot(v1, v2) {
         return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+    }
+
+    static mul(v1, v2) {
+        if (typeof v2 === 'number') {
+            return [v1[0] * v2, v1[1] * v2, v1[2] * v2]
+        }
+        return [v1[0] * v2[0], v1[1] * v2[1], v1[2] * v2[2]]
     }
 
     static normalize(v) {
