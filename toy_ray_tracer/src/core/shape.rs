@@ -16,11 +16,11 @@ pub trait Shape: Sync + Send {
     }
 
     fn sample_pdf(&self, _point: &Point3f, _wi: &Vec3f) -> f32 {
-        1.0
+        unimplemented!()
     }
 
     fn sample_wi(&self, _point: &Point3f) -> Vec3f {
-        Vec3f::new(0.0, 0.0, 0.0)
+        unimplemented!()
     }
 }
 

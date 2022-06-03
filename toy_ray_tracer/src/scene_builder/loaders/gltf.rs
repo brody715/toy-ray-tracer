@@ -75,6 +75,7 @@ fn load_scene(g_scene: &easy_gltf::Scene, transform: Transform) -> Result<SceneB
             positions,
             normals,
             uvs,
+            transform.clone(),
         )?);
 
         let g_material = g_model.material();
@@ -172,11 +173,7 @@ fn load_scene(g_scene: &easy_gltf::Scene, transform: Transform) -> Result<SceneB
         for id in 0..mesh.n_triangles {
             let triangle = Arc::new(Triangle::new(id, mesh.clone()));
 
-            let prim = Arc::new(GeometricPrimitive::new(
-                triangle,
-                transform.clone(),
-                material.clone(),
-            ));
+            let prim = Arc::new(GeometricPrimitive::new(triangle, material.clone()));
 
             prims.push(prim);
         }

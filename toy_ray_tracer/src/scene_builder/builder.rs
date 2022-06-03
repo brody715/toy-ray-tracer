@@ -9,7 +9,7 @@ use crate::{
     lights::{AreaLight, EnvironmentLight},
     materials::{DiffuseLight, GltfPbrMaterial, Lambertian, Metal, Transparent},
     primitives::{FlipFacePrimitive, GeometricPrimitive, PrimitiveList},
-    shapes::{Cube, Cylinder, Disk, Pyramid, Rect, Sphere, Triangle, TriangleMeshStorage},
+    shapes::{AADisk, Cube, Cylinder, Pyramid, Rect, Sphere, Triangle, TriangleMeshStorage},
     textures::{CheckerTexture, ConstantTexture, ImageTexture, ImageTextureParams},
 };
 use anyhow::{ensure, Context, Ok, Result};
@@ -60,10 +60,20 @@ impl Builder {
         }
     }
 
+    fn get_current_transform(&self) -> Transform {
+        self.cur_transform.clone()
+    }
+
     fn enter_transform(&mut self, transform: Transform) {
         self.transforms_stack.push(self.cur_transform.clone());
         // TODO: check orders
         self.cur_transform = transform * self.cur_transform.clone();
+    }
+
+    fn enter_transform_conf(&mut self, confs: &[TransformConfig]) -> Result<()> {
+        let transform = self.build_transforms(confs)?;
+        self.enter_transform(transform);
+        Ok(())
     }
 
     fn exit_transform(&mut self) {
@@ -134,9 +144,7 @@ impl Builder {
     }
 
     fn build_scene_custom(&mut self, conf: &SceneCustomConfig) -> Result<SceneBundle> {
-        let transform = self.build_transforms(&conf.transforms)?;
-
-        self.enter_transform(transform);
+        self.enter_transform_conf(&conf.transforms)?;
 
         let mut bundle = self.build_world(&conf.world)?;
 
@@ -179,10 +187,7 @@ impl Builder {
         let mut bundle = SceneBundle::default();
 
         for conf in confs {
-            let transforms = conf.get_transforms();
-            let transform = self.build_transforms(transforms)?;
-
-            self.enter_transform(transform.clone());
+            self.enter_transform_conf(conf.get_transforms())?;
 
             match conf {
                 PrimitiveConfig::Geom {
@@ -192,15 +197,12 @@ impl Builder {
                     area_light,
                     flip_face,
                 } => {
-                    let shapes = self.build_shapes(shape)?;
+                    let shapes = self.build_shapes(shape, self.get_current_transform())?;
                     let material = self.build_material(material)?;
 
                     for shape in shapes {
-                        let prim: PrimitivePtr = Arc::new(GeometricPrimitive::new(
-                            shape,
-                            transform.clone(),
-                            material.clone(),
-                        ));
+                        let prim: PrimitivePtr =
+                            Arc::new(GeometricPrimitive::new(shape, material.clone()));
 
                         let prim = if *flip_face {
                             Arc::new(FlipFacePrimitive::new(prim))
@@ -220,8 +222,6 @@ impl Builder {
                     transforms: _,
                     children,
                 } => {
-                    self.enter_transform(transform);
-
                     // build children
                     let children_bundle = self.build_world(&children)?;
                     bundle.union_assign(children_bundle);
@@ -234,10 +234,18 @@ impl Builder {
         Ok(bundle)
     }
 
-    fn build_shapes(&self, conf: &ShapeConfig) -> Result<Vec<ShapePtr>> {
+    fn build_shapes(
+        &self,
+        conf: &ShapeConfig,
+        object_to_world: Transform,
+    ) -> Result<Vec<ShapePtr>> {
         let shapes: Vec<ShapePtr> = match conf {
             ShapeConfig::Sphere { center, radius } => {
-                vec![Arc::new(Sphere::new(center.into(), *radius))]
+                vec![Arc::new(Sphere::new(
+                    center.into(),
+                    *radius,
+                    object_to_world,
+                ))]
             }
             ShapeConfig::TriangleMesh {
                 indices,
@@ -257,6 +265,7 @@ impl Builder {
                     positions,
                     normals,
                     uvs,
+                    object_to_world,
                 )?);
 
                 let mut shapes: Vec<ShapePtr> = Vec::new();
@@ -279,6 +288,7 @@ impl Builder {
                     mesh_bundle.positions,
                     mesh_bundle.normals,
                     mesh_bundle.uvs,
+                    object_to_world,
                 )?);
 
                 let mut shapes: Vec<ShapePtr> = Vec::new();
@@ -290,17 +300,26 @@ impl Builder {
                 shapes
             }
             ShapeConfig::Cube { p_min, p_max } => {
-                vec![Arc::new(Cube::new(p_min.into(), p_max.into()))]
+                vec![Arc::new(Cube::new(
+                    p_min.into(),
+                    p_max.into(),
+                    object_to_world,
+                ))]
             }
             ShapeConfig::Rect { v0, v1 } => {
-                vec![Arc::new(Rect::new(v0.into(), v1.into()))]
+                vec![Arc::new(Rect::new(v0.into(), v1.into(), object_to_world))]
             }
             ShapeConfig::Disk {
                 center,
                 radius,
                 normal,
             } => {
-                vec![Arc::new(Disk::new(center.into(), *radius, normal.into()))]
+                vec![Arc::new(AADisk::new(
+                    center.into(),
+                    *radius,
+                    normal.into(),
+                    object_to_world,
+                ))]
             }
             ShapeConfig::Cylinder {
                 center0,
@@ -311,15 +330,14 @@ impl Builder {
                     center0.into(),
                     center1.into(),
                     *radius,
+                    object_to_world,
                 ))]
             }
             ShapeConfig::Pyramid { v0, v1, v2, v3 } => {
-                vec![Arc::new(Pyramid::new([
-                    v0.into(),
-                    v1.into(),
-                    v2.into(),
-                    v3.into(),
-                ]))]
+                vec![Arc::new(Pyramid::new(
+                    [v0.into(), v1.into(), v2.into(), v3.into()],
+                    object_to_world,
+                ))]
             }
         };
 

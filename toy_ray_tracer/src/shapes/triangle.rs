@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
-use anyhow::{ensure, Result};
+use anyhow::{ensure, Ok, Result};
 
 use crate::{
     core::AABB,
-    core::{vec3, Point2f, Shape, Vec3f},
+    core::{vec3, Point2f, Shape, ShapePtr, Transform, Vec3f},
     core::{Point3f, SurfaceInteraction},
 };
+
+use super::shape_list::ShapeList;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -137,6 +139,7 @@ impl TriangleMeshStorage {
         positions: Vec<Point3f>,
         normals: Vec<Vec3f>,
         uvs: Vec<Point2f>,
+        object_to_world: Transform,
     ) -> Result<Self> {
         let n_vertices = n_triangles * 3;
         ensure!(n_vertices == vertex_indices.len());
@@ -157,6 +160,17 @@ impl TriangleMeshStorage {
         } else {
             vec![]
         };
+
+        // start to transform
+        let positions: Vec<_> = positions
+            .iter()
+            .map(|p| object_to_world.transform_point3(p))
+            .collect();
+
+        let vertex_normals = vertex_normals
+            .iter()
+            .map(|n| object_to_world.transform_normal(n))
+            .collect();
 
         let surface_normals: Vec<Vec3f> = vertex_indices[..]
             .chunks(3)
@@ -180,4 +194,28 @@ impl TriangleMeshStorage {
             surface_normals,
         })
     }
+}
+
+pub fn create_triangles(
+    indices: Vec<usize>,
+    positions: Vec<Vec3f>,
+    transform: Transform,
+) -> Result<ShapeList> {
+    let n_triangles = indices.len() / 3;
+    let mesh = Arc::new(TriangleMeshStorage::try_new(
+        indices.len() / 3,
+        indices,
+        positions,
+        vec![],
+        vec![],
+        transform,
+    )?);
+
+    let mut triangles: Vec<ShapePtr> = vec![];
+
+    for id in 0..n_triangles {
+        triangles.push(Arc::new(Triangle::new(id, mesh.clone())));
+    }
+
+    Ok(ShapeList::from(triangles))
 }

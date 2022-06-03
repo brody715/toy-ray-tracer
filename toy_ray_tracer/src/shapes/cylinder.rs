@@ -1,13 +1,64 @@
 use crate::{
     core::AABB,
-    core::{vec3, Point2f, Vec3f},
+    core::{vec3, Point2f, Ray, Transform, Vec3f},
     core::{Shape, SurfaceInteraction},
 };
 
 use super::Plane;
 
-#[derive(Debug)]
 pub struct Cylinder {
+    cylinder: AACylinder,
+    object_to_world: Transform,
+    world_to_object: Transform,
+}
+
+impl Cylinder {
+    pub fn new(c0: Vec3f, c1: Vec3f, r: f32, object_to_world: Transform) -> Self {
+        let cylinder = AACylinder::new(c0, c1, r);
+        Self {
+            cylinder,
+            object_to_world: object_to_world.clone(),
+            world_to_object: object_to_world.inverse(),
+        }
+    }
+}
+
+impl Shape for Cylinder {
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        self.cylinder
+            .bounding_box(t0, t1)
+            .map(|bbox| self.object_to_world.transform_bounding_box(bbox))
+    }
+
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
+        let ray = self.world_to_object.transform_ray(ray);
+
+        let si = self.cylinder.intersect(&ray, t_min, t_max);
+        let si = si.map(|mut si| {
+            self.object_to_world.transform_surface_iteraction(&mut si);
+            si
+        });
+        si
+    }
+
+    fn intersect_p(&self, ray: &Ray) -> bool {
+        let ray = self.world_to_object.transform_ray(ray);
+        self.cylinder.intersect_p(&ray)
+    }
+
+    fn sample_pdf(&self, _point: &crate::core::Point3f, _wi: &Vec3f) -> f32 {
+        unimplemented!()
+    }
+
+    fn sample_wi(&self, _point: &crate::core::Point3f) -> Vec3f {
+        unimplemented!()
+    }
+}
+
+// Axis Aligned Cylinder
+
+#[derive(Debug)]
+pub struct AACylinder {
     // center bottom
     center0: Vec3f,
     // center up
@@ -27,7 +78,7 @@ fn error_axis_aligned_cylinder(c0: Vec3f, c1: Vec3f, r: f32) -> ! {
     );
 }
 
-impl Cylinder {
+impl AACylinder {
     pub fn new(c0: Vec3f, c1: Vec3f, r: f32) -> Self {
         let ko = c0.iter().zip(c1.iter()).position(|(l, r)| l != r);
 
@@ -67,7 +118,7 @@ impl Cylinder {
     }
 }
 
-impl Shape for Cylinder {
+impl Shape for AACylinder {
     fn intersect(
         &self,
         ray: &crate::core::Ray,

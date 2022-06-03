@@ -1,164 +1,97 @@
-use std::sync::Arc;
-
 use crate::core::Ray;
 use crate::core::SurfaceInteraction;
+use crate::core::Transform;
 use crate::core::Vec3f;
-use crate::core::{Point2f, Shape, ShapePtr, AABB};
-use crate::utils::random;
+use crate::core::{Shape, AABB};
 
-use super::Plane;
+use super::create_triangles;
+use super::shape_list::ShapeList;
 
 pub struct Rect {
-    // left-bottom vertex
-    // p0: Vec3,
-    // right-top vertex
-    // p1: Vec3,
-    _impl: ShapePtr,
+    // actual, 2 triangles
+    triangles: ShapeList,
 }
 
 impl Rect {
     #[must_use]
-    pub fn new(p0: Vec3f, p1: Vec3f) -> Self {
+    pub fn new(p0: Vec3f, p1: Vec3f, object_to_world: Transform) -> Self {
         let axiso = p0.iter().zip(p1.iter()).position(|(l, r)| l == r);
 
         let k_axis = axiso.unwrap_or(3);
 
-        let (a, b, plane) = match k_axis {
-            0 => (1, 2, Plane::YZ),
-            1 => (2, 0, Plane::ZX),
-            2 => (0, 1, Plane::XY),
-            _ => panic!("unsupported rect: {}, {}", p0, p1),
+        let (a_axis, b_axis) = match k_axis {
+            0 => (1, 2), // yz
+            1 => (2, 0), // zx
+            2 => (0, 1), // xy
+            _ => panic!("only support axis-aligned rect: {}, {}", p0, p1),
         };
 
-        let a0 = p0[a].min(p1[a]);
-        let a1 = p0[a].max(p1[a]);
-        let b0 = p0[b].min(p1[b]);
-        let b1 = p0[b].max(p1[b]);
+        // 2d rect
+        let a0 = p0[a_axis].min(p1[a_axis]);
+        let a1 = p0[a_axis].max(p1[a_axis]);
+        let b0 = p0[b_axis].min(p1[b_axis]);
+        let b1 = p0[b_axis].max(p1[b_axis]);
         let k = p0[k_axis];
 
-        // info!(
-        //     "p0={}, p1={}, k_axis={} a0={}, a1={}, b0={}, b1={}, k={}",
-        //     &p0, &p1, k_axis, a0, a1, b0, b1, k
-        // );
+        let v0 = {
+            let mut v = Vec3f::zeros();
+            v[a_axis] = a0;
+            v[b_axis] = b0;
+            v[k_axis] = k;
+            v
+        };
 
-        Self {
-            // p0,
-            // p1,
-            // material: material.clone(),
-            _impl: Arc::new(AARect::new(plane, a0, a1, b0, b1, k)),
-        }
+        let v1 = {
+            let mut v = Vec3f::zeros();
+            v[a_axis] = a0;
+            v[b_axis] = b1;
+            v[k_axis] = k;
+            v
+        };
+
+        let v2 = {
+            let mut v = Vec3f::zeros();
+            v[a_axis] = a1;
+            v[b_axis] = b0;
+            v[k_axis] = k;
+            v
+        };
+
+        let v3 = {
+            let mut v = Vec3f::zeros();
+            v[a_axis] = a1;
+            v[b_axis] = b1;
+            v[k_axis] = k;
+            v
+        };
+
+        let indices = vec![0, 1, 2, 1, 3, 2];
+        let positions = vec![v0, v1, v2, v3];
+
+        let triangles = create_triangles(indices, positions, object_to_world).unwrap();
+
+        Self { triangles }
     }
 }
 
 impl Shape for Rect {
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
-        self._impl.intersect(ray, t_min, t_max)
-    }
-
     fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
-        self._impl.bounding_box(t0, t1)
+        self.triangles.bounding_box(t0, t1)
     }
 
-    fn sample_pdf(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
-        self._impl.sample_pdf(origin, v)
-    }
-
-    fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
-        self._impl.sample_wi(origin)
-    }
-}
-
-pub struct AARect {
-    plane: Plane,
-    a0: f32,
-    a1: f32,
-    b0: f32,
-    b1: f32,
-    k: f32,
-}
-
-impl AARect {
-    pub fn new(plane: Plane, a0: f32, a1: f32, b0: f32, b1: f32, k: f32) -> Self {
-        AARect {
-            plane,
-            a0,
-            a1,
-            b0,
-            b1,
-            k,
-        }
-    }
-}
-
-impl Shape for AARect {
     fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
-        let (k_axis, a_axis, b_axis) = match &self.plane {
-            Plane::YZ => (0, 1, 2),
-            Plane::ZX => (1, 2, 0),
-            Plane::XY => (2, 0, 1),
-        };
-        let t = (self.k - ray.origin()[k_axis]) / ray.direction()[k_axis];
-        if t < t_min || t > t_max {
-            None
-        } else {
-            let a = ray.origin()[a_axis] + t * ray.direction()[a_axis];
-            let b = ray.origin()[b_axis] + t * ray.direction()[b_axis];
-            if a < self.a0 || a > self.a1 || b < self.b0 || b > self.b1 {
-                None
-            } else {
-                let u = (a - self.a0) / (self.a1 - self.a0);
-                let v = (b - self.b0) / (self.b1 - self.b0);
-                let p = ray.point_at_parameter(t);
-                let mut normal = Vec3f::zeros();
-                normal[k_axis] = 1.0;
-                let rec =
-                    SurfaceInteraction::new(t, p, Point2f::new(u, v), -ray.direction(), normal);
-                return Some(rec);
-            }
-        }
-    }
-
-    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        let (min, max) = match &self.plane {
-            Plane::YZ => (
-                Vec3f::new(self.k - 0.0001, self.a0, self.b0),
-                Vec3f::new(self.k + 0.0001, self.a1, self.b1),
-            ),
-            Plane::ZX => (
-                Vec3f::new(self.b0, self.k - 0.0001, self.a0),
-                Vec3f::new(self.b1, self.k + 0.0001, self.a1),
-            ),
-            Plane::XY => (
-                Vec3f::new(self.a0, self.b0, self.k - 0.0001),
-                Vec3f::new(self.a1, self.b1, self.k + 0.0001),
-            ),
-        };
-        Some(AABB { min, max })
+        self.triangles.intersect(ray, t_min, t_max)
     }
 
     fn sample_pdf(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
-        let rec = self.intersect(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
-
-        if let Some(rec) = rec {
-            let area = (self.a1 - self.a0) * (self.b1 - self.b0);
-            let distance_squared = rec.t_hit * rec.t_hit * v.norm_squared();
-            let cosine = (v.dot(&rec.normal) / v.norm()).abs();
-
-            return distance_squared / (cosine * area);
-        }
-
-        return 0.0;
+        self.triangles.sample_pdf(origin, v)
     }
 
     fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
-        let rand_a = random::f32_r(self.a0, self.a1);
-        let rand_b = random::f32_r(self.b0, self.b1);
+        self.triangles.sample_wi(origin)
+    }
 
-        let random_point = match self.plane {
-            Plane::YZ => Vec3f::new(self.k, rand_a, rand_b),
-            Plane::ZX => Vec3f::new(rand_b, self.k, rand_a),
-            Plane::XY => Vec3f::new(rand_a, rand_b, self.k),
-        };
-        return random_point - origin;
+    fn intersect_p(&self, ray: &Ray) -> bool {
+        self.triangles.intersect_p(ray)
     }
 }

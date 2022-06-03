@@ -1,5 +1,5 @@
 use crate::{
-    core::{vec3, Point2f, Shape, Vec3f},
+    core::{vec3, Point2f, Shape, Transform, Vec3f},
     math::{NopSampler, Sampler, SamplerPtr},
     utils::random,
 };
@@ -18,16 +18,18 @@ struct DiskData {
     plane: Plane,
 }
 
-pub struct Disk {
+pub struct AADisk {
     center: Vec3f,
     radius: f32,
     normal: Vec3f,
     sampler: SamplerPtr,
+    object_to_world: Transform,
+    world_to_object: Transform,
 }
 
-impl Disk {
-    pub fn new(center: Vec3f, radius: f32, normal: Vec3f) -> Self {
-        if normal == vec3::XUP {
+impl AADisk {
+    pub fn new(center: Vec3f, radius: f32, normal: Vec3f, object_to_world: Transform) -> Self {
+        let plane = if normal == vec3::XUP {
             Plane::YZ
         } else if normal == vec3::YUP {
             Plane::ZX
@@ -41,13 +43,22 @@ impl Disk {
             center,
             radius,
             normal,
-            sampler: Box::new(NopSampler::new()),
+            sampler: Box::new(DiskRandomSampler::new(DiskData {
+                center,
+                radius,
+                normal,
+                plane,
+            })),
+            object_to_world: object_to_world.clone(),
+            world_to_object: object_to_world.inverse(),
         }
     }
 }
 
-impl Shape for Disk {
+impl Shape for AADisk {
     fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
+        let ray = self.world_to_object.transform_ray(ray);
+
         let o: Vec3f = ray.origin() - self.center;
         let t = -self.normal.dot(&o) / ray.direction().dot(&self.normal);
         let q: Vec3f = o + ray.direction() * t;
@@ -62,13 +73,16 @@ impl Shape for Disk {
             // TODO: u, v, polar coordinates like sphere ?
             let p = ray.origin() + t * ray.direction();
 
-            let si = SurfaceInteraction::new(
+            let mut si = SurfaceInteraction::new(
                 t,
                 p,
                 Point2f::new(0.0, 0.0),
                 -ray.direction(),
                 self.normal,
             );
+
+            self.object_to_world.transform_surface_iteraction(&mut si);
+
             return Some(si);
         }
 
@@ -85,13 +99,18 @@ impl Shape for Disk {
 
         // return Some(AABB::new(self.center - e, self.center + e));
         // TODO: more precise bbox
-        return Some(AABB::new(
+        let bbox = AABB::new(
             self.center.add_scalar(-self.radius),
             self.center.add_scalar(self.radius),
-        ));
+        );
+
+        let bbox = self.object_to_world.transform_bounding_box(bbox);
+        Some(bbox)
     }
 
     fn sample_pdf(&self, origin: &crate::core::Point3f, v: &Vec3f) -> f32 {
+        // TODO: Support transform
+
         let rec = self.intersect(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
 
         // TODO: Consider not axis-aligned
@@ -107,6 +126,7 @@ impl Shape for Disk {
     }
 
     fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
+        // TODO: Support transform
         self.sampler.sample_direction(origin)
     }
 }

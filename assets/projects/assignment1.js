@@ -128,7 +128,8 @@ export function create_world() {
           material: {
             // kind: "dielectric",
             // ir: 1.5,
-            kind: "lambertian",
+            kind: "metal",
+            fuzz: 0.0,
             albedo: {
               kind: "constant_texture",
               value: Color.rgb2vec3(255, 0, 0),
@@ -235,6 +236,7 @@ export function create_world() {
       },
     },
   });
+  // world.pop();
 
   return world;
 }
@@ -247,25 +249,29 @@ export default make_project({
     width: 800,
     nsamples: 5,
     max_depth: 15,
+    mis_weight: 1.0,
   },
-  scene: {
-    camera: {
-      look_from: [box_width / 2, box_height / 2, 2.3 * box_depth],
-      look_at: [box_width / 2, box_height / 2, 0],
-      view_up: [0, 1, 0],
-      vertical_fov: 40.0,
-      aspect: 1.0,
-      aperture: 0.0,
-      focus_dist: 10.0,
-      time0: 0.0,
-      time1: 0.0,
-    },
-    // lights,
-    environments: [
-      {
-        l: [0.0, 0.0, 0.0],
+  scenes: [
+    {
+      kind: "custom",
+      camera: {
+        look_from: [box_width / 2, box_height / 2, 2.3 * box_depth],
+        look_at: [box_width / 2, box_height / 2, 0],
+        view_up: [0, 1, 0],
+        vertical_fov: 40.0,
+        aspect: 1.0,
+        aperture: 0.0,
+        focus_dist: 10.0,
+        time0: 0.0,
+        time1: 0.0,
       },
-    ],
-    world: create_world(),
-  },
+      // lights,
+      environments: [
+        {
+          l: [0.0, 0.0, 0.0],
+        },
+      ],
+      world: create_world(),
+    },
+  ],
 });

@@ -10,9 +10,9 @@ mod triangle;
 
 pub use cube::Cube;
 pub use cylinder::Cylinder;
-pub use disk::Disk;
+pub use disk::AADisk;
 pub use plane::Plane;
 pub use pyramid::Pyramid;
-pub use rect::{AARect, Rect};
+pub use rect::Rect;
 pub use sphere::Sphere;
-pub use triangle::{Triangle, TriangleMeshStorage};
+pub use triangle::{create_triangles, Triangle, TriangleMeshStorage};

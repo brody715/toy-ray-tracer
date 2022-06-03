@@ -2,6 +2,7 @@ use crate::core::Point3f;
 use crate::core::Ray;
 use crate::core::Shape;
 use crate::core::SurfaceInteraction;
+use crate::core::Transform;
 use crate::core::AABB;
 use crate::core::{vec3, Point2f, Vec3f};
 use crate::math::ONB;
@@ -16,7 +17,11 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(center: Vec3f, radius: f32) -> Self {
+    pub fn new(center: Vec3f, radius: f32, object_to_world: Transform) -> Self {
+        // TODO: fix transform radius
+
+        let center = object_to_world.transform_point3(&center);
+
         Sphere { center, radius }
     }
 }
