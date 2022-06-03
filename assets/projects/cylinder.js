@@ -132,23 +132,26 @@ export default make_project({
     // mis_weight: 0.5,
     mis_weight: 1.0,
   },
-  scene: {
-    camera: {
-      look_from: [0, 2, 13],
-      look_at: [0, 0, 0],
-      view_up: [0, 1, 0],
-      vertical_fov: 20,
-      aspect: size.aspect(),
-      aperture: 0.0,
-      focus_dist: 10.0,
-      time0: 0.0,
-      time1: 1.0,
-    },
-    environments: [
-      {
-        l: Vec3.mul([0.7, 0.8, 1], 1.0),
+  scenes: [
+    {
+      kind: "custom",
+      camera: {
+        look_from: [0, 2, 13],
+        look_at: [0, 0, 0],
+        view_up: [0, 1, 0],
+        vertical_fov: 20,
+        aspect: size.aspect(),
+        aperture: 0.0,
+        focus_dist: 10.0,
+        time0: 0.0,
+        time1: 1.0,
       },
-    ],
-    world: create_world(),
-  },
+      environments: [
+        {
+          l: Vec3.mul([0.7, 0.8, 1], 1.0),
+        },
+      ],
+      world: create_world(),
+    },
+  ],
 });

@@ -4,7 +4,7 @@
   "type": "object",
   "required": [
     "name",
-    "scene",
+    "scenes",
     "settings"
   ],
   "properties": {
@@ -21,8 +21,11 @@
     "name": {
       "type": "string"
     },
-    "scene": {
-      "$ref": "#/definitions/SceneConfig"
+    "scenes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SceneConfig"
+      }
     },
     "settings": {
       "$ref": "#/definitions/Settings"
@@ -94,8 +97,11 @@
           "format": "float"
         },
         "aspect": {
-          "default": 1.0,
-          "type": "number",
+          "default": null,
+          "type": [
+            "number",
+            "null"
+          ],
           "format": "float"
         },
         "focus_dist": {
@@ -413,29 +419,78 @@
       ]
     },
     "SceneConfig": {
-      "type": "object",
-      "required": [
-        "camera",
-        "world"
-      ],
-      "properties": {
-        "camera": {
-          "$ref": "#/definitions/CameraConfig"
-        },
-        "environments": {
-          "default": [],
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EnvironmentConfig"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "uri"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "uri"
+              ]
+            },
+            "transforms": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TransformConfig"
+              }
+            },
+            "uri": {
+              "type": "string"
+            }
           }
         },
-        "world": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PrimitiveConfig"
+        {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "camera": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/CameraConfig"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "environments": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/EnvironmentConfig"
+              }
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "custom"
+              ]
+            },
+            "transforms": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TransformConfig"
+              }
+            },
+            "world": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PrimitiveConfig"
+              }
+            }
           }
         }
-      }
+      ]
     },
     "Settings": {
       "type": "object",

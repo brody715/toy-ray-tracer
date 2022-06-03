@@ -27,7 +27,7 @@ pub struct Disk {
 
 impl Disk {
     pub fn new(center: Vec3f, radius: f32, normal: Vec3f) -> Self {
-        let plane = if normal == vec3::XUP {
+        if normal == vec3::XUP {
             Plane::YZ
         } else if normal == vec3::YUP {
             Plane::ZX

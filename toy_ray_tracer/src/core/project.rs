@@ -18,6 +18,10 @@ impl Settings {
     pub fn default_mis_weight() -> f32 {
         return 0.5;
     }
+
+    pub fn get_aspect(&self) -> f32 {
+        return self.width as f32 / self.height as f32;
+    }
 }
 
 pub struct Project {

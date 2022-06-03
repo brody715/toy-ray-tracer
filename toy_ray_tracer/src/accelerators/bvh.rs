@@ -1,7 +1,7 @@
 use crate::core::PrimitiveContainer;
 use crate::core::Ray;
 use crate::core::AABB;
-use crate::core::{Primitive, PrimitivePtr, SurfaceInteraction};
+use crate::core::{PrimitivePtr, SurfaceInteraction};
 use crate::utils::random;
 use std::cmp::Ordering;
 

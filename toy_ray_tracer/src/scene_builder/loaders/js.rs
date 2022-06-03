@@ -200,7 +200,15 @@ mod tests {
 
         assert_eq!(project_config.name, "test");
         assert_eq!(project_config.settings.height, 800);
-        assert_eq!(project_config.scene.camera.focus_dist, 10.0);
+
+        match &project_config.scenes[0] {
+            crate::scene_builder::types::SceneConfig::Custom(scene) => {
+                assert_eq!(scene.camera.is_some(), true);
+                let camera = scene.camera.unwrap();
+                assert_eq!(camera.focus_dist, 10.0)
+            }
+            _ => todo!(),
+        }
 
         println!("{:?}", project_config);
     }

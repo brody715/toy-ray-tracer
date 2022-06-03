@@ -1,12 +1,14 @@
+mod gltf;
 mod js;
 mod mesh;
 
-pub use mesh::{MeshLoader, MeshBundle};
+pub use gltf::load_gltf_scenes;
+pub use mesh::{MeshBundle, MeshLoader};
 
 use anyhow::{anyhow, Ok};
 
-use js::load_from_js;
 use super::types::ProjectConfig;
+use js::load_from_js;
 use std::{ffi::OsStr, path::Path};
 
 pub fn load_project_config<P: AsRef<Path>>(path: P) -> anyhow::Result<ProjectConfig> {

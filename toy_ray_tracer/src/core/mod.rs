@@ -33,4 +33,4 @@ pub use transform::Transform;
 pub use vec::{vec3, Color3, Point2f, Point3f, Vec2f, Vec3List, Vec3f, Vec4f};
 
 pub use project::{Project, Settings};
-pub use scene::Scene;
+pub use scene::{Scene, SceneBundle};

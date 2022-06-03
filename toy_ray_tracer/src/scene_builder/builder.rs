@@ -3,23 +3,23 @@ use std::{rc::Rc, sync::Arc};
 use crate::{
     accelerators::BVHAccel,
     core::{
-        Camera, CameraOpt, LightPtr, MaterialPtr, PrimitiveContainerPtr, PrimitivePtr, Project,
-        Scene, ShapePtr, TexturePtr, Transform, Vec2f, Vec3f,
+        vec3, Camera, CameraOpt, MaterialPtr, PrimitiveContainerPtr, PrimitivePtr, Project, Scene,
+        SceneBundle, Settings, ShapePtr, TexturePtr, Transform, Vec2f, Vec3f,
     },
     lights::{AreaLight, EnvironmentLight},
     materials::{DiffuseLight, GltfPbrMaterial, Lambertian, Metal, Transparent},
     primitives::{FlipFacePrimitive, GeometricPrimitive, PrimitiveList},
     shapes::{Cube, Cylinder, Disk, Pyramid, Rect, Sphere, Triangle, TriangleMeshStorage},
-    textures::{CheckerTexture, ConstantTexture, ImageTexture},
+    textures::{CheckerTexture, ConstantTexture, ImageTexture, ImageTextureParams},
 };
 use anyhow::{ensure, Context, Ok, Result};
 
 use super::{
-    loaders::MeshLoader,
+    loaders::{load_gltf_scenes, MeshLoader},
     types::{
         AcceleratorConfig, AorB, CameraConfig, JVec2f, JVec3f, MaterialConfig, PrimitiveConfig,
-        ProjectConfig, SceneConfig, ShapeConfig, TextureConfig, TextureOrConst, TransformConfig,
-        UriConfig,
+        ProjectConfig, SceneConfig, SceneCustomConfig, ShapeConfig, TextureConfig, TextureOrConst,
+        TransformConfig, UriConfig,
     },
     AssetsManager,
 };
@@ -42,32 +42,9 @@ impl Into<Vec2f> for JVec2f {
     }
 }
 
-struct SceneBundle {
-    primitives: Vec<PrimitivePtr>,
-    lights: Vec<LightPtr>,
-    camera: Option<Arc<Camera>>,
-}
-
-impl Default for SceneBundle {
-    fn default() -> Self {
-        Self {
-            primitives: Vec::new(),
-            lights: Vec::new(),
-            camera: Default::default(),
-        }
-    }
-}
-
-impl SceneBundle {
-    pub fn union_assign(&mut self, mut other: SceneBundle) {
-        self.primitives.append(&mut other.primitives);
-        if let Some(camera) = other.camera {
-            self.camera = Some(camera);
-        }
-    }
-}
-
 pub struct Builder {
+    settings: Option<Settings>,
+
     transforms_stack: Vec<Transform>,
     cur_transform: Transform,
     assets_manager: Rc<AssetsManager>,
@@ -76,6 +53,7 @@ pub struct Builder {
 impl Builder {
     pub fn new(assets_manager: Rc<AssetsManager>) -> Self {
         Self {
+            settings: None,
             transforms_stack: Vec::new(),
             cur_transform: Transform::identity(),
             assets_manager,
@@ -91,11 +69,17 @@ impl Builder {
     fn exit_transform(&mut self) {
         self.cur_transform = self.transforms_stack.pop().unwrap();
     }
+
+    fn get_settings(&self) -> &Settings {
+        return self.settings.as_ref().unwrap();
+    }
 }
 
 impl Builder {
     pub fn build_project(&mut self, conf: &ProjectConfig) -> Result<Project> {
-        let scene_bundle = self.build_scene(&conf.scene)?;
+        self.settings = Some(conf.settings.clone());
+
+        let scene_bundle = self.build_scenes(&conf.scenes)?;
         let camera = scene_bundle.camera.clone().context("camera is not set")?;
 
         let world = self.build_accelerator(&conf.accelerator, &scene_bundle.primitives)?;
@@ -118,28 +102,72 @@ impl Builder {
         Ok(primitive)
     }
 
-    fn build_scene(&mut self, conf: &SceneConfig) -> Result<SceneBundle> {
-        let mut derived_bundle = self.build_primitives(&conf.world)?;
+    fn build_scenes(&mut self, confs: &[SceneConfig]) -> Result<SceneBundle> {
+        let mut main_bundle = SceneBundle::default();
 
-        derived_bundle.camera = Some(self.build_camera(&conf.camera)?);
+        for conf in confs {
+            let bundle = match conf {
+                SceneConfig::Uri { uri, transforms } => {
+                    let gltf_path = self.assets_manager.load_path(uri)?;
+
+                    let transform = self.build_transforms(&transforms)?;
+                    let bundles = load_gltf_scenes(&gltf_path, transform)?;
+
+                    let mut acc_bundle = SceneBundle::default();
+                    for bundle in bundles {
+                        acc_bundle.union_assign(bundle);
+                    }
+                    acc_bundle
+
+                    // bundles.iter().reduce(|acc, elem| acc.uni)
+                }
+                SceneConfig::Custom(conf) => self.build_scene_custom(conf)?,
+            };
+
+            main_bundle.union_assign(bundle);
+        }
+
+        ensure!(main_bundle.lights.len() > 0);
+        ensure!(main_bundle.camera.is_some());
+
+        Ok(main_bundle)
+    }
+
+    fn build_scene_custom(&mut self, conf: &SceneCustomConfig) -> Result<SceneBundle> {
+        let transform = self.build_transforms(&conf.transforms)?;
+
+        self.enter_transform(transform);
+
+        let mut bundle = self.build_world(&conf.world)?;
+
+        if let Some(camera) = &conf.camera {
+            let camera = self.build_camera(camera)?;
+            bundle.camera = Some(camera);
+        }
 
         for env in &conf.environments {
             let light = Arc::new(EnvironmentLight::new(env.l.into()));
-            derived_bundle.lights.push(light);
+            bundle.lights.push(light);
         }
 
-        ensure!(derived_bundle.lights.len() > 0);
+        self.exit_transform();
 
-        Ok(derived_bundle)
+        Ok(bundle)
     }
 
     fn build_camera(&self, conf: &CameraConfig) -> Result<Arc<Camera>> {
+        let aspect = if let Some(aspect) = conf.aspect {
+            aspect
+        } else {
+            self.get_settings().get_aspect()
+        };
+
         Ok(Arc::new(Camera::new(CameraOpt {
             look_from: conf.look_from.into(),
             look_at: conf.look_at.into(),
             view_up: conf.view_up.into(),
             vertical_fov: conf.vertical_fov,
-            aspect: conf.aspect,
+            aspect,
             aperture: conf.aperture,
             focus_dist: conf.focus_dist,
             time0: conf.time0,
@@ -147,7 +175,7 @@ impl Builder {
         })))
     }
 
-    fn build_primitives(&mut self, confs: &[PrimitiveConfig]) -> Result<SceneBundle> {
+    fn build_world(&mut self, confs: &[PrimitiveConfig]) -> Result<SceneBundle> {
         let mut bundle = SceneBundle::default();
 
         for conf in confs {
@@ -195,7 +223,7 @@ impl Builder {
                     self.enter_transform(transform);
 
                     // build children
-                    let children_bundle = self.build_primitives(&children)?;
+                    let children_bundle = self.build_world(&children)?;
                     bundle.union_assign(children_bundle);
                 }
             }
@@ -307,7 +335,7 @@ impl Builder {
             MaterialConfig::Metal { albedo, fuzz } => {
                 Arc::new(Metal::new(self.build_texture_or_vec3f(&albedo)?, *fuzz))
             }
-            MaterialConfig::Dielectric { ir } => {
+            MaterialConfig::Dielectric { ir: _ir } => {
                 todo!();
                 // Arc::new(Dielectric::new(*ir))
             }
@@ -357,7 +385,13 @@ impl Builder {
             }
             TextureConfig::ImageTexture { uri } => {
                 let image = self.assets_manager.load_image(&uri)?;
-                Arc::new(ImageTexture::from_image_convert(image, |s| s.clone()))
+                Arc::new(ImageTexture::from_image(
+                    image,
+                    ImageTextureParams {
+                        scale: vec3::scalar(1.0),
+                        flip: true,
+                    },
+                ))
             }
             TextureConfig::CheckerTexture { odd, even } => {
                 let odd = self.build_texture_or_vec3f(odd.as_ref())?;

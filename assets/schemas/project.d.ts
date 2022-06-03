@@ -14,6 +14,38 @@ export type AcceleratorConfig =
       kind: "bvh";
       [k: string]: unknown | undefined;
     };
+export type SceneConfig =
+  | {
+      kind: "uri";
+      transforms?: TransformConfig[];
+      uri: string;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      camera?: CameraConfig | null;
+      environments?: EnvironmentConfig[];
+      kind: "custom";
+      transforms?: TransformConfig[];
+      world?: PrimitiveConfig[];
+      [k: string]: unknown | undefined;
+    };
+export type TransformConfig =
+  | {
+      kind: "translate";
+      offset: JVec3F;
+      [k: string]: unknown | undefined;
+    }
+  | {
+      angle: number;
+      axis: JVec3F;
+      kind: "rotate";
+      [k: string]: unknown | undefined;
+    }
+  | {
+      kind: "scale";
+      scale: JVec3F;
+      [k: string]: unknown | undefined;
+    };
 export type JVec3F = [number, number, number];
 export type PrimitiveConfig =
   | {
@@ -160,40 +192,17 @@ export type ShapeConfig =
       [k: string]: unknown | undefined;
     };
 export type JVec2F = [number, number];
-export type TransformConfig =
-  | {
-      kind: "translate";
-      offset: JVec3F;
-      [k: string]: unknown | undefined;
-    }
-  | {
-      angle: number;
-      axis: JVec3F;
-      kind: "rotate";
-      [k: string]: unknown | undefined;
-    }
-  | {
-      kind: "scale";
-      scale: JVec3F;
-      [k: string]: unknown | undefined;
-    };
 
 export interface ProjectConfig {
   accelerator?: AcceleratorConfig;
   name: string;
-  scene: SceneConfig;
+  scenes: SceneConfig[];
   settings: Settings;
-  [k: string]: unknown | undefined;
-}
-export interface SceneConfig {
-  camera: CameraConfig;
-  environments?: EnvironmentConfig[];
-  world: PrimitiveConfig[];
   [k: string]: unknown | undefined;
 }
 export interface CameraConfig {
   aperture?: number;
-  aspect?: number;
+  aspect?: number | null;
   focus_dist?: number;
   look_at?: JVec3F;
   look_from?: JVec3F;

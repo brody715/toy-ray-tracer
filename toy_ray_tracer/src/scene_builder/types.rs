@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::core::{Settings, Spectrum};
+use crate::core::Settings;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 pub struct JVec3f(pub [f32; 3]);
@@ -26,7 +26,7 @@ impl JVec2f {
 pub struct ProjectConfig {
     pub name: String,
     pub settings: Settings,
-    pub scene: SceneConfig,
+    pub scenes: Vec<SceneConfig>,
     #[serde(default)]
     pub accelerator: AcceleratorConfig,
 }
@@ -45,12 +45,29 @@ impl Default for AcceleratorConfig {
 }
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug)]
-pub struct SceneConfig {
-    pub camera: CameraConfig,
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum SceneConfig {
+    Uri {
+        #[serde(default)]
+        transforms: Vec<TransformConfig>,
+        uri: String,
+    },
+    Custom(SceneCustomConfig),
+}
+
+#[derive(JsonSchema, Serialize, Deserialize, Debug)]
+pub struct SceneCustomConfig {
+    #[serde(default)]
+    pub transforms: Vec<TransformConfig>,
+    pub camera: Option<CameraConfig>,
+    #[serde(default)]
     pub world: Vec<PrimitiveConfig>,
     #[serde(default)]
     pub environments: Vec<EnvironmentConfig>,
 }
+
+#[derive(JsonSchema, Serialize, Deserialize, Debug)]
+pub struct SceneExtendItemConfig {}
 
 #[derive(JsonSchema, Serialize, Deserialize, Debug)]
 pub struct EnvironmentConfig {
@@ -64,7 +81,7 @@ pub struct CameraConfig {
     pub look_at: JVec3f,
     pub view_up: JVec3f,
     pub vertical_fov: f32,
-    pub aspect: f32,
+    pub aspect: Option<f32>,
     pub aperture: f32,
     pub focus_dist: f32,
     pub time0: f32,
@@ -78,7 +95,7 @@ impl Default for CameraConfig {
             look_at: JVec3f::new(0.0, 0.0, -1.0),
             view_up: JVec3f::new(0.0, 1.0, 0.0),
             vertical_fov: 90.0,
-            aspect: 1.0,
+            aspect: None,
             aperture: 0.0,
             focus_dist: 1.0,
             time0: 0.0,

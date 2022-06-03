@@ -1,4 +1,5 @@
 mod accelerators;
+mod bxdfs;
 pub mod core;
 mod engine;
 mod lights;
@@ -9,8 +10,6 @@ mod scene_builder;
 mod shapes;
 mod textures;
 mod utils;
-mod bxdfs;
-mod integrators;
 
 use crate::scene_builder::{load_project_config, AssetsManager, Builder};
 use crate::{engine::Engine, utils::ExecutionTimer};
@@ -99,6 +98,11 @@ fn run_render(args: RenderCmdArgs) -> anyhow::Result<()> {
 
     let opt = project.settings();
     let output_dir = Path::new(&opt.output_dir);
+
+    if !output_dir.exists() {
+        anyhow::bail!("output dir {} not exists", output_dir.display());
+    }
+
     let output_path = output_dir.join(format!("{}.png", project.name()));
 
     {

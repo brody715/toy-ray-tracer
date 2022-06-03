@@ -160,6 +160,7 @@ impl Engine {
         return scene.lights.background_l(&r);
     }
 
+    #[allow(dead_code)]
     fn trace_ray_loop<'a>(
         &self,
         ray: &Ray,
