@@ -405,35 +405,6 @@ pub fn fresnel_dielectric(eta: f32, cos_wo: f32) -> f32 {
     return (rs * rs + rp * rp) / 2.0;
 }
 
-pub fn fresnel_conductor(eta_i: &Vec3f, eta_t: &Vec3f, cos_wo: f32) -> Vec3f {
-    if cos_wo < 0.0 {
-        return Vec3f::zeros();
-    }
-
-    let cos_wo = cos_wo.clamp(-1.0, 1.0);
-    let cos_wo2 = cos_wo * cos_wo;
-    let cos_wo2v = vec3::scalar(cos_wo2);
-    let sin_wo2 = (1.0 - cos_wo2).clamp(0.0, 1.0);
-    let eta_i2 = vec3::elementwise_mult(eta_i, eta_i);
-    let eta_t2 = vec3::elementwise_mult(eta_t, eta_t);
-
-    let t0 = eta_i2 - eta_t2 - cos_wo2v;
-    let a2_plus_b2 = vec3::sqrt(
-        vec3::elementwise_mult(&t0, &t0) + 4.0 * vec3::elementwise_mult(&eta_i2, &eta_t2),
-    );
-    let t1 = a2_plus_b2 + cos_wo2v;
-
-    let a = vec3::sqrt((a2_plus_b2 + t0) / 2.0);
-    let t2 = 2.0 * a * cos_wo;
-    let rs = vec3::elementwise_div(&(t1 - t2), &(t1 + t2));
-
-    let t3 = cos_wo2 * a2_plus_b2 + vec3::scalar(sin_wo2 * sin_wo2);
-    let t4 = t2 * sin_wo2;
-    let rp = vec3::elementwise_mult(&rs, &vec3::elementwise_div(&(t3 - t4), &(t3 + t4)));
-
-    return (rp + rs) / 2.0;
-}
-
 // microfacet distribution evaluation
 // @see http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 // @param halfway (wi + wo).normalize()

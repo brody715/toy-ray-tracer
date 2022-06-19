@@ -32,7 +32,7 @@ impl Transform {
         Self::new(m)
     }
 
-    // angle in degree
+    // angle in degree, counter clockwise
     pub fn rotate(axis: Vec3f, angle: f32) -> Transform {
         let m = Matrix4::from_axis_angle(&Unit::new_normalize(axis), angle.to_radians());
         Self::new(m)

@@ -341,13 +341,8 @@ impl Builder {
                     object_to_world,
                 ))]
             }
-            ShapeConfig::RegularPolygon {
-                center,
-                radius,
-                num_sides,
-            } => {
+            ShapeConfig::RegularPolygon { radius, num_sides } => {
                 vec![Arc::new(RegularPolygon::new(
-                    center.into(),
                     *radius,
                     *num_sides,
                     object_to_world,

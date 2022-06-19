@@ -112,6 +112,7 @@ impl Engine {
         for bounce in 0..max_depth {
             if let Some(si) = world.intersect(&ray, 0.001, f32::MAX) {
                 let material = si.material.unwrap();
+                // TODO: support single sided light
                 let emission = if si.wo.dot(&si.normal) > 0.0 {
                     material.emission(&si)
                 } else {

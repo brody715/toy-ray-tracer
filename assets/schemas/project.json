@@ -686,15 +686,11 @@
         {
           "type": "object",
           "required": [
-            "center",
             "kind",
             "num_sides",
             "radius"
           ],
           "properties": {
-            "center": {
-              "$ref": "#/definitions/JVec3f"
-            },
             "kind": {
               "type": "string",
               "enum": [

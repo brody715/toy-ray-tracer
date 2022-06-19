@@ -191,7 +191,6 @@ pub enum ShapeConfig {
         v3: JVec3f,
     },
     RegularPolygon {
-        center: JVec3f,
         radius: f32,
         num_sides: usize,
     },

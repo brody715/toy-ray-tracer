@@ -74,6 +74,31 @@ export function create_world() {
       material: strong_light,
     })
   );
+  world.pop();
+
+  world.push({
+    kind: "geom",
+    transforms: [
+      {
+        kind: "rotate",
+        axis: [1, 0, 0],
+        angle: 90,
+      },
+      {
+        kind: "translate",
+        offset: [box_width / 2, box_height - 1, box_depth / 2],
+      },
+    ],
+    // flip_face: true,
+    shape: {
+      kind: "regular_polygon",
+      radius: 0.2 * box_width,
+      num_sides: 6,
+    },
+    area_light: {},
+    material: strong_light,
+  });
+  // world.pop()
 
   // top (ceil)
   world.push({
@@ -259,7 +284,7 @@ export default make_project({
     output_dir: "./output",
     height: 800,
     width: 800,
-    nsamples: 200,
+    nsamples: 20,
     max_depth: 20,
     mis_weight: 0.5,
   },

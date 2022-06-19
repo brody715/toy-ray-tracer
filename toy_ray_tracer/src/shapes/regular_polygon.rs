@@ -14,34 +14,24 @@ pub struct RegularPolygon {
 }
 
 impl RegularPolygon {
-    pub fn new(center: Vec3f, radius: f32, n_sides: usize, object_to_world: Transform) -> Self {
-        // TODO: 支持更多的多边形
-        let positions: Vec<Vec3f> = match n_sides {
-            4 => {
-                vec![
-                    center,
-                    center + Vec3f::new(0.0, radius, 0.0),
-                    center + Vec3f::new(-radius, 0.0, 0.0),
-                    center + Vec3f::new(0.0, -radius, 0.0),
-                    center + Vec3f::new(radius, 0.0, 0.0),
-                ]
-            }
-            6 => {
-                let cos_theta = 3.0_f32.sqrt() / 2.0;
-                let sin_theta = 1.0 / 2.0;
+    // 通过不断地逆时针旋转 \theta，得到所有的顶点坐标
+    pub fn new(radius: f32, n_sides: usize, object_to_world: Transform) -> Self {
+        if n_sides < 3 {
+            panic!("n_sides must be >= 3");
+        }
 
-                vec![
-                    center,
-                    center + Vec3f::new(0.0, radius, 0.0),
-                    center + Vec3f::new(-cos_theta * radius, radius * sin_theta, 0.0),
-                    center + Vec3f::new(-cos_theta * radius, -radius * sin_theta, 0.0),
-                    center + Vec3f::new(0.0, -radius, 0.0),
-                    center + Vec3f::new(cos_theta * radius, -radius * sin_theta, 0.0),
-                    center + Vec3f::new(cos_theta * radius, radius * sin_theta, 0.0),
-                ]
-            }
-            _ => panic!("RegularPolygon: n_sides must be 4 or 6"),
-        };
+        // rotation origin
+        let center = Vec3f::zeros();
+
+        let rotate_transform = Transform::rotate(Vec3f::new(0.0, 0.0, 1.0), 360.0 / n_sides as f32);
+
+        let v1 = center + Vec3f::new(0.0, radius, 0.0);
+        let mut positions: Vec<Vec3f> = vec![center, v1];
+
+        for i in 2..(n_sides + 1) {
+            let v = rotate_transform.transform_point3(&positions[i - 1]);
+            positions.push(v);
+        }
 
         let mut indices: Vec<usize> = vec![];
         for i in 1..(n_sides + 1) {
