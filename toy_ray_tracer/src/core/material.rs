@@ -6,7 +6,7 @@ use super::Bsdf;
 use super::Color3;
 
 pub trait Material: Sync {
-    fn emitted(&self, _si: &SurfaceInteraction) -> Color3 {
+    fn emission(&self, _si: &SurfaceInteraction) -> Color3 {
         Color3::zeros()
     }
 

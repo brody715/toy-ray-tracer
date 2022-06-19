@@ -3,9 +3,10 @@ use std::{path::Path, sync::Arc};
 
 use crate::{
     core::{vec3, MaterialPtr, Point2f, SceneBundle, Spectrum, TexturePtr, Transform, Vec3f},
+    lights::AreaLight,
     materials::GltfPbrMaterial,
     primitives::GeometricPrimitive,
-    shapes::{Triangle, TriangleMeshStorage},
+    shapes::{ShapeList, Triangle, TriangleMeshStorage},
     textures::{ConstantTexture, ImageTexture, ImageTextureParams},
 };
 
@@ -79,14 +80,17 @@ fn load_scene(g_scene: &easy_gltf::Scene, transform: Transform) -> Result<SceneB
         )?);
 
         let g_material = g_model.material();
+        let emissive = &g_material.emissive;
+        let emissive_factor =
+            Spectrum::new(emissive.factor.x, emissive.factor.y, emissive.factor.z);
+
         let material: MaterialPtr = {
             let pbr = &g_material.pbr;
-            let emissive = &g_material.emissive;
 
             let roughness_factor = pbr.roughness_factor;
             let metallic_factor = pbr.metallic_factor;
-            let emissive_factor =
-                Spectrum::new(emissive.factor.x, emissive.factor.y, emissive.factor.z);
+
+            // let emissive_factor = emissive_factor * 8.0;
 
             let base_color_factor = Spectrum::new(
                 pbr.base_color_factor.x,
@@ -169,13 +173,40 @@ fn load_scene(g_scene: &easy_gltf::Scene, transform: Transform) -> Result<SceneB
             material
         };
 
+        // if emissive is not black, and has no texture, we add it as area_light
+        let has_area_light: bool =
+            { !vec3::is_black(&emissive_factor) && emissive.texture.is_none() };
+
         let prims = &mut bundle.primitives;
+        let lights = &mut bundle.lights;
+
+        let mut triangles: Vec<Arc<Triangle>> = Vec::new();
+
         for id in 0..mesh.n_triangles {
             let triangle = Arc::new(Triangle::new(id, mesh.clone()));
+            triangles.push(triangle);
+        }
 
-            let prim = Arc::new(GeometricPrimitive::new(triangle, material.clone()));
+        if has_area_light {
+            // if has area light, we treat all traingles as a single primitive
 
+            let mut shapes = ShapeList::new();
+
+            for triangle in triangles {
+                shapes.push(triangle)
+            }
+
+            let prim = Arc::new(GeometricPrimitive::new(Arc::new(shapes), material.clone()));
+            let area_light = Arc::new(AreaLight::new(prim.clone()));
+
+            lights.push(area_light);
             prims.push(prim);
+        } else {
+            for triangle in triangles {
+                let prim = Arc::new(GeometricPrimitive::new(triangle, material.clone()));
+
+                prims.push(prim);
+            }
         }
     }
 

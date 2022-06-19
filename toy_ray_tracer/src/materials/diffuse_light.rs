@@ -1,17 +1,21 @@
 use crate::core::{Material, Spectrum, TexturePtr};
 
 pub struct DiffuseLight {
-    emit: TexturePtr<Spectrum>,
+    emission: TexturePtr<Spectrum>,
 }
 
 impl DiffuseLight {
-    pub fn new(emit: TexturePtr<Spectrum>) -> Self {
-        Self { emit }
+    pub fn new(emission: TexturePtr<Spectrum>) -> Self {
+        Self { emission }
     }
 }
 
 impl Material for DiffuseLight {
-    fn emitted(&self, si: &crate::core::SurfaceInteraction) -> Spectrum {
-        self.emit.evaluate(si)
+    fn emission(&self, si: &crate::core::SurfaceInteraction) -> Spectrum {
+        self.emission.evaluate(si)
+    }
+
+    fn compute_bsdf(&self, _si: &crate::core::SurfaceInteraction) -> Option<crate::core::Bsdf> {
+        None
     }
 }

@@ -8,6 +8,7 @@ mod primitive;
 mod project;
 mod ray;
 pub mod reflection;
+mod sampler;
 mod scene;
 mod shape;
 mod spectrum;
@@ -26,6 +27,7 @@ pub use primitive::{
 };
 pub use ray::Ray;
 pub use reflection::{Bsdf, Bxdf, BxdfPtr};
+pub use sampler::sample;
 pub use shape::{Shape, ShapePtr};
 pub use spectrum::Spectrum;
 pub use texture::{Texture, TextureData, TexturePtr};

@@ -65,7 +65,7 @@ impl Engine {
                     let u = (i as f32 + rng.f32()) / width as f32;
                     let v = (j as f32 + rng.f32()) / height as f32;
                     let r = camera.get_ray(u, v);
-                    let c = self.trace_ray(&r, &scene, settings, max_depth);
+                    let c = self.trace_ray_loop(&r, &scene, settings, max_depth);
                     pixels[(height - j - 1) * width + i] += c;
                 }
             }
@@ -94,72 +94,6 @@ impl Engine {
         return img;
     }
 
-    fn trace_ray<'a>(&self, r: &Ray, scene: &Scene, settings: &'a Settings, depth: i32) -> Color3 {
-        // no more light is gathered when reach the limit
-        if depth <= 0 {
-            return Color3::zeros();
-        }
-
-        let world = &scene.world;
-
-        if let Some(si) = world.intersect(r, 0.001, f32::MAX) {
-            let material = si.material.unwrap();
-            let emitted = material.emitted(&si);
-
-            if let Some(bsdf) = material.compute_bsdf(&si) {
-                let wo = &si.wo;
-
-                // delta 分布 brdf，如 镜面反射
-                if bsdf.is_delta() {
-                    let wi = bsdf.sample_wi(wo);
-                    let pdf = bsdf.sample_pdf(&wi, wo);
-                    let bsdf_value = bsdf.f_cos(&wi, wo);
-
-                    let ray = Ray::new(si.point, wi, r.time());
-                    return vec3::elementwise_mult(
-                        &bsdf_value,
-                        &self.trace_ray(&ray, scene, settings, depth - 1),
-                    ) / pdf;
-                }
-
-                // 非 delta 分布 brdf，如 漫反射
-                let lights = &scene.lights;
-
-                // bsdf and light sampling weight
-                let mis_weight = settings.mis_weight;
-
-                let wi = if random::f32() < mis_weight {
-                    bsdf.sample_wi(wo)
-                } else {
-                    lights.sample_wi(&si.point)
-                };
-
-                if vec3::is_near_zero(&wi) {
-                    return emitted;
-                }
-
-                let pdf = mis_weight * bsdf.sample_pdf(&wi, wo)
-                    + (1.0 - mis_weight) * lights.sample_pdf(&si.point, &wi);
-
-                let bsdf_value = bsdf.f_cos(&wi, wo);
-
-                // black, stop trace
-                if vec3::is_black(&bsdf_value) || pdf < f32::EPSILON {
-                    return emitted;
-                }
-
-                let scattered = Ray::new(si.point, wi, r.time());
-                let new_radiance = self.trace_ray(&scattered, scene, settings, depth - 1);
-
-                // TODO: fix bsdf_pdf
-                return emitted + vec3::elementwise_mult(&bsdf_value, &new_radiance) / pdf;
-            }
-            return emitted;
-        }
-        // TODO: support multiple infinitite lights
-        return scene.lights.background_l(&r);
-    }
-
     #[allow(dead_code)]
     fn trace_ray_loop<'a>(
         &self,
@@ -178,9 +112,14 @@ impl Engine {
         for bounce in 0..max_depth {
             if let Some(si) = world.intersect(&ray, 0.001, f32::MAX) {
                 let material = si.material.unwrap();
-                let emitted = material.emitted(&si);
+                let emission = if si.wo.dot(&si.normal) > 0.0 {
+                    material.emission(&si)
+                } else {
+                    // Color3::zeros()
+                    material.emission(&si)
+                };
 
-                color = color + vec3::elementwise_mult(&beta, &emitted);
+                color = color + vec3::elementwise_mult(&beta, &emission);
 
                 if let Some(bsdf) = material.compute_bsdf(&si) {
                     let wo = &si.wo;
@@ -243,6 +182,9 @@ impl Engine {
                             );
                         }
                     }
+                } else {
+                    // no bsdf for material, stop trace
+                    break;
                 }
             } else {
                 // no hit, return environment lights

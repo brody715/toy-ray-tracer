@@ -1,6 +1,6 @@
 use crate::{
     core::{vec3, Point2f, Shape, Transform, Vec3f},
-    math::{NopSampler, Sampler, SamplerPtr},
+    math::{Sampler, SamplerPtr},
     utils::random,
 };
 use std::f32::consts::PI;
@@ -18,7 +18,7 @@ struct DiskData {
     plane: Plane,
 }
 
-pub struct AADisk {
+pub struct Disk {
     center: Vec3f,
     radius: f32,
     normal: Vec3f,
@@ -27,7 +27,7 @@ pub struct AADisk {
     world_to_object: Transform,
 }
 
-impl AADisk {
+impl Disk {
     pub fn new(center: Vec3f, radius: f32, normal: Vec3f, object_to_world: Transform) -> Self {
         let plane = if normal == vec3::XUP {
             Plane::YZ
@@ -55,7 +55,7 @@ impl AADisk {
     }
 }
 
-impl Shape for AADisk {
+impl Shape for Disk {
     fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<SurfaceInteraction> {
         let ray = self.world_to_object.transform_ray(ray);
 
@@ -114,20 +114,22 @@ impl Shape for AADisk {
         let rec = self.intersect(&Ray::new(origin.clone(), v.clone(), 0.0), 0.001, f32::MAX);
 
         // TODO: Consider not axis-aligned
-        if let Some(rec) = rec {
+        if let Some(si) = rec {
+            // TODO: Disk Importance Sampling
             let area = self.radius * self.radius * PI;
 
-            let distance_squared = rec.t_hit * rec.t_hit * v.norm_squared();
-            let cosine = (v.dot(&rec.normal) / v.norm()).abs();
+            let distance_squared = si.t_hit * si.t_hit * v.norm_squared();
+            let cosine = (v.dot(&si.normal) / v.norm()).abs();
 
-            return distance_squared / (cosine * area);
+            let pdf = distance_squared / (cosine * area);
+            return pdf;
         }
         0.0
     }
 
     fn sample_wi(&self, origin: &Vec3f) -> Vec3f {
         // TODO: Support transform
-        self.sampler.sample_direction(origin)
+        self.sampler.sample_direction(origin).normalize()
     }
 }
 

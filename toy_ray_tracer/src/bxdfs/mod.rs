@@ -1,12 +1,10 @@
-use std::f32::consts::FRAC_1_PI;
+use std::f32::consts::{FRAC_1_PI, PI};
+
+use nalgebra::Matrix3;
 
 use crate::{
     core::{
-        reflection::{
-            eta_to_rf0, fresnel_dielectric, fresnel_schlick_v, microfacet_distribution,
-            microfacet_shadowing, sample_hemisphere_cos_pdf, sample_microfacet,
-            sample_microfacet_pdf,
-        },
+        sample,
         vec3::{self, reflect},
         Bxdf, Spectrum, Vec3f,
     },
@@ -38,23 +36,15 @@ impl Bxdf for LambertianReflection {
 
     // $P_d / \pi$
     fn f(&self, _wi: &Vec3f, _wo: &Vec3f, _normal: &Vec3f) -> Vec3f {
-        // TODO: Mul with 1 / \pi
         return self.albedo * FRAC_1_PI;
     }
 
     fn sample_wi(&self, _wo: &Vec3f, normal: &Vec3f) -> Vec3f {
-        let wi = vec3::random_hemisphere_cosine(normal);
-        return wi;
+        sample::sample_hemisphere_cos_wi(normal)
     }
 
     fn sample_pdf(&self, wi: &Vec3f, _wo: &Vec3f, normal: &Vec3f) -> f32 {
-        let cosine = wi.dot(&normal);
-        let pdf = if cosine < 0.0 {
-            0.0
-        } else {
-            cosine * FRAC_1_PI
-        };
-        pdf
+        sample::sample_hemisphere_cos_pdf(normal, wi)
     }
 }
 
@@ -138,8 +128,8 @@ impl Bxdf for TransparentTransmission {
             let halfway = (reflected + wo).normalize();
             let cos_half = normal.dot(&halfway);
             let cos_half_wo = halfway.dot(&wo);
-            let cos_reflected = reflected.dot(&wo);
-            let cos_wo = normal.dot(&wo);
+            let cos_reflected = reflected.dot(&normal);
+            let cos_wo = wo.dot(&normal);
 
             let f = fresnel_dielectric(self.eta, cos_half_wo);
             let d = microfacet_distribution(self.roughness, cos_half);
@@ -150,6 +140,8 @@ impl Bxdf for TransparentTransmission {
     }
 
     fn sample_wi(&self, wo: &Vec3f, normal: &Vec3f) -> Vec3f {
+        return sample::sample_hemisphere_cos_wi(normal);
+
         let normal = get_up_normal(wo, normal);
         let halfway = sample_microfacet(self.roughness, &normal);
         let cos_half_wo = wo.dot(&halfway);
@@ -171,6 +163,8 @@ impl Bxdf for TransparentTransmission {
     }
 
     fn sample_pdf(&self, wi: &Vec3f, wo: &Vec3f, normal: &Vec3f) -> f32 {
+        return sample::sample_hemisphere_cos_pdf(normal, wi);
+
         let same_hemisphere = vec3::is_same_hemisphere(wi, wo, normal);
 
         let normal = get_up_normal(wo, normal);
@@ -239,10 +233,10 @@ impl Bxdf for DeltaTransparentTransmission {
         let same_hemisphere = vec3::is_same_hemisphere(wi, wo, normal);
         let normal = get_up_normal(wo, normal);
 
+        let cos_wo = wo.dot(&normal);
         if same_hemisphere {
-            return fresnel_dielectric(self.eta, wo.dot(&normal));
+            return fresnel_dielectric(self.eta, cos_wo);
         } else {
-            let cos_wo = normal.dot(wo);
             return 1.0 - fresnel_dielectric(self.eta, cos_wo);
         }
     }
@@ -265,15 +259,20 @@ impl GltfPbrBxdf {
         }
     }
 
-    fn get_rf0(&self) -> Vec3f {
-        let rf0 = eta_to_rf0(self.eta);
+    fn get_mixed_rf0(&self) -> Vec3f {
+        let rf0 = eta_to_reflectivity(self.eta);
         let rf0 = vec3::lerp(&vec3::scalar(rf0), &self.base_color, self.metallic);
         rf0
     }
 }
 
-impl GltfPbrBxdf {
-    fn f_old(&self, wi: &Vec3f, wo: &Vec3f, normal: &Vec3f) -> Vec3f {
+impl Bxdf for GltfPbrBxdf {
+    fn is_delta(&self) -> bool {
+        // self.roughness < f32::EPSILON
+        false
+    }
+
+    fn f(&self, wi: &Vec3f, wo: &Vec3f, normal: &Vec3f) -> Vec3f {
         if !vec3::is_same_hemisphere(wi, wo, normal) {
             return Vec3f::zeros();
         }
@@ -286,41 +285,46 @@ impl GltfPbrBxdf {
         let cos_half_wi = halfway.dot(wi);
         let cos_half = halfway.dot(&normal);
 
-        let rf0 = self.get_rf0();
+        let rf0 = self.get_mixed_rf0();
 
         let f1 = fresnel_schlick_v(&rf0, cos_wo);
 
         let f = fresnel_schlick_v(&rf0, cos_half_wi);
 
+        // let f = fresnel_schlick_v(&rf0, halfway.dot(wo));
+        // let f1 = f;
+
         let d = microfacet_distribution(self.roughness, cos_half);
 
         let g = microfacet_shadowing(self.roughness, &normal, &halfway, wo, wi);
 
-        let f_diffuse = vec3::elementwise_mult(
-            &self.base_color,
-            &((1.0 - self.metallic) * (vec3::scalar(1.0) - f1) * FRAC_1_PI),
-        );
+        let c_diffuse = (1.0 - self.metallic) * self.base_color;
 
+        // f_diffuse = (1 - F) * (1 / \pi) * c_diffuse
+        let f_diffuse = vec3::elementwise_mult(&c_diffuse, &((vec3::scalar(1.0) - f1) * FRAC_1_PI));
+
+        // f_specular = F * D * G / (4 * cos_o * cos_i)
         let f_specular = f * d * g / (4.0 * cos_wo * cos_wi);
+
+        if log::max_level() >= log::Level::Trace {
+            log::trace!(
+                "f_diffuse: {:?}, base_color: {:?}, metallic: {:?}, f1: {:?}",
+                f_diffuse,
+                self.base_color,
+                self.metallic,
+                f1,
+            );
+        }
 
         return f_diffuse + f_specular;
     }
-}
-
-impl Bxdf for GltfPbrBxdf {
-    fn is_delta(&self) -> bool {
-        // self.roughness < f32::EPSILON
-        false
-    }
-
-    fn f(&self, wi: &Vec3f, wo: &Vec3f, normal: &Vec3f) -> Vec3f {
-        self.f_old(wi, wo, normal)
-    }
 
     fn sample_wi(&self, wo: &Vec3f, normal: &Vec3f) -> Vec3f {
+        // return sample::sample_hemisphere_cos_wi(normal);
+
         let normal = get_up_normal(wo, normal);
 
-        let rf0 = self.get_rf0();
+        let rf0 = self.get_mixed_rf0();
 
         let cos_wo = normal.dot(wo);
         if random::f32() < fresnel_schlick_v(&rf0, cos_wo).mean() {
@@ -331,11 +335,13 @@ impl Bxdf for GltfPbrBxdf {
             }
             return wi;
         } else {
-            return vec3::random_hemisphere_cosine(&normal);
+            return sample::sample_hemisphere_cos_wi(&normal);
         }
     }
 
     fn sample_pdf(&self, wi: &Vec3f, wo: &Vec3f, normal: &Vec3f) -> f32 {
+        // return sample::sample_hemisphere_cos_pdf(normal, wi);
+
         if !vec3::is_same_hemisphere(wi, wo, normal) {
             return 0.0;
         }
@@ -343,7 +349,7 @@ impl Bxdf for GltfPbrBxdf {
         let normal = get_up_normal(wo, normal);
         let halfway = (wi + wo).normalize();
 
-        let rf0 = self.get_rf0();
+        let rf0 = self.get_mixed_rf0();
 
         let cos_wo = normal.dot(wo);
         let cos_half = normal.dot(&halfway);
@@ -352,6 +358,164 @@ impl Bxdf for GltfPbrBxdf {
         let f = fresnel_schlick_v(&rf0, cos_wo).mean();
 
         return f * sample_microfacet_pdf(self.roughness, cos_half) / (4.0 * cos_half_wo.abs())
-            + (1.0 - f) * sample_hemisphere_cos_pdf(&normal, wi);
+            + (1.0 - f) * sample::sample_hemisphere_cos_pdf(&normal, wi);
     }
+}
+
+pub fn eta_to_reflectivity(eta: f32) -> f32 {
+    ((1.0 - eta) / (1.0 + eta)).powi(2)
+}
+
+// $R_f(0) + (1 - R_f(0))(1 - \cos\theta)^5$
+pub fn fresnel_schlick(rf_0: f32, cosine: f32) -> f32 {
+    if rf_0 == 0.0 {
+        return 0.0;
+    }
+
+    let n = (1.0 - cosine.abs()).clamp(0.0, 1.0);
+    return rf_0 + (1.0 - rf_0) * n.powi(5);
+}
+
+pub fn fresnel_schlick_v(rf_0: &Vec3f, cosine: f32) -> Vec3f {
+    if *rf_0 == Vec3f::zeros() {
+        return Vec3f::zeros();
+    }
+
+    let n = (1.0 - cosine.abs()).clamp(0.0, 1.0);
+    return rf_0 + (vec3::scalar(1.0) - rf_0) * n.powi(5);
+}
+
+// dielectrics of the fresnel
+pub fn fresnel_dielectric(eta: f32, cos_wo: f32) -> f32 {
+    let sin2 = 1.0 - cos_wo * cos_wo;
+    let eta2 = eta * eta;
+
+    let cos2t = 1.0 - sin2 / eta2;
+    if cos2t < 0.0 {
+        return 1.0;
+    }
+
+    let t0 = cos2t.sqrt();
+    let t1 = eta * t0;
+    let t2 = eta * cos_wo;
+
+    let rs = (cos_wo - t1) / (cos_wo + t1);
+    let rp = (t0 - t2) / (t0 + t2);
+
+    return (rs * rs + rp * rp) / 2.0;
+}
+
+pub fn fresnel_conductor(eta_i: &Vec3f, eta_t: &Vec3f, cos_wo: f32) -> Vec3f {
+    if cos_wo < 0.0 {
+        return Vec3f::zeros();
+    }
+
+    let cos_wo = cos_wo.clamp(-1.0, 1.0);
+    let cos_wo2 = cos_wo * cos_wo;
+    let cos_wo2v = vec3::scalar(cos_wo2);
+    let sin_wo2 = (1.0 - cos_wo2).clamp(0.0, 1.0);
+    let eta_i2 = vec3::elementwise_mult(eta_i, eta_i);
+    let eta_t2 = vec3::elementwise_mult(eta_t, eta_t);
+
+    let t0 = eta_i2 - eta_t2 - cos_wo2v;
+    let a2_plus_b2 = vec3::sqrt(
+        vec3::elementwise_mult(&t0, &t0) + 4.0 * vec3::elementwise_mult(&eta_i2, &eta_t2),
+    );
+    let t1 = a2_plus_b2 + cos_wo2v;
+
+    let a = vec3::sqrt((a2_plus_b2 + t0) / 2.0);
+    let t2 = 2.0 * a * cos_wo;
+    let rs = vec3::elementwise_div(&(t1 - t2), &(t1 + t2));
+
+    let t3 = cos_wo2 * a2_plus_b2 + vec3::scalar(sin_wo2 * sin_wo2);
+    let t4 = t2 * sin_wo2;
+    let rp = vec3::elementwise_mult(&rs, &vec3::elementwise_div(&(t3 - t4), &(t3 + t4)));
+
+    return (rp + rs) / 2.0;
+}
+
+// microfacet distribution evaluation
+// @see http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
+// @param halfway (wi + wo).normalize()
+// @param cos_wh halfway \cdot normal
+pub fn microfacet_distribution(roughness: f32, cos_half: f32) -> f32 {
+    if cos_half <= 0.0 {
+        return 0.0;
+    }
+
+    let roughness2 = roughness * roughness;
+    let cos_half2 = cos_half * cos_half;
+
+    return roughness2 / (PI * (cos_half2 * (roughness2 - 1.0) + 1.0).powi(2));
+}
+
+pub fn microfacet_shadowing_v(
+    roughness: f32,
+    cos_wi: f32,
+    cos_wo: f32,
+    cos_half_wi: f32,
+    cos_half_wo: f32,
+) -> f32 {
+    return microfacet_shadowing1(roughness, cos_wi, cos_half_wi)
+        * microfacet_shadowing1(roughness, cos_wo, cos_half_wo);
+}
+
+pub fn microfacet_shadowing(
+    roughness: f32,
+    normal: &Vec3f,
+    halfway: &Vec3f,
+    wo: &Vec3f,
+    wi: &Vec3f,
+) -> f32 {
+    let cos_wi = vec3::dot(wi, normal);
+    let cos_wo = vec3::dot(wo, normal);
+    let cos_half_wi = vec3::dot(halfway, wi);
+    let cos_half_wo = vec3::dot(halfway, wo);
+
+    return microfacet_shadowing1(roughness, cos_wi, cos_half_wi)
+        * microfacet_shadowing1(roughness, cos_wo, cos_half_wo);
+}
+
+pub fn microfacet_shadowing1(roughness: f32, cos_d: f32, cos_half_d: f32) -> f32 {
+    if cos_d * cos_half_d <= 0.0 {
+        return 0.0;
+    }
+
+    let roughness2 = roughness * roughness;
+    let cos_d2 = cos_d * cos_d;
+    return 2.0 * cos_d.abs() / (cos_d.abs() + (roughness2 + (1.0 - roughness2) * cos_d2).sqrt());
+}
+
+pub fn sample_microfacet(roughness: f32, normal: &Vec3f) -> Vec3f {
+    let rand_x = random::f32();
+    let rand_y = random::f32();
+
+    let phi = 2.0 * PI * rand_x;
+    let theta = f32::atan(roughness * (rand_y / (1.0 - rand_y).sqrt()));
+    let local_half_vector = Vec3f::new(
+        phi.cos() * theta.sin(),
+        phi.sin() * theta.sin(),
+        theta.cos(),
+    );
+
+    (basis_fromz(normal) * local_half_vector).normalize()
+}
+
+pub fn sample_microfacet_pdf(roughness: f32, cos_half: f32) -> f32 {
+    if cos_half < 0.0 {
+        return 0.0;
+    }
+    return microfacet_distribution(roughness, cos_half) * cos_half;
+}
+
+// Constructs a basis from a direction
+pub fn basis_fromz(v: &Vec3f) -> Matrix3<f32> {
+    // https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+    let z = v.normalize();
+    let sign = 1.0_f32.copysign(z[2]);
+    let a = -1.0 / (sign + z[2]);
+    let b = z[0] * z[1] * a;
+    let x = Vec3f::new(1.0 + sign * z[0] * z[0] * a, sign * b, -sign * z[0]);
+    let y = Vec3f::new(b, sign + z[1] * z[1] * a, -z[1]);
+    return Matrix3::from_columns(&[x, y, z]);
 }

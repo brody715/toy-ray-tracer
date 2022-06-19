@@ -9,7 +9,9 @@ use crate::{
     lights::{AreaLight, EnvironmentLight},
     materials::{DiffuseLight, GltfPbrMaterial, Lambertian, Metal, Transparent},
     primitives::{FlipFacePrimitive, GeometricPrimitive, PrimitiveList},
-    shapes::{AADisk, Cube, Cylinder, Pyramid, Rect, Sphere, Triangle, TriangleMeshStorage},
+    shapes::{
+        Cube, Cylinder, Disk, Pyramid, Rect, RegularPolygon, Sphere, Triangle, TriangleMeshStorage,
+    },
     textures::{CheckerTexture, ConstantTexture, ImageTexture, ImageTextureParams},
 };
 use anyhow::{ensure, Context, Ok, Result};
@@ -314,7 +316,7 @@ impl Builder {
                 radius,
                 normal,
             } => {
-                vec![Arc::new(AADisk::new(
+                vec![Arc::new(Disk::new(
                     center.into(),
                     *radius,
                     normal.into(),
@@ -336,6 +338,18 @@ impl Builder {
             ShapeConfig::Pyramid { v0, v1, v2, v3 } => {
                 vec![Arc::new(Pyramid::new(
                     [v0.into(), v1.into(), v2.into(), v3.into()],
+                    object_to_world,
+                ))]
+            }
+            ShapeConfig::RegularPolygon {
+                center,
+                radius,
+                num_sides,
+            } => {
+                vec![Arc::new(RegularPolygon::new(
+                    center.into(),
+                    *radius,
+                    *num_sides,
                     object_to_world,
                 ))]
             }

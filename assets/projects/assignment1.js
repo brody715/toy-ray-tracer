@@ -23,7 +23,7 @@ export function create_world() {
 
   const strong_light = make_material({
     kind: "diffuse_light",
-    emit: [7.0, 7.0, 7.0],
+    emit: Vec3.mul([1.0, 1.0, 1.0], 7),
   });
 
   const world = make_primitive_list([]);
@@ -54,13 +54,22 @@ export function create_world() {
     make_primitive({
       kind: "geom",
       transforms: [],
-      flip_face: true,
+      // flip_face: true,
       shape: {
         kind: "disk",
         center: [box_width / 2, box_height - 1, box_depth / 2],
         radius: 0.2 * box_width,
         normal: [0, 1, 0],
       },
+      // shape: {
+      //   kind: "sphere",
+      //   center: [
+      //     box_width / 2,
+      //     box_height - 1 + 0.1 * box_width,
+      //     box_depth / 2,
+      //   ],
+      //   radius: 0.2 * box_width,
+      // },
       area_light: {},
       material: strong_light,
     })
@@ -128,8 +137,12 @@ export function create_world() {
           material: {
             // kind: "dielectric",
             // ir: 1.5,
+            // kind: "transparent",
             kind: "metal",
             fuzz: 0.0,
+            // fuzz: 0.0,
+            // roughness: 0,
+            // eta: 1.5,
             albedo: {
               kind: "constant_texture",
               value: Color.rgb2vec3(255, 0, 0),
@@ -163,7 +176,6 @@ export function create_world() {
 
   {
     const height = 250;
-    const light_radius = 25;
 
     const m_cylinder = make_material({
       kind: "lambertian",
@@ -247,9 +259,9 @@ export default make_project({
     output_dir: "./output",
     height: 800,
     width: 800,
-    nsamples: 5,
-    max_depth: 15,
-    mis_weight: 1.0,
+    nsamples: 200,
+    max_depth: 20,
+    mis_weight: 0.5,
   },
   scenes: [
     {
@@ -267,9 +279,9 @@ export default make_project({
       },
       // lights,
       environments: [
-        {
-          l: [0.0, 0.0, 0.0],
-        },
+        // {
+        //   l: [0.0, 0.0, 0.0],
+        // },
       ],
       world: create_world(),
     },

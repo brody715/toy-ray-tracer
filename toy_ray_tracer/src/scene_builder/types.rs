@@ -190,6 +190,11 @@ pub enum ShapeConfig {
         v2: JVec3f,
         v3: JVec3f,
     },
+    RegularPolygon {
+        center: JVec3f,
+        radius: f32,
+        num_sides: usize,
+    },
     TriangleMesh {
         indices: Vec<usize>,
         positions: Vec<JVec3f>,

@@ -686,6 +686,35 @@
         {
           "type": "object",
           "required": [
+            "center",
+            "kind",
+            "num_sides",
+            "radius"
+          ],
+          "properties": {
+            "center": {
+              "$ref": "#/definitions/JVec3f"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "regular_polygon"
+              ]
+            },
+            "num_sides": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0.0
+            },
+            "radius": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
             "indices",
             "kind",
             "positions"

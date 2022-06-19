@@ -6,7 +6,7 @@ export default make_project({
     height: 800,
     nsamples: 20,
     max_depth: 20,
-    mis_weight: 1.0,
+    mis_weight: 0.5,
   },
   scenes: [
     {kind: "uri", uri: "assets:///models/gltf-tutorials/simple_texture.gltf"},

@@ -108,7 +108,7 @@ pub mod vec3 {
     }
 
     pub fn is_same_hemisphere(wi: &Vec3f, wo: &Vec3f, normal: &Vec3f) -> bool {
-        return wi.dot(normal) * wo.dot(normal) > 0.0;
+        return wi.dot(normal) * wo.dot(normal) >= 0.0;
     }
 
     #[allow(dead_code)]
@@ -163,15 +163,6 @@ pub mod vec3 {
         let y = phi.sin() * r2.sqrt();
 
         return Vec3f::new(x, y, z);
-    }
-
-    pub fn random_hemisphere_cosine(normal: &Vec3f) -> Vec3f {
-        let dir = self::random_cosine_direction();
-        if dir.dot(normal) > 0.0 {
-            dir
-        } else {
-            -dir
-        }
     }
 
     pub fn random_to_sphere(radius: f32, distance_squared: f32) -> Vec3f {
