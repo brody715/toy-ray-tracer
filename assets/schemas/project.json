@@ -697,6 +697,18 @@
                 "regular_polygon"
               ]
             },
+            "normal": {
+              "default": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "allOf": [
+                {
+                  "$ref": "#/definitions/JVec3f"
+                }
+              ]
+            },
             "num_sides": {
               "type": "integer",
               "format": "uint",

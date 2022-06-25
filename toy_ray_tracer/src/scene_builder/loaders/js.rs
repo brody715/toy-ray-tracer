@@ -3,6 +3,7 @@ pub(super) fn create_internal_module_script() -> String {
         "scene",
         "primitive_list",
         "primitive",
+        "shape",
         "material",
         "texture",
         "camera",

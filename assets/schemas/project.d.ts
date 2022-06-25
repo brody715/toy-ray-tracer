@@ -180,6 +180,7 @@ export type ShapeConfig =
     }
   | {
       kind: "regular_polygon";
+      normal?: JVec3F;
       num_sides: number;
       radius: number;
       [k: string]: unknown | undefined;

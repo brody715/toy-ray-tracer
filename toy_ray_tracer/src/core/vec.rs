@@ -73,6 +73,8 @@ impl IndexMut<usize> for Vec3List {
 pub mod vec3 {
     use std::f32::{consts::PI, EPSILON};
 
+    use nalgebra::Matrix3;
+
     use crate::utils::random;
 
     use super::{Vec3f, Vec4f};
@@ -234,5 +236,29 @@ pub mod vec3 {
 
     pub fn vec3_to_homo(v: &Vec3f) -> Vec4f {
         return Vec4f::new(v[0], v[1], v[2], 0.0);
+    }
+
+    // Constructs an onb from a direction
+    pub fn onb_fromz(n: &Vec3f) -> Matrix3<f32> {
+        // https://graphics.pixar.com/library/OrthonormalB/paper.pdf
+
+        /*
+        void branchlessONB(const Vec3f &n, Vec3f &b1, Vec3f &b2)
+        {
+            float sign = copysignf(1.0f, n.z);
+            const float a = -1.0f / (sign + n.z);
+            const float b = n.x * n.y * a;
+            b1 = Vec3f(1.0f + sign * n.x * n.x * a, sign * b, -sign * n.x);
+            b2 = Vec3f(b, sign + n.y * n.y * a, -n.y);
+        }
+        */
+
+        let z = n.normalize();
+        let sign = 1.0_f32.copysign(z[2]);
+        let a = -1.0 / (sign + z[2]);
+        let b = z[0] * z[1] * a;
+        let x = Vec3f::new(1.0 + sign * z[0] * z[0] * a, sign * b, -sign * z[0]);
+        let y = Vec3f::new(b, sign + z[1] * z[1] * a, -z[1]);
+        return Matrix3::from_columns(&[x, y, z]);
     }
 }

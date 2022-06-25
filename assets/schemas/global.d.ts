@@ -6,7 +6,7 @@ import {
   SceneConfig,
   Settings,
   EnvironmentConfig,
-  TextureConfig,
+  ShapeConfig,
 } from "./project";
 
 type Vec3F = [number, number, number];
@@ -19,13 +19,13 @@ declare global {
 
   function make_scene(scene: SceneConfig): SceneConfig;
 
+  function make_shape(shape: ShapeConfig): ShapeConfig;
+
   function make_primitive(primitive: PrimitiveConfig): PrimitiveConfig;
 
   function make_primitive_list(children: PrimitiveConfig[]): PrimitiveConfig[];
 
   function make_material(material: MaterialConfig): MaterialConfig;
-
-  function make_texture(texture: TextureConfig): TextureConfig;
 
   function make_camera(camera: CameraConfig): CameraConfig;
 

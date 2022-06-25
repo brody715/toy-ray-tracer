@@ -1,4 +1,4 @@
-use crate::core::{Shape, Transform, Vec3f};
+use crate::core::{vec3, Shape, Transform, Vec3f};
 
 use super::{create_triangles, ShapeList};
 
@@ -15,17 +15,21 @@ pub struct RegularPolygon {
 
 impl RegularPolygon {
     // 通过不断地逆时针旋转 \theta，得到所有的顶点坐标
-    pub fn new(radius: f32, n_sides: usize, object_to_world: Transform) -> Self {
+    pub fn new(radius: f32, n_sides: usize, normal: Vec3f, object_to_world: Transform) -> Self {
         if n_sides < 3 {
             panic!("n_sides must be >= 3");
         }
 
+        let onb = vec3::onb_fromz(&normal.normalize());
+        let z = onb.column(2);
+        let y = onb.column(1);
+
         // rotation origin
         let center = Vec3f::zeros();
 
-        let rotate_transform = Transform::rotate(Vec3f::new(0.0, 0.0, 1.0), 360.0 / n_sides as f32);
+        let rotate_transform = Transform::rotate(z.into(), 360.0 / n_sides as f32);
 
-        let v1 = center + Vec3f::new(0.0, radius, 0.0);
+        let v1 = center + radius * y;
         let mut positions: Vec<Vec3f> = vec![center, v1];
 
         for i in 2..(n_sides + 1) {

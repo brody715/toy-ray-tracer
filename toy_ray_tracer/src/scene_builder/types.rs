@@ -193,6 +193,8 @@ pub enum ShapeConfig {
     RegularPolygon {
         radius: f32,
         num_sides: usize,
+        #[serde(default = "default_polygon_normal")]
+        normal: JVec3f,
     },
     TriangleMesh {
         indices: Vec<usize>,
@@ -203,6 +205,10 @@ pub enum ShapeConfig {
         normals: Vec<JVec3f>,
     },
     Uri(UriConfig),
+}
+
+pub fn default_polygon_normal() -> JVec3f {
+    return JVec3f::new(0.0, 0.0, 1.0);
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]

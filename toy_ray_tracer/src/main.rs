@@ -100,7 +100,11 @@ fn run_render(args: RenderCmdArgs) -> anyhow::Result<()> {
     let output_dir = Path::new(&opt.output_dir);
 
     if !output_dir.exists() {
-        anyhow::bail!("output dir {} not exists", output_dir.display());
+        log::warn!(
+            "output dir {} not exists. Creating one",
+            output_dir.display()
+        );
+        std::fs::create_dir_all(output_dir)?;
     }
 
     let output_path = output_dir.join(format!("{}.png", project.name()));
