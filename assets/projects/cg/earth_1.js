@@ -1,14 +1,14 @@
 const scenes = [].map((v) => make_scene(v));
 
 export default make_project({
-  name: "simple",
+  name: "earth_1",
   settings: {
-    output_dir: "./output",
+    output_dir: "./output/cg",
     height: 800,
     width: 800,
-    nsamples: 10,
-    max_depth: 15,
-    mis_weight: 0.5,
+    nsamples: 100,
+    max_depth: 50,
+    mis_weight: 1.0,
   },
   scenes: [
     {
@@ -26,7 +26,7 @@ export default make_project({
       },
       environments: [
         {
-          l: [0.2, 0.2, 0.2],
+          l: [0.15, 0.15, 0.15],
         },
       ],
       world: [

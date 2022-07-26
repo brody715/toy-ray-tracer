@@ -5,7 +5,7 @@ mod transparent;
 
 pub use diffuse_light::DiffuseLight;
 pub use gltfpbr::GltfPbrMaterial;
-pub use naive::{Lambertian, Metal};
+pub use naive::{Lambertian, Metal, Dielectric};
 pub use transparent::Transparent;
 
 // utiltiy functions

@@ -4,7 +4,7 @@ use std::{path::Path, sync::Arc};
 use crate::{
     core::{vec3, MaterialPtr, Point2f, SceneBundle, Spectrum, TexturePtr, Transform, Vec3f},
     lights::AreaLight,
-    materials::GltfPbrMaterial,
+    materials::{DiffuseLight, GltfPbrMaterial},
     primitives::GeometricPrimitive,
     shapes::{ShapeList, Triangle, TriangleMeshStorage},
     textures::{ConstantTexture, ImageTexture, ImageTextureParams},
@@ -90,8 +90,6 @@ fn load_scene(g_scene: &easy_gltf::Scene, transform: Transform) -> Result<SceneB
             let roughness_factor = pbr.roughness_factor;
             let metallic_factor = pbr.metallic_factor;
 
-            // let emissive_factor = emissive_factor * 8.0;
-
             let base_color_factor = Spectrum::new(
                 pbr.base_color_factor.x,
                 pbr.base_color_factor.y,
@@ -158,19 +156,22 @@ fn load_scene(g_scene: &easy_gltf::Scene, transform: Transform) -> Result<SceneB
                 None => Arc::new(ConstantTexture::new(roughness_factor)),
             };
 
-            let material = Arc::new(GltfPbrMaterial::new(
-                1.5,
-                base_color,
-                metallic,
-                roughness,
-                emissive_color,
-            ));
-
-            if log::max_level() >= log::Level::Trace {
-                log::trace!("base_color: {:?}", pbr.base_color_factor)
+            // Fix: There are bugs when sampling area light in gltf materials. So we fallback it to lambertian diffuse light.
+            if !vec3::is_near_zero(&emissive_factor) && emissive.texture.is_none() {
+                // TODO: Found another way to strengthen gltf pbr emissive
+                let emissive_factor = emissive_factor * 12.0;
+                Arc::new(DiffuseLight::new(Arc::new(ConstantTexture::new(
+                    emissive_factor,
+                ))))
+            } else {
+                Arc::new(GltfPbrMaterial::new(
+                    1.5,
+                    base_color,
+                    metallic,
+                    roughness,
+                    emissive_color,
+                ))
             }
-
-            material
         };
 
         // if emissive is not black, and has no texture, we add it as area_light

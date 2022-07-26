@@ -48,6 +48,44 @@ impl Bxdf for LambertianReflection {
     }
 }
 
+pub struct NaiveDielectric {
+    ni_over_nt: f32,
+}
+
+impl NaiveDielectric {
+    pub fn new(ni_over_nt: f32) -> Self {
+        Self { ni_over_nt }
+    }
+}
+
+impl Bxdf for NaiveDielectric {
+    fn is_delta(&self) -> bool {
+        true
+    }
+
+    fn f(&self, _wi: &Vec3f, _wo: &Vec3f, _normal: &Vec3f) -> Vec3f {
+        Vec3f::new(1.0, 1.0, 1.0)
+    }
+
+    fn sample_wi(&self, wo: &Vec3f, normal: &Vec3f) -> Vec3f {
+        let unit_direction = &-wo.normalize();
+        let cos_theta = vec3::dot(&-unit_direction, &normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+        let cannot_refract = self.ni_over_nt * sin_theta > 1.0;
+
+        let wi = if cannot_refract || vec3::schlick(cos_theta, self.ni_over_nt) > random::f32() {
+            vec3::reflect(&unit_direction, &normal)
+        } else {
+            vec3::refract(&unit_direction, &normal, self.ni_over_nt)
+        };
+        return wi;
+    }
+
+    fn sample_pdf(&self, _wi: &Vec3f, _wo: &Vec3f, _normal: &Vec3f) -> f32 {
+        1.0
+    }
+}
+
 pub struct NaiveSpecularReflection {
     albedo: Spectrum,
     fuzz: f32,

@@ -1,6 +1,6 @@
-/// <reference path="../schemas/global.d.ts" />
+/// <reference path="../../schemas/global.d.ts" />
 
-/** @typedef {import("../schemas/project").JVec3F} JVec3F */
+/** @typedef {import("../../schemas/project").JVec3F} JVec3F */
 
 const scenes = [].map((v) => make_scene(v));
 
@@ -38,8 +38,10 @@ export function create_world() {
     })
   );
 
-  for (let a = -10; a < 10; a++) {
-    for (let b = -10; b < 10; b++) {
+  const n = 10;
+
+  for (let a = -n; a < n; a++) {
+    for (let b = -n; b < n; b++) {
       const choose_material = random_float();
       const center = make_vec3f([
         a + 0.9 * random_float(),
@@ -87,17 +89,24 @@ export function create_world() {
             })
           );
         } else {
-          // world.push(
-          //   make_primitive({
-          //     kind: "sphere",
-          //     center,
-          //     radius: 0.2,
-          //     material: {
-          //       kind: "dielectric",
-          //       ir: 1.5,
-          //     },
-          //   })
-          // );
+          world.push(
+            make_primitive({
+              kind: "geom",
+              shape: {
+                kind: "sphere",
+                center,
+                radius: 0.2,
+              },
+              material: {
+                kind: "dielectric",
+                ir: 1.5,
+                // kind: "transparent",
+                // albedo: [1.0, 1.0, 1.0],
+                // eta: 1.5,
+                // roughness: 0.0,
+              },
+            })
+          );
         }
       }
     }
@@ -115,16 +124,16 @@ export function create_world() {
       //   kind: "lambertian",
       //   albedo: [0.4, 0.0, 0.0],
       // },
-      material: {
-        kind: "transparent",
-        albedo: [1.0, 1.0, 1.0],
-        eta: 1.5,
-        roughness: 0.0,
-      },
       // material: {
-      //   kind: "dielectric",
-      //   ir: 1.5,
+      //   kind: "transparent",
+      //   albedo: [1.0, 1.0, 1.0],
+      //   eta: 1.5,
+      //   roughness: 0.0,
       // },
+      material: {
+        kind: "dielectric",
+        ir: 1.5,
+      },
     })
   );
 
@@ -169,40 +178,43 @@ export function create_world() {
 }
 
 const size = {
-  width: 800,
-  height: 600,
+  width: 1280,
+  height: 720,
   aspect: function () {
     return this.width / this.height;
   },
 };
 
 export default make_project({
-  name: "scene1",
+  name: "rtw_scene1",
   settings: {
-    output_dir: "./output",
+    output_dir: "./output/cg",
     width: size.width,
     height: size.height,
-    nsamples: 20,
-    max_depth: 4,
+    nsamples: 200,
+    max_depth: 40,
     mis_weight: 1.0,
   },
-  scene: {
-    camera: {
-      look_from: [13, 2, 3],
-      look_at: [0, 0, 0],
-      view_up: [0, 1, 0],
-      vertical_fov: 20,
-      aspect: size.aspect(),
-      aperture: 0.0,
-      focus_dist: 10.0,
-      time0: 0.0,
-      time1: 1.0,
-    },
-    environments: [
-      {
-        l: [0.7, 0.8, 1.0],
+  scenes: [
+    {
+      kind: "custom",
+      camera: {
+        look_from: [13, 2, 3],
+        look_at: [0, 0, 0],
+        view_up: [0, 1, 0],
+        vertical_fov: 20,
+        aspect: size.aspect(),
+        aperture: 0.0,
+        focus_dist: 10.0,
+        time0: 0.0,
+        time1: 1.0,
       },
-    ],
-    world: create_world(),
-  },
+      environments: [
+        {
+          l: [0.7, 0.8, 1.0],
+        },
+      ],
+      world: create_world(),
+    },
+  ],
 });

@@ -27,7 +27,7 @@ export function create_world() {
     kind: "diffuse_light",
     emit: {
       kind: "constant_texture",
-      value: Vec3.mul([7.0, 7.0, 7.0], 7.0 / 7.0),
+      value: [7.0, 7.0, 7.0],
     },
   });
 
@@ -39,6 +39,7 @@ export function create_world() {
       kind: "rect",
       v0: [555, 0, 0],
       v1: [555, 555, 555],
+      material: green,
     },
     material: green,
   });
@@ -53,42 +54,13 @@ export function create_world() {
     material: red,
   });
 
-  // world.push({
-  //   kind: "geom",
-  //   flip_face: true,
-  //   shape: {
-  //     kind: "disk",
-  //     center: [268, 554, 280],
-  //     radius: 100,
-  //     normal: [0, 1, 0],
-  //   },
-  //   material: light,
-  // });
-
   world.push({
     kind: "geom",
-    // flip_face: true,
-    transforms: [
-      {
-        kind: "rotate",
-        angle: 90,
-        axis: [1, 0, 0],
-      },
-      {kind: "translate", offset: [268, 554, 280]},
-    ],
     shape: {
-      // kind: "disk",
-      // center: [268, 554, 280],
-      // radius: 100,
-      // normal: [0, 1, 0],
-      // kind: "rect",
-      // v0: [213, 554, 227],
-      // v1: [343, 554, 332],
-      kind: "regular_polygon",
-      // center: [268, 554, 280],
-      center: [0, 0, 0],
+      kind: "disk",
+      center: [268, 554, 280],
       radius: 100,
-      num_sides: 6,
+      normal: [0, 1, 0],
     },
     material: light,
     area_light: {},
@@ -128,14 +100,11 @@ export function create_world() {
   let cube1 = make_primitive({
     kind: "geom",
     transforms: [
-      {
-        kind: "translate",
-        offset: [130, 0, 65],
-      },
+      {kind: "translate", offset: [130, 0, 65]},
       {
         kind: "rotate",
         axis: [0, 1, 0],
-        angle: -18.0,
+        angle: -18,
       },
     ],
     shape: {
@@ -149,14 +118,11 @@ export function create_world() {
   let cube2 = make_primitive({
     kind: "geom",
     transforms: [
+      {kind: "rotate", axis: [0, 1, 0], angle: 15},
       {
         kind: "translate",
-        offset: [265, 0, 295],
-      },
-      {
-        kind: "rotate",
-        axis: [0, 1, 0],
-        angle: 15.0,
+        offset: [285, 0, 295],
+        // offset: [0, 0, 0],
       },
     ],
     shape: {
@@ -175,14 +141,13 @@ export function create_world() {
 export default make_project({
   name: "cornell_box",
   settings: {
-    output_dir: "./output/mis",
+    output_dir: "./output/cg",
     height: 500,
     width: 500,
     nsamples: 500,
     // nsamples: 10,
     // nsamples: 3,
-    max_depth: 10,
-    mis_weight: 0.5,
+    max_depth: 50,
   },
   scenes: [
     {
@@ -198,14 +163,7 @@ export default make_project({
         time0: 0.0,
         time1: 0.0,
       },
-      // lights,
-      environments: [
-        // {
-        // // l: [0.7, 0.8, 1.0],
-        // l: [0.0, 0.0, 0.0],
-        // },
-      ],
-      world: [...create_world()],
+      world: create_world(),
     },
   ],
 });

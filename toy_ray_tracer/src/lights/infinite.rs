@@ -22,7 +22,7 @@ impl Light for EnvironmentLight {
     }
 
     fn sample_wi(&self, _point: &Point3f) -> Vec3f {
-        vec3::random_to_sphere(1.0, 1.0)
+        vec3::random_env_sphere()
     }
 
     fn sample_pdf(&self, _point: &Point3f, _wi: &crate::core::Vec3f) -> f32 {

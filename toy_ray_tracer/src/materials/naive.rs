@@ -1,5 +1,5 @@
 use crate::{
-    bxdfs::{LambertianReflection, NaiveSpecularReflection},
+    bxdfs::{LambertianReflection, NaiveDielectric, NaiveSpecularReflection},
     core::{Bsdf, Material, Spectrum, SurfaceInteraction, TexturePtr},
 };
 
@@ -44,6 +44,31 @@ impl Material for Metal {
             self.fuzz,
         ));
 
+        Some(bsdf)
+    }
+}
+
+pub struct Dielectric {
+    ir: f32,
+}
+
+impl Dielectric {
+    pub fn new(ir: f32) -> Self {
+        Dielectric { ir }
+    }
+}
+
+impl Material for Dielectric {
+    fn compute_bsdf(&self, si: &crate::core::SurfaceInteraction) -> Option<Bsdf> {
+        let mut bsdf = Bsdf::new(si.normal);
+
+        let ni_over_nt = if si.front_face {
+            1.0 / self.ir
+        } else {
+            self.ir
+        };
+
+        bsdf.set_raw(NaiveDielectric::new(ni_over_nt));
         Some(bsdf)
     }
 }

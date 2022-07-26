@@ -173,8 +173,22 @@ pub mod vec3 {
         let z = 1.0 + r2 * ((1.0 - radius * radius / distance_squared).sqrt() - 1.0);
 
         let phi = 2.0 * PI * r1;
-        let x = phi.cos() * (1.0 - z * z).sqrt();
-        let y = phi.sin() * (1.0 - z * z).sqrt();
+        let r = (1.0 - z * z).clamp(0.0, 1.0).sqrt();
+        let x = phi.cos() * r;
+        let y = phi.sin() * r;
+
+        return Vec3f::new(x, y, z);
+    }
+
+    pub fn random_env_sphere() -> Vec3f {
+        let r1 = random::f32();
+        let r2 = random::f32();
+        let z = 2.0 * r2 - 1.0;
+
+        let r = (1.0 - z * z).clamp(0.0, 1.0).sqrt();
+        let phi = 2.0 * PI * r1;
+        let x = phi.cos() * r;
+        let y = phi.sin() * r;
 
         return Vec3f::new(x, y, z);
     }

@@ -7,7 +7,7 @@ use crate::{
         SceneBundle, Settings, ShapePtr, TexturePtr, Transform, Vec2f, Vec3f,
     },
     lights::{AreaLight, EnvironmentLight},
-    materials::{DiffuseLight, GltfPbrMaterial, Lambertian, Metal, Transparent},
+    materials::{Dielectric, DiffuseLight, GltfPbrMaterial, Lambertian, Metal, Transparent},
     primitives::{FlipFacePrimitive, GeometricPrimitive, PrimitiveList},
     shapes::{
         Cube, Cylinder, Disk, Pyramid, Rect, RegularPolygon, Sphere, Triangle, TriangleMeshStorage,
@@ -367,10 +367,7 @@ impl Builder {
             MaterialConfig::Metal { albedo, fuzz } => {
                 Arc::new(Metal::new(self.build_texture_or_vec3f(&albedo)?, *fuzz))
             }
-            MaterialConfig::Dielectric { ir: _ir } => {
-                todo!();
-                // Arc::new(Dielectric::new(*ir))
-            }
+            MaterialConfig::Dielectric { ir } => Arc::new(Dielectric::new(*ir)),
             MaterialConfig::DiffuseLight { emit } => {
                 Arc::new(DiffuseLight::new(self.build_texture_or_vec3f(&emit)?))
             }
