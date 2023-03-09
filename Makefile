@@ -3,7 +3,7 @@ COMMIT_ID = $(shell git log -1 --format=%h)
 VERSION_TAG = ${COMMIT_ID}
 endif
 
-DOCKER_REGISTRY = registry.cn-shanghai.aliyuncs.com/thincats-public/
+DOCKER_REGISTRY = registry.cn-shanghai.aliyuncs.com/brody715/
 
 EXEC_IMAGE_NOTAG = ${DOCKER_REGISTRY}toy-ray-tracer
 EXEC_IMAGE = ${EXEC_IMAGE_NOTAG}:${VERSION_TAG}
